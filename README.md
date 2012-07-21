@@ -2,8 +2,6 @@
 
 WORK IN PROGRESS
 
-The overal aim is to create a a simple to use, lightweight, blisteringly fast job scheduler.
-
 Scheduling future job execution with  [RabbitMQ](http://www.rabbitmq.com/) - sort of. RabbitMQ wasn't designed for scheduling future job execution (although what it was designed for, it does very well). I'm hoping to utilise [Redis](http://redis.io/) in combination with RabbitMQ to achieve this.
 
 The rabbit-scheduler service, written in [Scala](http://www.scala-lang.org/) with [Scalatra](http://www.scalatra.org/):
