@@ -2,9 +2,9 @@
 
 WORK IN PROGRESS
 
-Scheduling future job execution with  [RabbitMQ](http://www.rabbitmq.com/) - sort of. RabbitMQ wasn't designed for scheduling future job execution (although what it was designed for, it does very well). I'm hoping to utilise [Redis](http://redis.io/) in combination with RabbitMQ to achieve this.
+[RabbitMQ](http://www.rabbitmq.com/) wasn't designed for scheduling future job execution (although what it was designed for, it does very well). I'm hoping to utilise [Redis](http://redis.io/) in combination with RabbitMQ to achieve this.
 
-The rabbit-scheduler service, written in [Scala](http://www.scala-lang.org/) with [Scalatra](http://www.scalatra.org/):
+The rabbit-scheduler service, written in [Scala](http://www.scala-lang.org/):
 
 1) rabbit-scheduler is started on a server somewhere (runs completely independently from your own application)
 
@@ -23,6 +23,8 @@ The rabbit-scheduler service, written in [Scala](http://www.scala-lang.org/) wit
 8) Your own application executes the job
 
 * Support for single date or repeated cron based job scheduling
-* Pretty Webapp interface UI for administering scheduled jobs
-* Restful API for administering scheduled jobs
 * Ability to add, update or remove scheduled jobs via messages on RabbitMQ exchanges
+
+[Scalatra](http://www.scalatra.org/) admin web service (possibly moved to a separate git repository)
+* Restful API for administering scheduled jobs
+* Pretty Webapp interface UI for administering scheduled jobs

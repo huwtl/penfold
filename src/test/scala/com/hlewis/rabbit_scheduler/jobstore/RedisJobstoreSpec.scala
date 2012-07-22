@@ -7,6 +7,7 @@ import com.redis.RedisClient
 class RedisJobstoreSpec extends Specification with Mockito {
 
   val redisClient = mock[RedisClient]
+
   val redisJobstore = new RedisJobstore(redisClient)
 
   "redis job store" should {
