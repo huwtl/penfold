@@ -1,10 +1,12 @@
 package com.hlewis.rabbit_scheduler.jobstore
 
 import com.redis.RedisClient
+import com.google.inject.Inject
 
-class RedisJobstore (client: RedisClient = new RedisClient("localhost", 6379)) {
+class RedisJobstore @Inject()(val client: RedisClient) extends Jobstore {
 
-  def add(key: String, value: String) = {
+  override def add(key: String, value: String) {
     client.hset("test", key, value)
   }
+
 }

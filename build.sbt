@@ -16,7 +16,9 @@ libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-webapp" % "7.6.0.v20120127" % "container",
   "javax.servlet" % "servlet-api" % "2.5" % "provided",
   "net.liftweb" %% "lift-json" % "2.4-M4",
-  "net.debasishg" % "redisclient_2.9.2" % "2.6"
+  "net.debasishg" % "redisclient_2.9.2" % "2.6",
+  "com.google.inject" % "guice" % "3.0",
+  "com.google.inject.extensions" % "guice-servlet" % "3.0"
 )
 
 resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"

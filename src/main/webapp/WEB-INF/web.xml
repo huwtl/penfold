@@ -3,14 +3,20 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
 
-    <servlet>
-        <servlet-name>jobstoreController</servlet-name>
-        <servlet-class>com.hlewis.rabbit_scheduler.api.JobstoreController</servlet-class>
-    </servlet>
+    <listener>
+        <listener-class>com.hlewis.rabbit_scheduler.di.GuiceServletConfig</listener-class>
+    </listener>
 
-    <servlet-mapping>
-        <servlet-name>jobstoreController</servlet-name>
+    <filter>
+        <filter-name>guiceFilter</filter-name>
+        <filter-class>com.google.inject.servlet.GuiceFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>guiceFilter</filter-name>
         <url-pattern>/*</url-pattern>
-    </servlet-mapping>
+    </filter-mapping>
+
+
 
 </web-app>
