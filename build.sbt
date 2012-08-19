@@ -18,7 +18,8 @@ libraryDependencies ++= Seq(
   "net.liftweb" %% "lift-json" % "2.4-M4",
   "net.debasishg" % "redisclient_2.9.2" % "2.6",
   "com.google.inject" % "guice" % "3.0",
-  "com.google.inject.extensions" % "guice-servlet" % "3.0"
+  "com.google.inject.extensions" % "guice-servlet" % "3.0",
+  "net.liftweb" %% "lift-amqp" % "2.4"
 )
 
 resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"

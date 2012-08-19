@@ -8,7 +8,7 @@ class JobstoreControllerSpec extends ScalatraSpec with Mockito {
 
   val jobstore = mock[RedisJobstore]
 
-  addServlet(new JobstoreController(jobstore), "/*")
+  addServlet(new JobstoreController(jobstore, null), "/*")
 
   def is =
   "GET / on JobstoreController" ^

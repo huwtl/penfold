@@ -4,8 +4,9 @@ import org.scalatra._
 import scalate.ScalateSupport
 import com.hlewis.rabbit_scheduler.jobstore.{Jobstore, RedisJobstore}
 import com.google.inject.Inject
+import com.hlewis.rabbit_scheduler.queue.RabbitQueue
 
-class JobstoreController @Inject()(val jobstore: Jobstore) extends ScalatraServlet with ScalateSupport {
+class JobstoreController @Inject()(val jobstore: Jobstore, val queue: RabbitQueue) extends ScalatraServlet with ScalateSupport {
 
   get("/") {
     "pong"
@@ -14,6 +15,12 @@ class JobstoreController @Inject()(val jobstore: Jobstore) extends ScalatraServl
   get("/redis-hash-test/:key/:value") {
     jobstore.add(params("key"), params("value"))
     "added to hash"
+  }
+
+  get("/rabbit-test") {
+    queue.send()
+
+    "rabbit test comple"
   }
 
   notFound {
