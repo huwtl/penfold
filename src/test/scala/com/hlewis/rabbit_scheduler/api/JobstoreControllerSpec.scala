@@ -1,20 +1,24 @@
 package com.hlewis.rabbit_scheduler.api
 
-import org.scalatra.test.specs2._
 import com.hlewis.rabbit_scheduler.jobstore.RedisJobstore
-import org.specs2.mock.Mockito
+import org.scalatra.test.scalatest.ScalatraSuite
+import org.scalatest.FunSpec
+import org.scalatest.mock.MockitoSugar
 
-class JobstoreControllerSpec extends ScalatraSpec with Mockito {
+class JobstoreControllerSpec extends ScalatraSuite with FunSpec with MockitoSugar {
 
   val jobstore = mock[RedisJobstore]
 
   addServlet(new JobstoreController(jobstore, null), "/*")
 
-  def is =
-  "GET / on JobstoreController" ^
-  "should return status 200" ! root200
+  describe("Ping request") {
 
-  def root200 = get("/") {
-    status must_== 200
+    it("should return 200") {
+      get("/ping") {
+        status should equal(200)
+        body should include("pong")
+      }
+    }
+
   }
 }

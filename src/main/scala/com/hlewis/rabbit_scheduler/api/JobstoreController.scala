@@ -8,7 +8,7 @@ import com.hlewis.rabbit_scheduler.queue.RabbitQueue
 
 class JobstoreController @Inject()(val jobstore: Jobstore, val queue: RabbitQueue) extends ScalatraServlet with ScalateSupport {
 
-  get("/") {
+  get("/ping") {
     "pong"
   }
 

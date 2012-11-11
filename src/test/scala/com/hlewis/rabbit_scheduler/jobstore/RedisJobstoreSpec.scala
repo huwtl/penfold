@@ -1,22 +1,25 @@
 package com.hlewis.rabbit_scheduler.jobstore
 
-import org.specs2.mutable.Specification
-import org.specs2.mock.Mockito
 import com.redis.RedisClient
+import org.scalatra.test.scalatest.ScalatraSuite
+import org.scalatest.FunSpec
+import org.scalatest.mock.MockitoSugar
+import org.mockito.BDDMockito._
 
-class RedisJobstoreSpec extends Specification with Mockito {
+class RedisJobstoreSpec extends ScalatraSuite with FunSpec with MockitoSugar {
 
   val redisClient = mock[RedisClient]
 
   val redisJobstore = new RedisJobstore(redisClient)
 
-  "redis job store" should {
-    "set value in hash" in {
+  describe("Redis job store") {
 
-      redisJobstore.add("key", "value")
+    it("should add job") {
+      given(redisClient.hset("test", "key", "value")).willReturn(true)
 
-      there was one(redisClient).hset("test", "key", "value")
+      val result: Boolean = redisJobstore.add("key", "value")
+
+      result should be(true)
     }
   }
-
 }
