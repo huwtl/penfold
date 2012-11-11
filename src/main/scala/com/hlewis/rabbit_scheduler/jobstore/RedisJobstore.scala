@@ -5,7 +5,7 @@ import com.google.inject.Inject
 
 class RedisJobstore @Inject()(val client: RedisClient) extends Jobstore {
 
-  override def add(key: String, value: String): Boolean = {
+  override def add(key: String, value: String) = {
     client.hset("test", key, value)
   }
 

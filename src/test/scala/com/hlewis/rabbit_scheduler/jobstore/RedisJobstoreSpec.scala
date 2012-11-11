@@ -17,7 +17,7 @@ class RedisJobstoreSpec extends ScalatraSuite with FunSpec with MockitoSugar {
     it("should add job") {
       given(redisClient.hset("test", "key", "value")).willReturn(true)
 
-      val result: Boolean = redisJobstore.add("key", "value")
+      val result = redisJobstore.add("key", "value")
 
       result should be(true)
     }
