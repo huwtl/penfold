@@ -1,0 +1,21 @@
+{
+  "header":{
+    "reference":"12345678",
+
+    "jobType":"abc",
+
+    "cron":"0 0 * * 0",
+
+    "dispatch":{
+      "amqpExchange":"aaa",
+
+      "amqpRoutingKey":"bbb"
+    }
+  },
+
+  "body":{
+    "stuff":"something",
+
+    "boolean":true
+  }
+}

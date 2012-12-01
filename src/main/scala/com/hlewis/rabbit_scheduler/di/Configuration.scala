@@ -8,7 +8,7 @@ import com.redis.RedisClient
 import com.hlewis.rabbit_scheduler.queue.RabbitQueue
 import com.rabbitmq.client.{ConnectionFactory, ConnectionParameters}
 
-class GuiceServletConfig extends GuiceServletContextListener {
+class Configuration extends GuiceServletContextListener {
 
   override def getInjector: Injector = {
 

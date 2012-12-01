@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
 
     <listener>
-        <listener-class>com.hlewis.rabbit_scheduler.di.GuiceServletConfig</listener-class>
+        <listener-class>com.hlewis.rabbit_scheduler.di.Configuration</listener-class>
     </listener>
 
     <filter>

@@ -23,7 +23,9 @@ libraryDependencies ++= Seq(
   "net.debasishg" %% "redisclient" % "2.7",
   "com.google.inject" % "guice" % "3.0",
   "com.google.inject.extensions" % "guice-servlet" % "3.0",
-  "net.liftweb" % "lift-amqp_2.9.1" % "2.4"
+  "net.liftweb" % "lift-amqp_2.9.1" % "2.4",
+  "com.github.philcali" %% "cronish" % "0.1.1",
+  "org.scalaj" %% "scalaj-time" % "0.6"
 )
 
 resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
