@@ -1,4 +1,4 @@
-package com.hlewis.rabbit_scheduler.queue
+package com.hlewis.rabbit_scheduler.app.exchange
 
 import com.rabbitmq.client.{Channel, ConnectionFactory}
 import net.liftweb.amqp.AMQPDispatcher

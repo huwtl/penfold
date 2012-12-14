@@ -3,20 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
 
+    <context-param>
+        <param-name>org.scalatra.LifeCycle</param-name>
+        <param-value>com.hlewis.rabbit_scheduler.app.Main</param-value>
+    </context-param>
+
     <listener>
-        <listener-class>com.hlewis.rabbit_scheduler.di.Configuration</listener-class>
+        <listener-class>org.scalatra.servlet.ScalatraListener</listener-class>
     </listener>
-
-    <filter>
-        <filter-name>guiceFilter</filter-name>
-        <filter-class>com.google.inject.servlet.GuiceFilter</filter-class>
-    </filter>
-
-    <filter-mapping>
-        <filter-name>guiceFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
-
-
 
 </web-app>

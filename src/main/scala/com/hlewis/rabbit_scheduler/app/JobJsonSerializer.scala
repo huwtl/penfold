@@ -1,9 +1,12 @@
-package com.hlewis.rabbit_scheduler.job
+package com.hlewis.rabbit_scheduler.app
 
 import net.liftweb.json._
+import com.hlewis.rabbit_scheduler.domain.Body
+import com.hlewis.rabbit_scheduler.domain.Header
 import net.liftweb.json.TypeInfo
+import com.hlewis.rabbit_scheduler.domain.Job
 
-class JobSerializer extends Serializer[Job] {
+class JobJsonSerializer extends Serializer[Job] {
   private val JobClass = classOf[Job]
 
   def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Job] = {

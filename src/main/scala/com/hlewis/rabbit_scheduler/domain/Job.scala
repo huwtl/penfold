@@ -1,6 +1,4 @@
-package com.hlewis.rabbit_scheduler.job
-
-import cronish.Cron
+package com.hlewis.rabbit_scheduler.domain
 
 case class Job(header: Header, body: Body)
 

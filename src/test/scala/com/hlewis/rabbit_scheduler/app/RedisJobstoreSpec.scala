@@ -1,4 +1,4 @@
-package com.hlewis.rabbit_scheduler.jobstore
+package com.hlewis.rabbit_scheduler.app
 
 import com.redis.RedisClient
 import org.scalatra.test.scalatest.ScalatraSuite
@@ -10,7 +10,7 @@ class RedisJobstoreSpec extends ScalatraSuite with FunSpec with MockitoSugar {
 
   val redisClient = mock[RedisClient]
 
-  val redisJobstore = new RedisJobstore(redisClient)
+  val redisJobstore = new RedisJobStore(redisClient)
 
   describe("Redis job store") {
 

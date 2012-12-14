@@ -1,12 +1,11 @@
-package com.hlewis.rabbit_scheduler.api
+package com.hlewis.rabbit_scheduler.app
 
 import org.scalatra._
+import exchange.RabbitJobExchange
 import scalate.ScalateSupport
-import com.hlewis.rabbit_scheduler.jobstore.{Jobstore, RedisJobstore}
-import com.google.inject.Inject
-import com.hlewis.rabbit_scheduler.queue.RabbitQueue
+import com.hlewis.rabbit_scheduler.domain.JobStore
 
-class JobstoreController @Inject()(val jobstore: Jobstore, val queue: RabbitQueue) extends ScalatraServlet with ScalateSupport {
+class JobstoreController (jobstore: JobStore, queue: RabbitJobExchange) extends ScalatraServlet with ScalateSupport {
 
   get("/ping") {
     "pong"

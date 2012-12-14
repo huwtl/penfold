@@ -1,13 +1,12 @@
-package com.hlewis.rabbit_scheduler.api
+package com.hlewis.rabbit_scheduler.app
 
-import com.hlewis.rabbit_scheduler.jobstore.RedisJobstore
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.scalatest.FunSpec
 import org.scalatest.mock.MockitoSugar
 
 class JobstoreControllerSpec extends ScalatraSuite with FunSpec with MockitoSugar {
 
-  val jobstore = mock[RedisJobstore]
+  val jobstore = mock[RedisJobStore]
 
   addServlet(new JobstoreController(jobstore, null), "/*")
 

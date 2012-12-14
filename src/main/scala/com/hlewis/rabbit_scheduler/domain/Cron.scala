@@ -1,4 +1,4 @@
-package com.hlewis.rabbit_scheduler.job
+package com.hlewis.rabbit_scheduler.domain
 
 import org.joda.time.DateTime
 

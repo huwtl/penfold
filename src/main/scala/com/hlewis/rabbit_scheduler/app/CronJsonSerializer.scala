@@ -1,10 +1,10 @@
-package com.hlewis.rabbit_scheduler.job
+package com.hlewis.rabbit_scheduler.app
 
 import net.liftweb.json._
 import net.liftweb.json.TypeInfo
-import cronish.Cron
+import com.hlewis.rabbit_scheduler.domain.Cron
 
-class CronSerializer extends Serializer[Cron] {
+class CronJsonSerializer extends Serializer[Cron] {
   private val CronClass = classOf[Cron]
 
   def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Cron] = {
@@ -12,7 +12,7 @@ class CronSerializer extends Serializer[Cron] {
       val cronStr = json.extract[String]
       val cronParts = cronStr.split(" ")
 
-      Cron("0", cronParts(0), cronParts(1), cronParts(2), cronParts(3), cronParts(4), "*")
+      Cron(cronParts(0), cronParts(1), cronParts(2), cronParts(3), cronParts(4))
     }
   }
 
