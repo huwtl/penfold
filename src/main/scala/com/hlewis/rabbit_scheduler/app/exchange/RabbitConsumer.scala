@@ -8,7 +8,7 @@ class RabbitConsumer {
   implicit val system = ActorSystem("mySystem")
 
   // create an AMQP connection
-  val conn = new RabbitMQConnection(host = "localhost", port = 5672, name = "Connection", user = "qmg", password = "m4rl1n", vhost = "qmg_vhost")
+  val conn = new RabbitMQConnection(host = "localhost", port = 5672, name = "Connection", user = "test", password = "password", vhost = "vhost")
 
   // create an actor that will receive AMQP deliveries
   val listener = system.actorOf(Props(new Actor {

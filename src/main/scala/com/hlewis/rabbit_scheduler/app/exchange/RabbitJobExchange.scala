@@ -14,7 +14,7 @@ class RabbitJobExchange extends JobExchange {
     implicit val system = ActorSystem("mySystem")
 
     // create an AMQP connection
-    val conn = new RabbitMQConnection(host = "localhost", port = 5672, name = "Connection", user = "qmg", password = "m4rl1n", vhost = "qmg_vhost")
+    val conn = new RabbitMQConnection(host = "localhost", port = 5672, name = "Connection", user = "test", password = "password", vhost = "vhost")
 
     // create a "channel owner" on this connection
     val producer = conn.createChannelOwner()
