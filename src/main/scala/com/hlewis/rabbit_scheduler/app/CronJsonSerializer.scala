@@ -10,7 +10,7 @@ class CronJsonSerializer extends Serializer[Cron] {
   def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Cron] = {
     case (TypeInfo(CronClass, _), json) => {
       val cronStr = json.extract[String]
-      val cronParts = cronStr.split(" ")
+      val cronParts = cronStr.split(' ')
 
       Cron(cronParts(0), cronParts(1), cronParts(2), cronParts(3), cronParts(4))
     }

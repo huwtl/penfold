@@ -1,17 +1,29 @@
 package com.hlewis.rabbit_scheduler.app.exchange
 
-import com.rabbitmq.client.ConnectionFactory
-import net.liftweb.amqp._
-import com.hlewis.rabbit_scheduler.domain.{Job, JobExchange}
+import com.hlewis.rabbit_scheduler.domain.JobExchange
+import akka.actor.ActorSystem
+import com.github.sstone.amqp.{Amqp, RabbitMQConnection}
+import com.github.sstone.amqp.Amqp.Publish
+import com.hlewis.rabbit_scheduler.domain.Job
 
-class RabbitJobExchange(connectionFactory: ConnectionFactory) extends JobExchange {
+class RabbitJobExchange extends JobExchange {
 
-  val amqp = new RabbitDispatcher[String](connectionFactory, "localhost", 5672)
-
-  val sender = new StringAMQPSender(connectionFactory, "localhost", 5672, "mult", "routeroute")
+  val consumer = new RabbitConsumer()
 
   def send() {
-    sender ! AMQPMessage("hello...")
+    implicit val system = ActorSystem("mySystem")
+
+    // create an AMQP connection
+    val conn = new RabbitMQConnection(host = "localhost", port = 5672, name = "Connection", user = "qmg", password = "m4rl1n", vhost = "qmg_vhost")
+
+    // create a "channel owner" on this connection
+    val producer = conn.createChannelOwner()
+
+    // wait till everyone is actually connected to the broker
+    Amqp.waitForConnection(system, producer).await()
+
+    // send a message
+    producer ! Publish("mult", "routeroute", "hello...".getBytes, properties = None, mandatory = true, immediate = false)
   }
 
   def receive(job: Job) {}
