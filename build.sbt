@@ -1,6 +1,6 @@
 organization := "com.hlewis"
 
-name := "rabbit-scheduler"
+name := "event-fire"
 
 version := "0.1.0-SNAPSHOT"
 

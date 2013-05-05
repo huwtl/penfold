@@ -5,7 +5,7 @@
 
     <context-param>
         <param-name>org.scalatra.LifeCycle</param-name>
-        <param-value>com.hlewis.rabbit_scheduler.app.Main</param-value>
+        <param-value>com.hlewis.eventfire.app.Main</param-value>
     </context-param>
 
     <listener>
