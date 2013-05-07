@@ -8,7 +8,7 @@ class JobstoreControllerSpec extends ScalatraSuite with FunSpec with MockitoSuga
 
   val jobstore = mock[RedisJobStore]
 
-  addServlet(new JobstoreController(jobstore, null), "/*")
+  addServlet(new JobstoreController(jobstore), "/*")
 
   describe("Ping request") {
 

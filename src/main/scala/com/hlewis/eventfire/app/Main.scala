@@ -4,7 +4,7 @@ import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
 import com.hlewis.eventfire.usecases.DispatchPendingJobsFromJobStoreToJobExchange
 
-class Main extends LifeCycle with RabbitJobExchangeFactory with RedisJobStoreFactory {
+class Main extends LifeCycle with RedisJobStoreFactory {
   private val PENDING_CHECK_PERIOD = 10000
 
   private val pendingDispatchCheckQueue = new PendingJobDispatchQueue(new DispatchPendingJobsFromJobStoreToJobExchange)
@@ -12,16 +12,14 @@ class Main extends LifeCycle with RabbitJobExchangeFactory with RedisJobStoreFac
   private val periodicPendingJobDispatchTrigger = new PeriodicPendingJobDispatchTrigger(PENDING_CHECK_PERIOD, pendingDispatchCheckQueue)
 
   override def init(context: ServletContext) {
-    val jobExchange = createJobExchange()
-
     val jobStore = createJobStore()
 
     pendingDispatchCheckQueue.start()
 
     periodicPendingJobDispatchTrigger.start()
 
-
-    context mount(new JobstoreController(jobStore, jobExchange), "/*")
+    context mount(classOf[AtomServlet], "/atom/*")
+    context mount(new JobstoreController(jobStore), "/*")
   }
 
   override def destroy(context: ServletContext) {

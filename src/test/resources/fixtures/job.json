@@ -7,9 +7,7 @@
     "cron":"0 0 * * 0",
 
     "dispatch":{
-      "amqpExchange":"aaa",
-
-      "amqpRoutingKey":"bbb"
+      "exchange":"aaa",
     }
   },
 

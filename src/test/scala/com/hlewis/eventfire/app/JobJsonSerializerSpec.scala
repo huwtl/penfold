@@ -10,15 +10,15 @@ class JobJsonSerializerSpec extends ScalatraSuite with FunSpec with GivenWhenThe
 
   describe("Job JSON parsing") {
     it("should convert json to job") {
-      given("json received for job")
+      Given("json received for job")
       implicit val formats = Serialization.formats(NoTypeHints) + new JobJsonSerializer + new CronJsonSerializer
       val json = parse(fromInputStream(getClass.getClassLoader.getResourceAsStream("fixtures/job.json")).mkString)
 
-      when("json is parsed")
+      When("json is parsed")
       val job = json.extract[Job]
 
-      then("expected job is created")
-      job should equal(Job(Header("12345678", "abc", Cron("0", "0", "*", "*", "0"), Map("amqpExchange" -> "aaa", "amqpRoutingKey" -> "bbb")), Body(Map("stuff" -> "something", "boolean" -> true))))
+      Then("expected job is created")
+      job should equal(Job(Header("12345678", "abc", Cron("0", "0", "*", "*", "0"), Map("exchange" -> "aaa")), Body(Map("stuff" -> "something", "boolean" -> true))))
     }
   }
 }
