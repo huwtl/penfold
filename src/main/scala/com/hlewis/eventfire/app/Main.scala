@@ -2,27 +2,32 @@ package com.hlewis.eventfire.app
 
 import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
-import com.hlewis.eventfire.usecases.DispatchPendingJobsFromJobStoreToJobExchange
+import com.hlewis.eventfire.usecases.RefreshFeedWithPendingJobs
+import akka.actor.ActorDSL.actor
+import akka.actor.ActorSystem
+import scala.concurrent.duration._
+import com.hlewis.eventfire.app.feed.AtomServlet
+import com.hlewis.eventfire.app.support.PeriodicMessageSender
+import com.hlewis.eventfire.app.store.redis.RedisJobStoreFactory
+import com.hlewis.eventfire.app.web.AdminWebController
 
 class Main extends LifeCycle with RedisJobStoreFactory {
-  private val PENDING_CHECK_PERIOD = 10000
 
-  private val pendingDispatchCheckQueue = new PendingJobDispatchQueue(new DispatchPendingJobsFromJobStoreToJobExchange)
-
-  private val periodicPendingJobDispatchTrigger = new PeriodicPendingJobDispatchTrigger(PENDING_CHECK_PERIOD, pendingDispatchCheckQueue)
+  private implicit val system = ActorSystem("actor-system")
 
   override def init(context: ServletContext) {
-    val jobStore = createJobStore()
+    val pendingDispatchCheckQueue = actor(new PendingJobDispatchQueue(new RefreshFeedWithPendingJobs))
 
-    pendingDispatchCheckQueue.start()
+    actor(new PeriodicMessageSender(10 seconds, pendingDispatchCheckQueue, DispatchPending))
 
-    periodicPendingJobDispatchTrigger.start()
+    val jobStore = initJobStore()
 
-    context mount(classOf[AtomServlet], "/atom/*")
-    context mount(new JobstoreController(jobStore), "/*")
+    context mount(classOf[AtomServlet], "/feed/*")
+
+    context mount(new AdminWebController(jobStore), "/*")
   }
 
   override def destroy(context: ServletContext) {
-    pendingDispatchCheckQueue ! Quit
+    system.shutdown()
   }
 }

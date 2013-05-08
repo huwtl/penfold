@@ -1,4 +1,4 @@
-package com.hlewis.eventfire.app
+package com.hlewis.eventfire.app.support
 
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.scalatest.{GivenWhenThen, FunSpec}

@@ -1,4 +1,4 @@
-package com.hlewis.eventfire.app
+package com.hlewis.eventfire.app.store.redis
 
 import com.redis.RedisClient
 import org.scalatra.test.scalatest.ScalatraSuite

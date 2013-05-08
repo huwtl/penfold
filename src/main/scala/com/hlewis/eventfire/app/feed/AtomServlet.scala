@@ -1,4 +1,4 @@
-package com.hlewis.eventfire.app
+package com.hlewis.eventfire.app.feed
 
 import org.apache.abdera.protocol.server.impl.{SimpleWorkspaceInfo, DefaultProvider}
 import org.apache.abdera.protocol.server.servlet.AbderaServlet
@@ -12,7 +12,7 @@ class AtomServlet extends AbderaServlet {
     wi.setTitle("Job Directory Workspace")
     wi.addCollection(ca)
 
-    val provider = new DefaultProvider("/atom/")
+    val provider = new DefaultProvider("/feed/")
     provider.addWorkspace(wi)
 
     provider.init(getAbdera, null)

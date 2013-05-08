@@ -1,14 +1,15 @@
-package com.hlewis.eventfire.app
+package com.hlewis.eventfire.app.web
 
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.scalatest.FunSpec
 import org.scalatest.mock.MockitoSugar
+import com.hlewis.eventfire.domain.JobStore
 
-class JobstoreControllerSpec extends ScalatraSuite with FunSpec with MockitoSugar {
+class AdminWebControllerSpec extends ScalatraSuite with FunSpec with MockitoSugar {
 
-  val jobstore = mock[RedisJobStore]
+  val jobstore = mock[JobStore]
 
-  addServlet(new JobstoreController(jobstore), "/*")
+  addServlet(new AdminWebController(jobstore), "/*")
 
   describe("Ping request") {
 

@@ -7,7 +7,7 @@
     "cron":"0 0 * * 0",
 
     "dispatch":{
-      "exchange":"aaa",
+      "exchange":"aaa"
     }
   },
 

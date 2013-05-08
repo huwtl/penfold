@@ -1,4 +1,4 @@
-package com.hlewis.eventfire.app
+package com.hlewis.eventfire.app.support
 
 import net.liftweb.json._
 import net.liftweb.json.TypeInfo

@@ -1,30 +1,24 @@
 package com.hlewis.eventfire.app
 
-import actors.Actor
-import org.slf4j.LoggerFactory
-import com.hlewis.eventfire.usecases.DispatchPendingJobsFromJobStoreToJobExchange
+//import org.slf4j.LoggerFactory
 
-class PendingJobDispatchQueue(dispatchPendingJobsFromStoreToExchange: DispatchPendingJobsFromJobStoreToJobExchange) extends Actor {
-  val LOGGER = LoggerFactory.getLogger(getClass)
+import com.hlewis.eventfire.usecases.RefreshFeedWithPendingJobs
+import akka.actor.Actor
 
-  def act() {
-    loop {
-      react {
-        case DispatchPending => {
-          dispatchPendingJobsFromStoreToExchange.dispatchPending()
-        }
-        case Quit => exit()
-      }
+class PendingJobDispatchQueue(exposePendingJobsFromStore: RefreshFeedWithPendingJobs) extends Actor {
+
+  //val LOGGER = LoggerFactory.getLogger(getClass)
+
+  override def receive = {
+    case DispatchPending => {
+      exposePendingJobsFromStore.refresh()
     }
   }
 
-  override def exceptionHandler = {
-    case e: Exception => {
-      LOGGER.error("Exception occurred while attempting to dispatch pending jobs to exchange: ", e)
-    }
-  }
+  // todo: not sure how to do this with akka actors yet
+  //  {
+  //    case e: Exception => LOGGER.error("Exception occurred while attempting to dispatch pending jobs to exchange: ", e)
+  //  }
 }
 
 case object DispatchPending
-
-case object Quit
