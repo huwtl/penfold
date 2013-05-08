@@ -10,15 +10,16 @@ import com.hlewis.eventfire.app.feed.AtomServlet
 import com.hlewis.eventfire.app.support.PeriodicMessageSender
 import com.hlewis.eventfire.app.store.redis.RedisJobStoreFactory
 import com.hlewis.eventfire.app.web.AdminWebController
+import com.hlewis.eventfire.domain.PendingJobsFeed
 
 class Main extends LifeCycle with RedisJobStoreFactory {
 
   private implicit val system = ActorSystem("actor-system")
 
   override def init(context: ServletContext) {
-    val pendingDispatchCheckQueue = actor(new PendingJobDispatchQueue(new RefreshFeedWithPendingJobs))
+    val pendingJobsFeed = actor(new PendingJobsFeed())
 
-    actor(new PeriodicMessageSender(10 seconds, pendingDispatchCheckQueue, DispatchPending))
+    actor(new PeriodicMessageSender(10 seconds, new RefreshFeedWithPendingJobs(pendingJobsFeed)))
 
     val jobStore = initJobStore()
 

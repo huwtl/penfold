@@ -1,7 +1,10 @@
 package com.hlewis.eventfire.usecases
 
-class RefreshFeedWithPendingJobs  {
+import akka.actor.ActorRef
+import com.hlewis.eventfire.domain.Refresh
+
+class RefreshFeedWithPendingJobs(pendingJobsFeed: ActorRef)  {
   def refresh() {
-    println("Refresh...")
+    pendingJobsFeed ! Refresh
   }
 }
