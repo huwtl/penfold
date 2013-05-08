@@ -6,7 +6,7 @@ import org.apache.abdera.protocol.server.servlet.AbderaServlet
 class AtomServlet extends AbderaServlet {
   override def createProvider() = {
     val ca = new JobCollectionAdapter()
-    ca.setHref("job")
+    ca.setHref("pending-jobs")
 
     val wi = new SimpleWorkspaceInfo()
     wi.setTitle("Job Directory Workspace")
