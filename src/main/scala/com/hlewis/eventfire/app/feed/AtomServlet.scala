@@ -12,6 +12,7 @@ class AtomServlet extends AbderaServlet {
     wi.setTitle("Job Directory Workspace")
     wi.addCollection(ca)
 
+
     val provider = new DefaultProvider("/feed/")
     provider.addWorkspace(wi)
 

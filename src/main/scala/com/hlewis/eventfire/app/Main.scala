@@ -2,15 +2,14 @@ package com.hlewis.eventfire.app
 
 import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
-import com.hlewis.eventfire.usecases.RefreshFeedWithPendingJobs
-import akka.actor.ActorDSL.actor
+import com.hlewis.eventfire.usecases.{ExposePendingJobs, Refresh}
+import akka.actor.ActorDSL._
 import akka.actor.ActorSystem
 import scala.concurrent.duration._
 import com.hlewis.eventfire.app.feed.AtomServlet
 import com.hlewis.eventfire.app.support.RepeatExecution
 import com.hlewis.eventfire.app.store.redis.RedisJobStoreFactory
 import com.hlewis.eventfire.app.web.AdminWebController
-import com.hlewis.eventfire.domain.PendingJobsFeed
 
 class Main extends LifeCycle with RedisJobStoreFactory {
 
@@ -19,9 +18,9 @@ class Main extends LifeCycle with RedisJobStoreFactory {
   override def init(context: ServletContext) {
     val jobStore = initJobStore()
 
-    val refreshFeedWithPendingJobs = new RefreshFeedWithPendingJobs(actor(new PendingJobsFeed()))
+    val exposePendingJobs = actor(new ExposePendingJobs())
 
-    actor(new RepeatExecution(repeatDelay = 10 seconds, refreshFeedWithPendingJobs.refresh()))
+    actor(new RepeatExecution(repeatDelay = 10 seconds, exposePendingJobs ! Refresh))
 
     context mount(classOf[AtomServlet], "/feed/*")
 
