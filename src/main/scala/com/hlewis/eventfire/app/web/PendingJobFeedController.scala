@@ -12,7 +12,7 @@ import com.hlewis.eventfire.domain.Body
 import com.hlewis.eventfire.domain.Job
 import com.hlewis.eventfire.domain.Cron
 
-class JobsFeedController(jobstore: JobStore) extends ScalatraServlet with ScalateSupport {
+class PendingJobFeedController(jobstore: JobStore) extends ScalatraServlet with ScalateSupport {
 
   private val jobs = mutable.Map[String, Job]("job1" -> Job(Header("job1", "test", Cron("1", "10", "*", "*", "*"), Map()), Body(Map("data" -> "value"))),
     "job2" -> Job(Header("job2", "test", Cron("1", "10", "*", "*", "*"), Map()), Body(Map("data" -> "value"))))
