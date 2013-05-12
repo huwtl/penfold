@@ -1,15 +1,13 @@
 package com.hlewis.eventfire.app.support
 
 import net.liftweb.json._
-import com.hlewis.eventfire.domain.Body
-import com.hlewis.eventfire.domain.Header
+import com.hlewis.eventfire.domain.{Cron, Body, Header, Job}
 import net.liftweb.json.TypeInfo
-import com.hlewis.eventfire.domain.Job
 
 class JobJsonSerializer extends Serializer[Job] {
   private val JobClass = classOf[Job]
 
-  def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Job] = {
+  override def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Job] = {
     case (TypeInfo(JobClass, _), json) => {
       val header = (json \ "header").extract[Header]
       val body = (json \ "body").values

@@ -6,10 +6,9 @@ import com.hlewis.eventfire.usecases.{ExposePendingJobs, Refresh}
 import akka.actor.ActorDSL._
 import akka.actor.ActorSystem
 import scala.concurrent.duration._
-import com.hlewis.eventfire.app.feed.AtomServlet
 import com.hlewis.eventfire.app.support.RepeatExecution
 import com.hlewis.eventfire.app.store.redis.RedisJobStoreFactory
-import com.hlewis.eventfire.app.web.AdminWebController
+import com.hlewis.eventfire.app.web.{JobsFeedController, AdminWebController}
 
 class Main extends LifeCycle with RedisJobStoreFactory {
 
@@ -22,7 +21,7 @@ class Main extends LifeCycle with RedisJobStoreFactory {
 
     actor(new RepeatExecution(repeatDelay = 10 seconds, exposePendingJobs ! Refresh))
 
-    context mount(classOf[AtomServlet], "/feed/*")
+    context mount(new JobsFeedController(jobStore), "/feed/*")
 
     context mount(new AdminWebController(jobStore), "/*")
   }
