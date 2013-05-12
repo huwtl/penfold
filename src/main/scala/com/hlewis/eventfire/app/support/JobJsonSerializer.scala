@@ -12,7 +12,7 @@ class JobJsonSerializer extends Serializer[Job] {
       val header = (json \ "header").extract[Header]
       val body = (json \ "body").values
 
-      Job(header, Body(body.asInstanceOf[Map[String, Any]]))
+      Job(header, Body(body.asInstanceOf[Map[String, String]]))
     }
   }
 

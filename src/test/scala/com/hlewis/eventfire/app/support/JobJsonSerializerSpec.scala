@@ -18,7 +18,7 @@ class JobJsonSerializerSpec extends ScalatraSuite with FunSpec with GivenWhenThe
       val job = json.extract[Job]
 
       Then("expected job is created")
-      job should equal(Job(Header("12345678", "abc", Cron("0", "0", "*", "*", "0"), Map("exchange" -> "aaa")), Body(Map("stuff" -> "something", "boolean" -> true))))
+      job should equal(Job(Header("12345678", "abc", Cron("0", "0", "*", "*", "0"), Map("exchange" -> "aaa")), Body(Map("stuff" -> "something", "boolean" -> "true"))))
     }
   }
 }

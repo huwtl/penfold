@@ -9,10 +9,11 @@ import scala.concurrent.duration._
 import com.hlewis.eventfire.app.support.RepeatExecution
 import com.hlewis.eventfire.app.store.redis.RedisJobStoreFactory
 import com.hlewis.eventfire.app.web.{JobsFeedController, AdminWebController}
+import scala.language.postfixOps
 
 class Main extends LifeCycle with RedisJobStoreFactory {
 
-  private implicit val system = ActorSystem("actor-system")
+  private implicit val actorSystem = ActorSystem("actor-system")
 
   override def init(context: ServletContext) {
     val jobStore = initJobStore()
@@ -27,6 +28,6 @@ class Main extends LifeCycle with RedisJobStoreFactory {
   }
 
   override def destroy(context: ServletContext) {
-    system.shutdown()
+    actorSystem.shutdown()
   }
 }

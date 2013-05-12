@@ -6,6 +6,8 @@ version := "0.1.0-SNAPSHOT"
 
 scalaVersion := "2.10.1"
 
+scalacOptions ++= Seq( "-deprecation", "-unchecked", "-feature" )
+
 seq(webSettings :_*)
 
 conflictWarning in ThisBuild := ConflictWarning.disable
@@ -23,8 +25,7 @@ libraryDependencies ++= Seq(
   "net.debasishg" % "redisclient_2.10" % "2.10",
   "com.github.philcali" % "cronish_2.10" % "0.1.3",
   "org.scalaj" % "scalaj-time_2.10.0-M7" % "0.6",
-  "com.theoryinpractise" % "halbuilder-core" % "2.0.1",
-  "net.hamnaberg.rest" % "json-collection" % "2.1"
+  "com.theoryinpractise" % "halbuilder-core" % "2.0.1"
 )
 
 resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
