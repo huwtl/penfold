@@ -1,0 +1,27 @@
+{
+    "_links": {
+        "self": {
+            "href": "http://host/triggered"
+        }
+    },
+    "_embedded": {
+        "jobs": [
+            {
+                "_links": {
+                    "self": {"href": "http://host/triggered/2"},
+                    "job": {"href": "http://host/jobs/2"},
+                    "start": {"href": "http://host/started"}
+                },
+                "jobId": "2"
+            },
+            {
+                "_links": {
+                    "self": {"href": "http://host/triggered/1"},
+                    "job": {"href": "http://host/jobs/1"},
+                    "start": {"href": "http://host/started"}
+                },
+                "jobId": "1"
+            }
+        ]
+    }
+}

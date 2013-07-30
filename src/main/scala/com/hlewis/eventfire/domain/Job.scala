@@ -1,7 +1,13 @@
 package com.hlewis.eventfire.domain
 
-case class Job(header: Header, body: Body)
+import org.joda.time.DateTime.now
+import org.joda.time.DateTime
 
-case class Header(reference: String, jobType: String, cron: Cron, dispatch: Map[String, String])
+case class Job(id: String, jobType: String, cron: Option[Cron], triggerDate: Option[DateTime], status: String = "waiting", payload: Payload) {
+  val nextTriggerDate = cron match {
+    case Some(cron) => cron.nextExecutionDate
+    case _ => triggerDate getOrElse now()
+  }
+}
 
-case class Body(data: Map[String, String])
+case class Payload(content: Map[String, Any])

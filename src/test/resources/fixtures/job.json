@@ -1,19 +1,15 @@
 {
-  "header":{
-    "reference":"12345678",
+    "id": "12345678",
 
-    "jobType":"abc",
+    "jobType": "abc",
 
-    "cron":"0 0 * * 0",
+    "cron": "0 0 * * 0 * *",
 
-    "dispatch":{
-      "exchange":"aaa"
+    "payload": {
+        "stuff": "something",
+
+        "nested": {
+            "inner": true
+        }
     }
-  },
-
-  "body":{
-    "stuff":"something",
-
-    "boolean":"true"
-  }
 }
