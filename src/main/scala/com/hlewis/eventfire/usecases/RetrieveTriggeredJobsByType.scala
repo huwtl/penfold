@@ -4,6 +4,6 @@ import com.hlewis.eventfire.domain.JobStore
 
 class RetrieveTriggeredJobsByType(jobStore: JobStore) {
   def retrieve(jobType: String) = {
-    jobStore.retrieveTriggered(jobType)
+    jobStore.retrieveTriggeredBy(jobType)
   }
 }

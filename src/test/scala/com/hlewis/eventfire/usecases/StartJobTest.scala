@@ -22,7 +22,7 @@ class StartJobTest extends FunSpec with ShouldMatchers with MockitoSugar {
 
   describe("Start job use case") {
     it("should throw exception when job not found") {
-      when(jobStore.retrieve("1")).thenReturn(None)
+      when(jobStore.retrieveBy("1")).thenReturn(None)
 
       evaluating {
         startJob.start(request)
@@ -30,7 +30,7 @@ class StartJobTest extends FunSpec with ShouldMatchers with MockitoSugar {
     }
 
     it("should start job") {
-      when(jobStore.retrieve("1")).thenReturn(Some(job))
+      when(jobStore.retrieveBy("1")).thenReturn(Some(job))
 
       startJob.start(request)
 

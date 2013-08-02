@@ -21,7 +21,6 @@ libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-webapp" % "8.1.7.v20120910" % "container,compile",
   "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container,compile" artifacts Artifact("javax.servlet", "jar", "jar"),
   "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided",
-  "net.debasishg" % "redisclient_2.10" % "2.10",
   "com.github.philcali" % "cronish_2.10" % "0.1.3",
   "org.scalaj" % "scalaj-time_2.10.0-M7" % "0.6",
   "com.theoryinpractise" % "halbuilder-core" % "2.0.2",

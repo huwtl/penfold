@@ -12,7 +12,7 @@ class InMemoryJobStore extends JobStore {
     "job2" -> Job("job2", "test", Some(Cron("0", "*", "*", "*", "*", "*")), None, "waiting", Payload(Map("data" -> "value")))
   )
 
-  override def retrieve(id: String) = {
+  override def retrieveBy(id: String) = {
     store.get(id)
   }
 
@@ -24,13 +24,9 @@ class InMemoryJobStore extends JobStore {
       .sortWith((job1, job2) => job1.nextTriggerDate.isAfter(job2.nextTriggerDate))
   }
 
-  override def retrieveTriggered(jobType: String) = {
+  override def retrieveTriggeredBy(jobType: String) = {
     retrieveTriggered()
       .filter(_.jobType == jobType)
-  }
-
-  override def retrieveStarted() = {
-    retrieveWith("started")
   }
 
   override def retrieveCompleted() = {

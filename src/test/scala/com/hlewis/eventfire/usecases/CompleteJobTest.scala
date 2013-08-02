@@ -17,7 +17,7 @@ class CompleteJobTest extends FunSpec with MockitoSugar {
 
   describe("Complete job use case") {
     it("ignore completion of non existing job") {
-      when(jobStore.retrieve(request.jobId)).thenReturn(None)
+      when(jobStore.retrieveBy(request.jobId)).thenReturn(None)
 
       completeJob.complete(request)
 
@@ -25,7 +25,7 @@ class CompleteJobTest extends FunSpec with MockitoSugar {
     }
 
     it("complete job") {
-      when(jobStore.retrieve(request.jobId)).thenReturn(Some(job))
+      when(jobStore.retrieveBy(request.jobId)).thenReturn(Some(job))
 
       completeJob.complete(request)
 

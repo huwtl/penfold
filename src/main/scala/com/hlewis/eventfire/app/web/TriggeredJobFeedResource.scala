@@ -24,7 +24,7 @@ class TriggeredJobFeedResource(retrieveTriggeredJob: RetrieveTriggeredJob,
   }
 
   get("/:id") {
-    retrieveTriggeredJob.retrieve(params("id")) match {
+    retrieveTriggeredJob.retrieveBy(params("id")) match {
       case Some(job) => Ok(halFormatter.halFrom(job))
       case _ => NotFound("Triggered job not found")
     }
