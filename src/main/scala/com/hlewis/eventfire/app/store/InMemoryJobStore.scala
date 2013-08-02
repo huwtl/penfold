@@ -6,7 +6,6 @@ import com.hlewis.eventfire.domain.Job
 import com.hlewis.eventfire.domain.Cron
 
 class InMemoryJobStore extends JobStore {
-
   private val store = mutable.LinkedHashMap[String, Job](
     "job1" -> Job("job1", "test", Some(Cron("0", "*", "*", "*", "*", "*")), None, "waiting", Payload(Map("data" -> "value"))),
     "job2" -> Job("job2", "test", Some(Cron("0", "*", "*", "*", "*", "*")), None, "waiting", Payload(Map("data" -> "value")))
@@ -24,13 +23,9 @@ class InMemoryJobStore extends JobStore {
       .sortWith((job1, job2) => job1.nextTriggerDate.isAfter(job2.nextTriggerDate))
   }
 
-  override def retrieveTriggeredBy(jobType: String) = {
+  override def retrieveTriggeredWith(jobType: String) = {
     retrieveTriggered()
       .filter(_.jobType == jobType)
-  }
-
-  override def retrieveCompleted() = {
-    retrieveWith("completed")
   }
 
   override def add(job: Job) = {
@@ -45,9 +40,5 @@ class InMemoryJobStore extends JobStore {
 
   override def remove(job: Job) {
     store.remove(job.id)
-  }
-
-  private def retrieveWith(status: String) = {
-    store.values.filter(_.status == status).toList.reverse
   }
 }

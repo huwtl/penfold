@@ -1,7 +1,6 @@
 package com.hlewis.eventfire.app.support.hal
 
 import org.scalatest.FunSpec
-import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
 import java.net.URI
 import scala.io.Source._
 import com.hlewis.eventfire.domain.Payload
@@ -11,7 +10,7 @@ import org.json4s.jackson.JsonMethods._
 import org.scalatest.matchers.ShouldMatchers
 
 class HalTriggeredJobFormatterTest extends FunSpec with ShouldMatchers {
-  val jobFormatter = new HalTriggeredJobFeedFormatter(new DefaultRepresentationFactory, new URI("http://host/triggered"), new URI("http://host/jobs"), new URI("http://host/started"))
+  val jobFormatter = new HalTriggeredJobFeedFormatter(new URI("http://host/triggered"), new URI("http://host/jobs"), new URI("http://host/started"))
 
   describe("HAL triggered job feed formatter") {
     it("should format triggered job feed as hal+json") {

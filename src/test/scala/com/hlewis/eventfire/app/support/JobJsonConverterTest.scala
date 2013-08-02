@@ -7,7 +7,7 @@ import org.json4s.jackson.JsonMethods._
 import com.hlewis.eventfire.domain.{Payload, Job, Cron}
 import org.scalatest.matchers.ShouldMatchers
 
-class JobJsonConverterSpec extends FunSpec with ShouldMatchers {
+class JobJsonConverterTest extends FunSpec with ShouldMatchers {
 
   val converter = new JobJsonConverter
 

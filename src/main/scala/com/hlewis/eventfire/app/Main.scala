@@ -2,12 +2,10 @@ package com.hlewis.eventfire.app
 
 import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
-import akka.actor.ActorSystem
 import com.hlewis.eventfire.app.support._
 import com.hlewis.eventfire.app.web._
 import scala.language.postfixOps
 import com.hlewis.eventfire.app.store.InMemoryJobStore
-import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
 import java.net.URI
 import com.hlewis.eventfire.app.support.hal.{HalTriggeredJobFeedFormatter, HalStartedJobFormatter, HalJobFormatter, HalCompletedJobFormatter}
 import com.hlewis.eventfire.usecases._
@@ -31,16 +29,16 @@ class Main extends LifeCycle {
 
     val completedJobLink = new URI(s"${baseUrl.toString}/feed/completed")
 
-    val jobFormatter = new HalJobFormatter(new DefaultRepresentationFactory, jobLink, triggeredJobLink)
+    val jobFormatter = new HalJobFormatter(jobLink, triggeredJobLink)
 
-    val triggeredJobFeedFormatter = new HalTriggeredJobFeedFormatter(new DefaultRepresentationFactory, triggeredJobLink, jobLink, startedJobLink)
+    val triggeredJobFeedFormatter = new HalTriggeredJobFeedFormatter(triggeredJobLink, jobLink, startedJobLink)
 
-    val startedJobFormatter = new HalStartedJobFormatter(new DefaultRepresentationFactory, startedJobLink, jobLink, completedJobLink)
+    val startedJobFormatter = new HalStartedJobFormatter(startedJobLink, jobLink, completedJobLink)
 
-    val completedJobFormatter = new HalCompletedJobFormatter(new DefaultRepresentationFactory, completedJobLink)
+    val completedJobFormatter = new HalCompletedJobFormatter(completedJobLink)
 
     val createJob = new CreateJob(jobStore)
-    val retrieveExistingJob = new RetrieveJob(jobStore)
+    val retrieveJobById = new RetrieveJobById(jobStore)
 
     val retrieveTriggeredJob = new RetrieveTriggeredJob(jobStore)
     val retrieveTriggeredJobs = new RetrieveTriggeredJobs(jobStore)
@@ -51,7 +49,7 @@ class Main extends LifeCycle {
 
     val completeJob = new CompleteJob(jobStore)
 
-    context mount(new JobsResource(retrieveExistingJob, createJob, jsonJobConverter, jobFormatter), "/jobs/*")
+    context mount(new JobsResource(retrieveJobById, createJob, jsonJobConverter, jobFormatter), "/jobs/*")
     context mount(new TriggeredJobFeedResource(retrieveTriggeredJob, retrieveTriggeredJobs, retrieveTriggeredJobsByType, jsonJobConverter, triggeredJobFeedFormatter), "/feed/triggered/*")
     context mount(new StartedJobFeedResource(startJob, retrieveStartedJob, jsonStartJobRequestConverter, startedJobFormatter), "/feed/started/*")
     context mount(new CompletedJobFeedResource(completeJob, jsonCompleteJobRequestConverter, completedJobFormatter), "/feed/completed/*")

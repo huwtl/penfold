@@ -1,11 +1,12 @@
 package com.hlewis.eventfire.app.support.hal
 
-import com.theoryinpractise.halbuilder.api.RepresentationFactory
 import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import com.hlewis.eventfire.domain.Job
 import java.net.URI
+import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
 
-class HalCompletedJobFormatter(representationFactory: RepresentationFactory, selfLink: URI) {
+class HalCompletedJobFormatter(selfLink: URI) {
+  private val representationFactory = new DefaultRepresentationFactory
 
   def halFrom(job: Job) = {
     representationFactory.newRepresentation(s"${selfLink.toString}/${job.id}")

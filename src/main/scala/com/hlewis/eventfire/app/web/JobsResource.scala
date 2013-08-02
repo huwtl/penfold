@@ -4,9 +4,9 @@ import org.scalatra._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import com.hlewis.eventfire.app.support.JobJsonConverter
 import com.hlewis.eventfire.app.support.hal.HalJobFormatter
-import com.hlewis.eventfire.usecases.{RetrieveJob, CreateJob}
+import com.hlewis.eventfire.usecases.{RetrieveJobById, CreateJob}
 
-class JobsResource(retrieveExistingJob: RetrieveJob, createJob: CreateJob, jsonConverter: JobJsonConverter, halFormatter: HalJobFormatter) extends ScalatraServlet {
+class JobsResource(retrieveExistingJob: RetrieveJobById, createJob: CreateJob, jsonConverter: JobJsonConverter, halFormatter: HalJobFormatter) extends ScalatraServlet {
 
   before() {
     contentType = HAL_JSON

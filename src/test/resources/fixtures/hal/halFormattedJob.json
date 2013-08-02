@@ -4,11 +4,9 @@
             "href": "http://host/jobs/1234"
         },
         "triggeredFeed": {
-            "href": "http://host/triggered?type=testType"
+            "href": "http://host/feed/triggered?type=testType"
         }
     },
-
-    "cron": "01 05 13 10 07 * 2014",
 
     "jobType": "testType",
 

@@ -14,9 +14,6 @@ class CompletedJobFeedResource(completeStartedJob: CompleteJob, jsonConverter: C
 
   post("/") {
     val completeJobRequest = jsonConverter.from(request.body)
-    completeStartedJob.complete(completeJobRequest) match {
-      case Some(completedJob) => Created(halFormatter.halFrom(completedJob))
-      case _ => NotFound("Job not found to complete")
-    }
+    Created(halFormatter.halFrom(completeStartedJob.complete(completeJobRequest)))
   }
 }

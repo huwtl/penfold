@@ -4,8 +4,10 @@ import com.theoryinpractise.halbuilder.api.RepresentationFactory
 import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import com.hlewis.eventfire.domain.Job
 import java.net.URI
+import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
 
-class HalTriggeredJobFeedFormatter(representationFactory: RepresentationFactory, selfLink: URI, jobLink: URI, startedJobLink: URI) {
+class HalTriggeredJobFeedFormatter(selfLink: URI, jobLink: URI, startedJobLink: URI) {
+  private val representationFactory = new DefaultRepresentationFactory
 
   def halFrom(job: Job) = {
     createHal(job).toString(HAL_JSON)

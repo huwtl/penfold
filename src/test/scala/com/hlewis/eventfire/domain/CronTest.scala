@@ -5,7 +5,7 @@ import org.joda.time.DateTime._
 import org.scala_tools.time.Imports._
 import org.scalatest.matchers.ShouldMatchers
 
-class CronSpec extends FunSpec with ShouldMatchers {
+class CronTest extends FunSpec with ShouldMatchers {
   describe("Cron definition") {
     it("should correctly calculate next execution date") {
       val cron = Cron("0", "59", "23", "*", "*", "*", String.valueOf(now.getYear))

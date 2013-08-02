@@ -2,12 +2,14 @@ package com.hlewis.eventfire.usecases
 
 import org.scalatest.FunSpec
 import org.scalatest.mock.MockitoSugar
-import com.hlewis.eventfire.domain.{Job, CompleteJobRequest, JobStore}
+import com.hlewis.eventfire.domain.{Payload, Job, CompleteJobRequest, JobStore}
 import org.mockito.Mockito._
-import org.mockito.Matchers._
+import com.hlewis.eventfire.domain.exceptions.JobNotFoundException
+import org.scalatest.matchers.ShouldMatchers
+import org.joda.time.DateTime
 
-class CompleteJobTest extends FunSpec with MockitoSugar {
-  val job = mock[Job]
+class CompleteJobTest extends FunSpec with MockitoSugar with ShouldMatchers {
+  val job = Job("1", "type", None, Some(new DateTime(2013, 7, 30, 0, 0, 0)), "waiting", Payload(Map()))
 
   val request = new CompleteJobRequest("1")
 
@@ -16,12 +18,12 @@ class CompleteJobTest extends FunSpec with MockitoSugar {
   val completeJob = new CompleteJob(jobStore)
 
   describe("Complete job use case") {
-    it("ignore completion of non existing job") {
-      when(jobStore.retrieveBy(request.jobId)).thenReturn(None)
+    it("should throw exception when job not found") {
+      when(jobStore.retrieveBy("1")).thenReturn(None)
 
-      completeJob.complete(request)
-
-      verify(jobStore, never()).remove(any())
+      evaluating {
+        completeJob.complete(request)
+      } should produce[JobNotFoundException]
     }
 
     it("complete job") {
@@ -29,7 +31,7 @@ class CompleteJobTest extends FunSpec with MockitoSugar {
 
       completeJob.complete(request)
 
-      verify(jobStore).remove(job)
+      verify(jobStore).update(Job(job.id, job.jobType, job.cron, job.triggerDate, "completed", job.payload))
     }
   }
 }

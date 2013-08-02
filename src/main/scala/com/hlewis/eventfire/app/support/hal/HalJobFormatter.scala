@@ -6,8 +6,10 @@ import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import com.hlewis.eventfire.domain.Job
 import org.joda.time.format.DateTimeFormat
 import java.net.URI
+import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
 
-class HalJobFormatter(representationFactory: RepresentationFactory, selfLink: URI, triggeredJobLink: URI) {
+class HalJobFormatter(selfLink: URI, triggeredJobLink: URI) {
+  private val representationFactory = new DefaultRepresentationFactory
 
   private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 

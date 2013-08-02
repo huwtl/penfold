@@ -1,7 +1,6 @@
 package com.hlewis.eventfire.domain
 
 trait JobStore {
-
   def add(job: Job): Job
 
   def update(job: Job) : Job
@@ -12,7 +11,5 @@ trait JobStore {
 
   def retrieveTriggered(): Iterable[Job]
 
-  def retrieveTriggeredBy(jobType: String): Iterable[Job]
-
-  def retrieveCompleted(): Iterable[Job]
+  def retrieveTriggeredWith(jobType: String): Iterable[Job]
 }

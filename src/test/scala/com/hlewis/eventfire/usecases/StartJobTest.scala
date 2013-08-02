@@ -34,7 +34,7 @@ class StartJobTest extends FunSpec with ShouldMatchers with MockitoSugar {
 
       startJob.start(request)
 
-      verify(jobStore).update(Job("1", "type", None, Some(new DateTime(2013, 7, 30, 0, 0, 0)), "started", Payload(Map())))
+      verify(jobStore).update(Job(job.id, job.jobType, job.cron, job.triggerDate, "started", job.payload))
     }
   }
 }
