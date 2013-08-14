@@ -21,6 +21,15 @@ class HalStartedJobFormatterTest extends FunSpec with ShouldMatchers {
       parse(hal) should equal(jsonFromFile("fixtures/hal/halFormattedStartedJobFeedEntry.json"))
     }
 
+    it("should format started job feed as hal+json") {
+      val job1 = Job("1", "", None, None, "", Payload(Map()))
+      val job2 = Job("2", "", None, None, "", Payload(Map()))
+
+      val hal = jobFormatter.halFrom(List(job2, job1))
+
+      parse(hal) should equal(jsonFromFile("fixtures/hal/halFormattedStartedJobFeed.json"))
+    }
+
     def jsonFromFile(filePath: String) = {
       parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString)
     }

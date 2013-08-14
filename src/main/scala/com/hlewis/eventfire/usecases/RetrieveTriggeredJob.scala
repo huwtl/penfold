@@ -4,7 +4,9 @@ import com.hlewis.eventfire.domain.JobStore
 
 class RetrieveTriggeredJob(jobStore: JobStore) {
   def retrieveBy(id: String) = {
-    // todo should be None when exists but not in triggered state
-    jobStore.retrieveBy(id)
+    jobStore.retrieveBy(id) match {
+      case Some(job) if job.status == "triggered" => Some(job)
+      case _ => None
+    }
   }
 }

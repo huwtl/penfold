@@ -9,6 +9,8 @@ import com.hlewis.eventfire.app.store.InMemoryJobStore
 import java.net.URI
 import com.hlewis.eventfire.app.support.hal.{HalTriggeredJobFeedFormatter, HalStartedJobFormatter, HalJobFormatter, HalCompletedJobFormatter}
 import com.hlewis.eventfire.usecases._
+import java.util.concurrent.Executors._
+import java.util.concurrent.TimeUnit._
 
 class Main extends LifeCycle {
 
@@ -35,7 +37,7 @@ class Main extends LifeCycle {
 
     val startedJobFormatter = new HalStartedJobFormatter(startedJobLink, jobLink, completedJobLink)
 
-    val completedJobFormatter = new HalCompletedJobFormatter(completedJobLink)
+    val completedJobFormatter = new HalCompletedJobFormatter(completedJobLink, jobLink)
 
     val createJob = new CreateJob(jobStore)
     val retrieveJobById = new RetrieveJobById(jobStore)
@@ -46,12 +48,28 @@ class Main extends LifeCycle {
 
     val startJob = new StartJob(jobStore)
     val retrieveStartedJob = new RetrieveStartedJob(jobStore)
+    val retrieveStartedJobs = new RetrieveStartedJobs(jobStore)
 
     val completeJob = new CompleteJob(jobStore)
+    val retrieveCompletedJob = new RetrieveCompletedJob(jobStore)
+    val retrieveCompletedJobs = new RetrieveCompletedJobs(jobStore)
+
+    val triggerPendingJobs = new TriggerPendingJobs(jobStore)
 
     context mount(new JobsResource(retrieveJobById, createJob, jsonJobConverter, jobFormatter), "/jobs/*")
     context mount(new TriggeredJobFeedResource(retrieveTriggeredJob, retrieveTriggeredJobs, retrieveTriggeredJobsByType, jsonJobConverter, triggeredJobFeedFormatter), "/feed/triggered/*")
-    context mount(new StartedJobFeedResource(startJob, retrieveStartedJob, jsonStartJobRequestConverter, startedJobFormatter), "/feed/started/*")
-    context mount(new CompletedJobFeedResource(completeJob, jsonCompleteJobRequestConverter, completedJobFormatter), "/feed/completed/*")
+    context mount(new StartedJobFeedResource(startJob, retrieveStartedJob, retrieveStartedJobs, jsonStartJobRequestConverter, startedJobFormatter), "/feed/started/*")
+    context mount(new CompletedJobFeedResource(completeJob, retrieveCompletedJob, retrieveCompletedJobs, jsonCompleteJobRequestConverter, completedJobFormatter), "/feed/completed/*")
+
+    newSingleThreadScheduledExecutor.scheduleAtFixedRate(new Runnable() {
+      def run() {
+        try {
+          triggerPendingJobs.triggerPending()
+        }
+        catch {
+          case e: Exception => println(e)
+        }
+      }
+    }, 0, 30, SECONDS)
   }
 }

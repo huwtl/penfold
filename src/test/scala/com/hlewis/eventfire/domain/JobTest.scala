@@ -12,6 +12,7 @@ class JobTest extends FunSpec with ShouldMatchers {
 
     it("should construct new job with explicit trigger date") {
       Job("", "", None, Some(new DateTime(2013, 7, 28, 12, 30, 0)), "", Payload(Map())).nextTriggerDate should equal(new DateTime(2013, 7, 28, 12, 30, 0))
+      Job("", "", Some(Cron("1", "30", "12", "28", "07", "*", "2013")), Some(new DateTime(2013, 7, 28, 12, 30, 0)), "", Payload(Map())).nextTriggerDate should equal(new DateTime(2013, 7, 28, 12, 30, 0))
     }
 
     it("should construct new job with default trigger date") {

@@ -7,9 +7,9 @@ trait JobStore {
 
   def remove(job: Job)
 
+  def triggerPendingJobs()
+
   def retrieveBy(id: String): Option[Job]
 
-  def retrieveTriggered(): Iterable[Job]
-
-  def retrieveTriggeredWith(jobType: String): Iterable[Job]
+  def retrieve(status: String): Iterable[Job]
 }

@@ -1,0 +1,27 @@
+{
+    "_links": {
+        "self": {
+            "href": "http://host/started"
+        }
+    },
+    "_embedded": {
+        "jobs": [
+            {
+                "_links": {
+                    "self": {"href": "http://host/started/2"},
+                    "job": {"href": "http://host/jobs/2"},
+                    "complete": {"href": "http://host/completed"}
+                },
+                "jobId": "2"
+            },
+            {
+                "_links": {
+                    "self": {"href": "http://host/started/1"},
+                    "job": {"href": "http://host/jobs/1"},
+                    "complete": {"href": "http://host/completed"}
+                },
+                "jobId": "1"
+            }
+        ]
+    }
+}

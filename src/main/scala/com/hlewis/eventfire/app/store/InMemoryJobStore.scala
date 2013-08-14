@@ -15,17 +15,11 @@ class InMemoryJobStore extends JobStore {
     store.get(id)
   }
 
-  override def retrieveTriggered() = {
+  override def triggerPendingJobs() {
     store.values
       .filter(!_.nextTriggerDate.isAfterNow)
       .filter(_.status == "waiting")
-      .toList
-      .sortWith((job1, job2) => job1.nextTriggerDate.isAfter(job2.nextTriggerDate))
-  }
-
-  override def retrieveTriggeredWith(jobType: String) = {
-    retrieveTriggered()
-      .filter(_.jobType == jobType)
+      .foreach(job => store.put(job.id, Job(job.id, job.jobType, job.cron, job.triggerDate, "triggered", job.payload)))
   }
 
   override def add(job: Job) = {
@@ -40,5 +34,12 @@ class InMemoryJobStore extends JobStore {
 
   override def remove(job: Job) {
     store.remove(job.id)
+  }
+
+  override def retrieve(status: String) = {
+    store.values
+      .filter(_.status == status)
+      .toList
+      .sortWith((job1, job2) => job1.nextTriggerDate.isAfter(job2.nextTriggerDate))
   }
 }

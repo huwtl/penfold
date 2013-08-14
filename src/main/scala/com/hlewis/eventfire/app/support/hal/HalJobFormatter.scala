@@ -1,6 +1,5 @@
 package com.hlewis.eventfire.app.support.hal
 
-import com.theoryinpractise.halbuilder.api.RepresentationFactory
 import scala.collection.JavaConversions._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import com.hlewis.eventfire.domain.Job

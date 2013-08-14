@@ -4,9 +4,9 @@ import org.joda.time.DateTime.now
 import org.joda.time.DateTime
 
 case class Job(id: String, jobType: String, cron: Option[Cron], triggerDate: Option[DateTime], status: String = "waiting", payload: Payload) {
-  val nextTriggerDate = cron match {
-    case Some(cron) => cron.nextExecutionDate
-    case _ => triggerDate getOrElse now()
+  val nextTriggerDate = triggerDate match {
+    case Some(triggerDate) => triggerDate
+    case _ => if (cron.isDefined) cron.get.nextExecutionDate else now()
   }
 }
 
