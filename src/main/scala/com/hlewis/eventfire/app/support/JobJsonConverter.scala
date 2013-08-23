@@ -3,12 +3,12 @@ package com.hlewis.eventfire.app.support
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.Extraction._
-import com.hlewis.eventfire.domain.{Cron, Payload, Job}
+import com.hlewis.eventfire.domain.{Status, Cron, Payload, Job}
 import org.json4s.JValue
 import org.json4s.TypeInfo
 
 class JobJsonConverter {
-  implicit val formats = DefaultFormats + new PayloadJsonSerializer + new CronJsonSerializer + new DateTimeJsonSerializer
+  implicit val formats = DefaultFormats + new PayloadJsonSerializer + new CronJsonSerializer + new DateTimeJsonSerializer + new StatusJsonSerializer
 
   def jsonFrom(job: Job) = {
     pretty(decompose(job))
@@ -53,5 +53,17 @@ private class CronJsonSerializer extends Serializer[Cron] {
 
   override def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
     case cron: Cron => new JString(cron.toString)
+  }
+}
+
+private class StatusJsonSerializer extends Serializer[Status] {
+  private val StatusClass = classOf[Status]
+
+  override def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Status] = {
+    case (TypeInfo(StatusClass, _), json) => Status.from(json.extract[String])
+  }
+
+  override def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+    case status: Status => new JString(status.name)
   }
 }

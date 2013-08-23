@@ -1,22 +1,19 @@
 package com.hlewis.eventfire.usecases
 
-import org.scalatest.FunSpec
-import org.scalatest.mock.MockitoSugar
 import com.hlewis.eventfire.domain.{Job, JobStore}
-import org.mockito.Mockito._
+import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
 
-class CreateJobTest extends FunSpec with MockitoSugar {
+class CreateJobTest extends Specification with Mockito {
   val job = mock[Job]
 
   val jobStore = mock[JobStore]
 
   val createJob = new CreateJob(jobStore)
 
-  describe("Create job use case") {
-    it("should create job") {
-      createJob.create(job)
+  "create job" in {
+    createJob.create(job)
 
-      verify(jobStore).add(job)
-    }
+    there was one(jobStore).add(job)
   }
 }

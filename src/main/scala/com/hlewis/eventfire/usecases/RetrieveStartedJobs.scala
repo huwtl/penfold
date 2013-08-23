@@ -1,9 +1,9 @@
 package com.hlewis.eventfire.usecases
 
-import com.hlewis.eventfire.domain.JobStore
+import com.hlewis.eventfire.domain.{Status, JobStore}
 
 class RetrieveStartedJobs(jobStore: JobStore) {
   def retrieve() = {
-    jobStore.retrieve("started")
+    jobStore.retrieve(Status.Started)
   }
 }

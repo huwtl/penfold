@@ -1,44 +1,36 @@
 package com.hlewis.eventfire.app.support
 
-import org.scalatest.FunSpec
 import io.Source._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import com.hlewis.eventfire.domain.{Payload, Job, Cron}
-import org.scalatest.matchers.ShouldMatchers
+import com.hlewis.eventfire.domain.{Status, Payload, Job, Cron}
+import org.specs2.mutable.Specification
 
-class JobJsonConverterTest extends FunSpec with ShouldMatchers {
-
+class JobJsonConverterTest extends Specification {
   val converter = new JobJsonConverter
 
-  describe("Job deserialization") {
-    it("should deserialize json to job") {
-      val json = fromInputStream(getClass.getClassLoader.getResourceAsStream("fixtures/job.json")).mkString
+  "deserialise json to job" in {
+    val json = fromInputStream(getClass.getClassLoader.getResourceAsStream("fixtures/job.json")).mkString
 
-      val job = converter.jobFrom(json)
+    val job = converter.jobFrom(json)
 
-      job should equal(Job("12345678", "abc", Some(Cron("0", "0", "*", "*", "0", "*")), None, "waiting", Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true)))))
-    }
+    job must beEqualTo(Job("12345678", "abc", Some(Cron("0", "0", "*", "*", "0", "*")), None, Status.Waiting, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true)))))
   }
 
-  describe("Job payload deserialization") {
-    it("should deserialize json to payload") {
-      val json = fromInputStream(getClass.getClassLoader.getResourceAsStream("fixtures/payload.json")).mkString
+  "deserialise json to payload" in {
+    val json = fromInputStream(getClass.getClassLoader.getResourceAsStream("fixtures/payload.json")).mkString
 
-      val payload = converter.jobPayloadFrom(json)
+    val payload = converter.jobPayloadFrom(json)
 
-      payload should equal(Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
-    }
+    payload must beEqualTo(Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
   }
 
-  describe("Job payload serialization") {
-    it("should serialize payload to json") {
-      val payload = Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true)))
-      val expectedJson = pretty(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream("fixtures/payload.json")).mkString))
+  "serialise payload to json" in {
+    val payload = Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true)))
+    val expectedJson = pretty(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream("fixtures/payload.json")).mkString))
 
-      val json = converter.jsonFrom(payload)
+    val json = converter.jsonFrom(payload)
 
-      json should equal(expectedJson)
-    }
+    json must beEqualTo(expectedJson)
   }
 }

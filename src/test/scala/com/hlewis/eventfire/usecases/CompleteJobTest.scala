@@ -1,37 +1,39 @@
 package com.hlewis.eventfire.usecases
 
-import org.scalatest.FunSpec
-import org.scalatest.mock.MockitoSugar
-import com.hlewis.eventfire.domain.{Payload, Job, CompleteJobRequest, JobStore}
-import org.mockito.Mockito._
-import com.hlewis.eventfire.domain.exceptions.JobNotFoundException
-import org.scalatest.matchers.ShouldMatchers
+import com.hlewis.eventfire.domain._
 import org.joda.time.DateTime
+import com.hlewis.eventfire.domain.Payload
+import scala.Some
+import com.hlewis.eventfire.domain.Job
+import com.hlewis.eventfire.domain.exceptions.JobNotFoundException
+import com.hlewis.eventfire.domain.CompleteJobRequest
+import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
+import org.specs2.specification.Scope
 
-class CompleteJobTest extends FunSpec with MockitoSugar with ShouldMatchers {
-  val job = Job("1", "type", None, Some(new DateTime(2013, 7, 30, 0, 0, 0)), "waiting", Payload(Map()))
+class CompleteJobTest extends Specification with Mockito {
 
-  val request = new CompleteJobRequest("1")
+  trait context extends Scope {
+    val job = Job("1", "type", None, Some(new DateTime(2013, 7, 30, 0, 0, 0)), Status.Waiting, Payload(Map()))
 
-  val jobStore = mock[JobStore]
+    val request = new CompleteJobRequest("1")
 
-  val completeJob = new CompleteJob(jobStore)
+    val jobStore = mock[JobStore]
 
-  describe("Complete job use case") {
-    it("should throw exception when job not found") {
-      when(jobStore.retrieveBy("1")).thenReturn(None)
+    val completeJob = new CompleteJob(jobStore)
+  }
 
-      evaluating {
-        completeJob.complete(request)
-      } should produce[JobNotFoundException]
-    }
+  "complete job" in new context {
+    jobStore.retrieveBy(request.jobId) returns Some(job)
 
-    it("complete job") {
-      when(jobStore.retrieveBy(request.jobId)).thenReturn(Some(job))
+    completeJob.complete(request)
 
-      completeJob.complete(request)
+    there was one(jobStore).update(Job(job.id, job.jobType, job.cron, job.triggerDate, Status.Completed, job.payload))
+  }
 
-      verify(jobStore).update(Job(job.id, job.jobType, job.cron, job.triggerDate, "completed", job.payload))
-    }
+  "throw exception when job not found" in new context {
+    jobStore.retrieveBy("1") returns None
+
+    completeJob.complete(request) must throwA[JobNotFoundException]
   }
 }

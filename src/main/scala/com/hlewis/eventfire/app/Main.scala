@@ -4,22 +4,42 @@ import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
 import com.hlewis.eventfire.app.support._
 import com.hlewis.eventfire.app.web._
-import scala.language.postfixOps
-import com.hlewis.eventfire.app.store.InMemoryJobStore
+import com.hlewis.eventfire.app.store.{DbInMemoryJobStore, InMemoryJobStore}
 import java.net.URI
 import com.hlewis.eventfire.app.support.hal.{HalTriggeredJobFeedFormatter, HalStartedJobFormatter, HalJobFormatter, HalCompletedJobFormatter}
 import com.hlewis.eventfire.usecases._
 import java.util.concurrent.Executors._
 import java.util.concurrent.TimeUnit._
+import com.googlecode.flyway.core.Flyway
+import com.mchange.v2.c3p0.ComboPooledDataSource
+import scala.slick.session.Database
+import com.hlewis.eventfire.domain.{Payload, Status, Job}
+import org.joda.time.DateTime
 
 class Main extends LifeCycle {
-
   override def init(context: ServletContext) {
-    val jobStore = new InMemoryJobStore()
-
     val jsonJobConverter = new JobJsonConverter
     val jsonStartJobRequestConverter = new StartJobRequestJsonConverter
     val jsonCompleteJobRequestConverter = new CompleteJobRequestJsonConverter
+
+    val dataSource = new ComboPooledDataSource
+    dataSource.setDriverClass("org.hsqldb.jdbcDriver")
+    dataSource.setJdbcUrl("jdbc:hsqldb:mem:penfold;sql.syntax_mys=true")
+    dataSource.setUser("sa")
+    dataSource.setPassword("")
+
+    val flyway = new Flyway
+    flyway.setDataSource(dataSource)
+    flyway.migrate()
+
+    val database = Database.forDataSource(dataSource)
+
+    val storeTest = new DbInMemoryJobStore(database, jsonJobConverter)
+    storeTest.add(new Job("1", "type2", None, Some(new DateTime()), Status.Waiting, Payload(Map("val" -> "2"))))
+    println(storeTest.retrieveBy("1"))
+    println(storeTest.retrieveBy("2"))
+
+    val jobStore = new InMemoryJobStore()
 
     val baseUrl = new URI("http://localhost:8080")
 

@@ -1,22 +1,19 @@
 package com.hlewis.eventfire.usecases
 
-import org.scalatest.FunSpec
-import org.scalatest.mock.MockitoSugar
 import com.hlewis.eventfire.domain.{Job, JobStore}
-import org.mockito.Mockito._
+import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
 
-class CancelExistingJobTest extends FunSpec with MockitoSugar {
+class CancelExistingJobTest extends Specification with Mockito {
   val jobStore = mock[JobStore]
 
   val cancelExistingJob = new CancelExistingJob(jobStore)
 
-  describe("Cancel existing job use case") {
-    it("should cancel existing job") {
-      val job = mock[Job]
+  "cancel existing job" in {
+    val job = mock[Job]
 
-      cancelExistingJob.cancel(job)
+    cancelExistingJob.cancel(job)
 
-      verify(jobStore).remove(job)
-    }
+    there was one(jobStore).remove(job)
   }
 }

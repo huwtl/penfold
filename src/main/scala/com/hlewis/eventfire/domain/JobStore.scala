@@ -11,5 +11,5 @@ trait JobStore {
 
   def retrieveBy(id: String): Option[Job]
 
-  def retrieve(status: String): Iterable[Job]
+  def retrieve(status: Status): Iterable[Job]
 }

@@ -1,40 +1,38 @@
 package com.hlewis.eventfire.usecases
 
-import org.scalatest.FunSpec
-import org.scalatest.mock.MockitoSugar
 import com.hlewis.eventfire.domain._
-import org.mockito.Mockito._
-import org.scalatest.matchers.ShouldMatchers
 import com.hlewis.eventfire.domain.StartJobRequest
 import scala.Some
 import com.hlewis.eventfire.domain.Job
 import org.joda.time.DateTime
+import org.specs2.mutable.Specification
+import org.specs2.mock.Mockito
+import org.specs2.specification.Scope
 import com.hlewis.eventfire.domain.exceptions.JobNotFoundException
 
-class StartJobTest extends FunSpec with ShouldMatchers with MockitoSugar {
-  val job = Job("1", "type", None, Some(new DateTime(2013, 7, 30, 0, 0, 0)), "waiting", Payload(Map()))
+class StartJobTest extends Specification with Mockito {
 
-  val jobStore = mock[JobStore]
+  trait context extends Scope {
+    val job = Job("1", "type", None, Some(new DateTime(2013, 7, 30, 0, 0, 0)), Status.Waiting, Payload(Map()))
 
-  val request = new StartJobRequest("1")
+    val jobStore = mock[JobStore]
 
-  val startJob = new StartJob(jobStore)
+    val request = new StartJobRequest("1")
 
-  describe("Start job use case") {
-    it("should throw exception when job not found") {
-      when(jobStore.retrieveBy("1")).thenReturn(None)
+    val startJob = new StartJob(jobStore)
+  }
 
-      evaluating {
-        startJob.start(request)
-      } should produce[JobNotFoundException]
-    }
+  "start job" in new context {
+    jobStore.retrieveBy("1") returns Some(job)
 
-    it("should start job") {
-      when(jobStore.retrieveBy("1")).thenReturn(Some(job))
+    startJob.start(request)
 
-      startJob.start(request)
+    there was one(jobStore).update(Job(job.id, job.jobType, job.cron, job.triggerDate, Status.Started, job.payload))
+  }
 
-      verify(jobStore).update(Job(job.id, job.jobType, job.cron, job.triggerDate, "started", job.payload))
-    }
+  "throw exception when job not found" in new context {
+    jobStore.retrieveBy("1") returns None
+
+    startJob.start(request) must throwA[JobNotFoundException]
   }
 }

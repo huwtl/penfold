@@ -7,8 +7,8 @@ import com.hlewis.eventfire.domain.Cron
 
 class InMemoryJobStore extends JobStore {
   private val store = mutable.LinkedHashMap[String, Job](
-    "job1" -> Job("job1", "test", Some(Cron("0", "*", "*", "*", "*", "*")), None, "waiting", Payload(Map("data" -> "value"))),
-    "job2" -> Job("job2", "test", Some(Cron("0", "*", "*", "*", "*", "*")), None, "waiting", Payload(Map("data" -> "value")))
+    "job1" -> Job("job1", "test", Some(Cron("0", "*", "*", "*", "*", "*")), None, Status.Waiting, Payload(Map("data" -> "value"))),
+    "job2" -> Job("job2", "test", Some(Cron("0", "*", "*", "*", "*", "*")), None, Status.Waiting, Payload(Map("data" -> "value")))
   )
 
   override def retrieveBy(id: String) = {
@@ -18,8 +18,8 @@ class InMemoryJobStore extends JobStore {
   override def triggerPendingJobs() {
     store.values
       .filter(!_.nextTriggerDate.isAfterNow)
-      .filter(_.status == "waiting")
-      .foreach(job => store.put(job.id, Job(job.id, job.jobType, job.cron, job.triggerDate, "triggered", job.payload)))
+      .filter(_.status == Status.Waiting)
+      .foreach(job => store.put(job.id, Job(job.id, job.jobType, job.cron, job.triggerDate, Status.Triggered, job.payload)))
   }
 
   override def add(job: Job) = {
@@ -36,7 +36,7 @@ class InMemoryJobStore extends JobStore {
     store.remove(job.id)
   }
 
-  override def retrieve(status: String) = {
+  override def retrieve(status: Status) = {
     store.values
       .filter(_.status == status)
       .toList

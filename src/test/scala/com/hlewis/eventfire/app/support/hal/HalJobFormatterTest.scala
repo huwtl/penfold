@@ -1,39 +1,34 @@
 package com.hlewis.eventfire.app.support.hal
 
-import org.scalatest.FunSpec
 import java.net.URI
 import scala.io.Source._
-import com.hlewis.eventfire.domain.Payload
+import com.hlewis.eventfire.domain.{Status, Payload, Job, Cron}
 import scala.Some
-import com.hlewis.eventfire.domain.Job
-import com.hlewis.eventfire.domain.Cron
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.joda.time.DateTime
-import org.scalatest.matchers.ShouldMatchers
+import org.specs2.mutable.Specification
 
-class HalJobFormatterTest extends FunSpec with ShouldMatchers {
+class HalJobFormatterTest extends Specification {
   val jobFormatter = new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/feed/triggered"))
 
-  describe("HAL job formatter") {
-    it("should format cron job as hal+json") {
-      val job = Job("1234", "testType", Some(Cron("01", "05", "13", "10", "07", "*", "2014")), None, "waiting", Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+  "format cron job as hal+json" in {
+    val job = Job("1234", "testType", Some(Cron("01", "05", "13", "10", "07", "*", "2014")), None, Status.Waiting, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
 
-      val hal = jobFormatter.halFrom(job)
+    val hal = jobFormatter.halFrom(job)
 
-      parse(hal) should equal(jsonFromFile("fixtures/hal/halFormattedJobWithCron.json"))
-    }
+    parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedJobWithCron.json"))
+  }
 
-    it("should format job without cron as hal+json") {
-      val job = Job("1234", "testType", None, Some(new DateTime(2014, 7, 10, 13, 5, 1)), "waiting", Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+  "format job without cron as hal+json" in {
+    val job = Job("1234", "testType", None, Some(new DateTime(2014, 7, 10, 13, 5, 1)), Status.Waiting, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
 
-      val hal = jobFormatter.halFrom(job)
+    val hal = jobFormatter.halFrom(job)
 
-      parse(hal) should equal(jsonFromFile("fixtures/hal/halFormattedJob.json"))
-    }
+    parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedJob.json"))
+  }
 
-    def jsonFromFile(filePath: String) = {
-      parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString)
-    }
+  def jsonFromFile(filePath: String) = {
+    parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString)
   }
 }

@@ -16,7 +16,7 @@ class HalJobFormatter(selfLink: URI, triggeredJobLink: URI) {
     val hal = representationFactory.newRepresentation(s"${selfLink.toString}/${job.id}")
       .withLink("triggeredFeed", s"${triggeredJobLink.toString}?type=${job.jobType}")
       .withProperty("jobType", job.jobType)
-      .withProperty("status", job.status)
+      .withProperty("status", job.status.name)
       .withProperty("triggerDate", dateFormatter.print(job.nextTriggerDate))
       .withProperty("payload", deepConvertToJavaMap(job.payload.content))
 

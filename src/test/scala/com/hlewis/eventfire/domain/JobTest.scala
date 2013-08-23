@@ -1,22 +1,21 @@
 package com.hlewis.eventfire.domain
 
-import org.scalatest.FunSpec
 import org.joda.time.DateTime
-import org.scalatest.matchers.ShouldMatchers
+import org.specs2.mutable.Specification
 
-class JobTest extends FunSpec with ShouldMatchers {
-  describe("Job") {
-    it("should construct new job with trigger date calculated from cron") {
-      Job("", "", Some(Cron("0", "30", "12", "28", "07", "*", "2013")), None, "", Payload(Map())).nextTriggerDate should equal(new DateTime(2013, 7, 28, 12, 30, 0))
-    }
+class JobTest extends Specification {
+  val triggerDate = new DateTime(2013, 7, 28, 12, 30, 0)
 
-    it("should construct new job with explicit trigger date") {
-      Job("", "", None, Some(new DateTime(2013, 7, 28, 12, 30, 0)), "", Payload(Map())).nextTriggerDate should equal(new DateTime(2013, 7, 28, 12, 30, 0))
-      Job("", "", Some(Cron("1", "30", "12", "28", "07", "*", "2013")), Some(new DateTime(2013, 7, 28, 12, 30, 0)), "", Payload(Map())).nextTriggerDate should equal(new DateTime(2013, 7, 28, 12, 30, 0))
-    }
+  "construct new job with trigger date calculated from cron" in {
+    Job("", "", Some(Cron("0", "30", "12", "28", "07", "*", "2013")), None, Status.Waiting, Payload(Map())).nextTriggerDate must beEqualTo(triggerDate)
+  }
 
-    it("should construct new job with default trigger date") {
-      Job("", "", None, None, "", Payload(Map())).nextTriggerDate should not be null
-    }
+  "construct new job with explicit trigger date" in {
+    Job("", "", None, Some(triggerDate), Status.Waiting, Payload(Map())).nextTriggerDate must beEqualTo(triggerDate)
+    Job("", "", Some(Cron("1", "30", "12", "28", "07", "*", "2013")), Some(triggerDate), Status.Waiting, Payload(Map())).nextTriggerDate must beEqualTo(triggerDate)
+  }
+
+  "construct new job with default trigger date" in {
+    Job("", "", None, None, Status.Waiting, Payload(Map())).nextTriggerDate must not beNull
   }
 }
