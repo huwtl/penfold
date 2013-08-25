@@ -14,7 +14,7 @@ class JobJsonConverterTest extends Specification {
 
     val job = converter.jobFrom(json)
 
-    job must beEqualTo(Job("12345678", "abc", Some(Cron("0", "0", "*", "*", "0", "*")), None, Status.Waiting, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true)))))
+    job must beEqualTo(Job("12345678", "abc", Some(Cron("0 0 * * 0 * *")), None, Status.Waiting, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true)))))
   }
 
   "deserialise json to payload" in {

@@ -6,7 +6,7 @@ import org.specs2.mutable.Specification
 
 class CronTest extends Specification {
   "calculate next execution date" in {
-    val cron = Cron("0", "59", "23", "*", "*", "*", String.valueOf(now.getYear))
+    val cron = Cron(s"0 59 23 * * * ${String.valueOf(now.getYear)}")
 
     val nextTriggerDateTime = cron.nextExecutionDate
 
@@ -14,7 +14,7 @@ class CronTest extends Specification {
   }
 
   "calculate next execution date for explicit date even if in past" in {
-    val cron = Cron("0", "59", "23", "1", "12", "*", "2011")
+    val cron = Cron("0 59 23 1 12 * 2011")
 
     val nextTriggerDateTime = cron.nextExecutionDate
 
@@ -22,16 +22,10 @@ class CronTest extends Specification {
   }
 
   "return string representation" in {
-    val cron = Cron("0", "59", "23", "*", "*", "*", String.valueOf(now.getYear))
+    val cron = Cron(s"0 59 23 * * * ${String.valueOf(now.getYear)}")
 
     val string: String = cron.toString
 
     string must beEqualTo(s"0 59 23 * * * ${String.valueOf(now.getYear)}")
-  }
-
-  "default missing year field to every year" in {
-    val cronWithoutYearField = Cron("*", "*", "*", "*", "*", "*")
-
-    cronWithoutYearField.year must beEqualTo("*")
   }
 }

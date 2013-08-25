@@ -14,7 +14,7 @@ class DbInMemoryJobStore(database: Database, jobConverter: JobJsonConverter) ext
   implicit val getJobFromRow = GetResult(r => Job(
     r.nextString(),
     r.nextString(),
-    Option(Cron(r.nextString(), "*", "*", "*", "*", "*")),
+    Option(Cron(r.nextString())),
     Option(new DateTime(r.nextTimestamp())),
     Status.from(r.nextString()),
     jobConverter.jobPayloadFrom(r.nextString())

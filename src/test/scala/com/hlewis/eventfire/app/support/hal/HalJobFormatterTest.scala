@@ -13,7 +13,7 @@ class HalJobFormatterTest extends Specification {
   val jobFormatter = new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/feed/triggered"))
 
   "format cron job as hal+json" in {
-    val job = Job("1234", "testType", Some(Cron("01", "05", "13", "10", "07", "*", "2014")), None, Status.Waiting, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    val job = Job("1234", "testType", Some(Cron("01 05 13 10 07 * 2014")), None, Status.Waiting, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
 
     val hal = jobFormatter.halFrom(job)
 

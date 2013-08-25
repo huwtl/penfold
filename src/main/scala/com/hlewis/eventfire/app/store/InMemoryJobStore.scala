@@ -7,8 +7,8 @@ import com.hlewis.eventfire.domain.Cron
 
 class InMemoryJobStore extends JobStore {
   private val store = mutable.LinkedHashMap[String, Job](
-    "job1" -> Job("job1", "test", Some(Cron("0", "*", "*", "*", "*", "*")), None, Status.Waiting, Payload(Map("data" -> "value"))),
-    "job2" -> Job("job2", "test", Some(Cron("0", "*", "*", "*", "*", "*")), None, Status.Waiting, Payload(Map("data" -> "value")))
+    "job1" -> Job("job1", "test", Some(Cron("0 * * * * * *")), None, Status.Waiting, Payload(Map("data" -> "value"))),
+    "job2" -> Job("job2", "test", Some(Cron("0 * * * * * *")), None, Status.Waiting, Payload(Map("data" -> "value")))
   )
 
   override def retrieveBy(id: String) = {

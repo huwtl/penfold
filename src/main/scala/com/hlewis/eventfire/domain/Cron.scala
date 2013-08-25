@@ -2,17 +2,12 @@ package com.hlewis.eventfire.domain
 
 import org.joda.time.DateTime
 
-case class Cron(second: String,
-                minute: String,
-                hour: String,
-                dayOfMonth: String,
-                month: String,
-                dayOfWeek: String,
-                year: String = "*") {
+case class Cron(cronStr: String) {
+  val cronParts = cronStr.split(' ')
 
-  private val cron = cronish.Cron(second, minute, hour, dayOfMonth, month, dayOfWeek, year)
+  private val cron = cronish.Cron(cronParts(0), cronParts(1), cronParts(2), cronParts(3), cronParts(4), cronParts(5), cronParts(6))
 
   def nextExecutionDate = new DateTime(cron.nextTime.getTimeInMillis)
 
-  override def toString = List(second, minute, hour, dayOfMonth, month, dayOfWeek, year) mkString " "
+  override def toString = cron.full
 }
