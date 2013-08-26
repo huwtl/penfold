@@ -1,4 +1,4 @@
-organization := "com.hlewis"
+organization := "org.huwtl"
 
 name := "penfold"
 
