@@ -1,6 +1,6 @@
 organization := "com.hlewis"
 
-name := "event-fire"
+name := "penfold"
 
 version := "0.1.0-SNAPSHOT"
 
