@@ -27,7 +27,7 @@ class InMemoryJobStore extends JobStore {
     job
   }
 
-  override def update(job: Job) = {
+  override def updateStatus(job: Job, status: Status) = {
     store.put(job.id, job)
     job
   }

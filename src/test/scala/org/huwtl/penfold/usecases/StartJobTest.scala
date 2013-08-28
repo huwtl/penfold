@@ -27,7 +27,7 @@ class StartJobTest extends Specification with Mockito {
 
     startJob.start(request)
 
-    there was one(jobStore).update(Job(job.id, job.jobType, job.cron, job.triggerDate, Status.Started, job.payload))
+    there was one(jobStore).updateStatus(job, Status.Started)
   }
 
   "throw exception when job not found" in new context {
