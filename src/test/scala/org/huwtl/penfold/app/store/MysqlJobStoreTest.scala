@@ -23,9 +23,9 @@ class MysqlJobStoreTest extends Specification with DataTables {
   val store = new MysqlJobStore(Database.forDataSource(dataSource), new JobJsonConverter)
 
   "add job to store" in {
-    "job"                                                                                                                   |>
+    "job"                                                                                                                   |
     Job("1", "type", None, Some(new DateTime(2013, 8, 1, 12, 0, 0)), Status.Waiting, Payload(Map()))                        |
-    Job("2", "type", Some(Cron("* * * * * * *")), Some(new DateTime(2013, 8, 1, 12, 0, 0)), Status.Waiting, Payload(Map())) | { (job) =>
+    Job("2", "type", Some(Cron("* * * * * * *")), Some(new DateTime(2013, 8, 1, 12, 0, 0)), Status.Waiting, Payload(Map())) |> { job =>
       store.add(job)
       job must beEqualTo(store.retrieveBy(job.id).get)
     }
