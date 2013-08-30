@@ -46,7 +46,7 @@ class MysqlJobStore(database: Database, jobConverter: JobJsonConverter) extends 
         INSERT INTO jobs (id, job_type, cron, trigger_date, status, payload) VALUES (
           ${job.id},
           ${job.jobType},
-          ${if (job.cron.isDefined) job.cron.get.toString else null},
+          ${job.cron.map(_.toString)},
           ${new Timestamp(job.nextTriggerDate.getMillis).toString},
           ${job.status.name},
           ${jobConverter.jsonFrom(job.payload)}
@@ -85,5 +85,3 @@ class MysqlJobStore(database: Database, jobConverter: JobJsonConverter) extends 
     """.as[Job].list
   }
 }
-
-

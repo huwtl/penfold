@@ -3,25 +3,25 @@ package org.huwtl.penfold.app.web
 import org.huwtl.penfold.usecases.{RetrieveJobById, CreateJob}
 import org.huwtl.penfold.app.support.JobJsonConverter
 import org.huwtl.penfold.app.support.hal.HalJobFormatter
-import org.huwtl.penfold.app.store.InMemoryJobStore
 import java.net.URI
 import org.json4s.jackson.JsonMethods._
 import scala.io.Source._
 import org.scalatra.test.specs2.MutableScalatraSpec
-import org.huwtl.penfold.domain.{Payload, Status, Job}
+import org.huwtl.penfold.domain.{Cron, Payload, Status, Job}
 import org.joda.time.DateTime
-import org.specs2.specification.BeforeExample
+import org.specs2.mock.Mockito
 
-class JobsResourceTest extends MutableScalatraSpec with BeforeExample {
-  val store = new InMemoryJobStore
+class JobsResourceTest extends MutableScalatraSpec with Mockito {
+  val retrieveJobById = mock[RetrieveJobById]
 
-  addServlet(new JobsResource(new RetrieveJobById(store), new CreateJob(store), new JobJsonConverter, new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/feed/triggered"))), "/jobs/*")
+  val createJob = mock[CreateJob]
 
-  def before = {
-    store.add(Job("1234", "testType", None, Some(new DateTime(2014, 7, 10, 13, 5, 1)), Status.Waiting, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true)))))
-  }
+  addServlet(new JobsResource(retrieveJobById, createJob, new JobJsonConverter, new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/feed/triggered"))), "/jobs/*")
 
   "return 200 with hal+json formatted job response" in {
+    val expectedJob = Job("1234", "testType", None, Some(new DateTime(2014, 7, 10, 13, 5, 1)), Status.Waiting, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    retrieveJobById.retrieve("1234") returns Some(expectedJob)
+
     get("/jobs/1234") {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedJob.json"))
@@ -35,6 +35,9 @@ class JobsResourceTest extends MutableScalatraSpec with BeforeExample {
   }
 
   "return 201 when posting new job" in {
+    val expectedJob = Job("12345678", "abc", Some(Cron("0 0 * * 0 * *")), None, Status.Waiting, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+    createJob.create(expectedJob) returns expectedJob
+
     post("/jobs", textFromFile("fixtures/job.json")) {
       status must beEqualTo(201)
     }

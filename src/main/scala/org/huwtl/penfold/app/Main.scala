@@ -4,7 +4,7 @@ import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
 import org.huwtl.penfold.app.support._
 import org.huwtl.penfold.app.web._
-import org.huwtl.penfold.app.store.{MysqlJobStore, InMemoryJobStore}
+import org.huwtl.penfold.app.store.MysqlJobStore
 import java.net.URI
 import org.huwtl.penfold.app.support.hal.{HalTriggeredJobFeedFormatter, HalStartedJobFormatter, HalJobFormatter, HalCompletedJobFormatter}
 import org.huwtl.penfold.usecases._

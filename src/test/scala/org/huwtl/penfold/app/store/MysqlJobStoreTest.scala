@@ -30,4 +30,6 @@ class MysqlJobStoreTest extends Specification with DataTables {
       job must beEqualTo(store.retrieveBy(job.id).get)
     }
   }
+
+
 }
