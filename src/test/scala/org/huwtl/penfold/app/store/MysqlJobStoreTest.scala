@@ -5,9 +5,13 @@ import com.mchange.v2.c3p0.ComboPooledDataSource
 import scala.slick.session.Database
 import com.googlecode.flyway.core.Flyway
 import org.huwtl.penfold.app.support.JobJsonConverter
-import org.huwtl.penfold.domain.{Cron, Payload, Status, Job}
+import org.huwtl.penfold.domain._
 import org.joda.time.DateTime
 import org.specs2.matcher.DataTables
+import org.huwtl.penfold.domain.Payload
+import scala.Some
+import org.huwtl.penfold.domain.Job
+import org.huwtl.penfold.domain.Cron
 
 class MysqlJobStoreTest extends Specification with DataTables {
   val dataSource = new ComboPooledDataSource
@@ -24,8 +28,8 @@ class MysqlJobStoreTest extends Specification with DataTables {
 
   "add job to store" in {
     "job"                                                                                                                   |
-    Job("1", "type", None, Some(new DateTime(2013, 8, 1, 12, 0, 0)), Status.Waiting, Payload(Map()))                        |
-    Job("2", "type", Some(Cron("* * * * * * *")), Some(new DateTime(2013, 8, 1, 12, 0, 0)), Status.Waiting, Payload(Map())) |> { job =>
+    Job(Id("1"), JobType("type"), None, Some(new DateTime(2013, 8, 1, 12, 0, 0)), Status.Waiting, Payload(Map()), Some(DateTime.now()), Some(DateTime.now()))                        |
+    Job(Id("2"), JobType("type"), Some(Cron("* * * * * * *")), Some(new DateTime(2013, 8, 1, 12, 0, 0)), Status.Waiting, Payload(Map()), Some(DateTime.now()), Some(DateTime.now())) |> { job =>
       store.add(job)
       job must beEqualTo(store.retrieveBy(job.id).get)
     }

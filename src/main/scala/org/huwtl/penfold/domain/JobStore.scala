@@ -12,7 +12,7 @@ trait JobStore {
 
   def triggerPendingJobs()
 
-  def retrieveBy(id: String): Option[Job]
+  def retrieveBy(id: Id): Option[Job]
 
   def retrieve(status: Status): Iterable[Job]
 }

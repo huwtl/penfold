@@ -3,8 +3,12 @@ package org.huwtl.penfold.app.support
 import io.Source._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import org.huwtl.penfold.domain.{Status, Payload, Job, Cron}
+import org.huwtl.penfold.domain._
 import org.specs2.mutable.Specification
+import org.huwtl.penfold.domain.Payload
+import org.huwtl.penfold.domain.Job
+import scala.Some
+import org.huwtl.penfold.domain.Cron
 
 class JobJsonConverterTest extends Specification {
   val converter = new JobJsonConverter
@@ -14,7 +18,7 @@ class JobJsonConverterTest extends Specification {
 
     val job = converter.jobFrom(json)
 
-    job must beEqualTo(Job("12345678", "abc", Some(Cron("0 0 * * 0 * *")), None, Status.Waiting, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true)))))
+    job must beEqualTo(Job(Id("12345678"), JobType("abc"), Some(Cron("0 0 * * 0 * *")), None, Status.Waiting, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true)))))
   }
 
   "deserialise json to payload" in {

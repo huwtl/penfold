@@ -2,7 +2,7 @@ package org.huwtl.penfold.app.support
 
 import org.json4s.jackson.JsonMethods._
 import scala.io.Source._
-import org.huwtl.penfold.domain.StartJobRequest
+import org.huwtl.penfold.domain.{Id, StartJobRequest}
 import org.specs2.mutable.Specification
 
 class StartJobRequestJsonConverterTest extends Specification {
@@ -13,6 +13,6 @@ class StartJobRequestJsonConverterTest extends Specification {
 
     val startJobRequest = converter.from(expectedJson)
 
-    startJobRequest must beEqualTo(StartJobRequest("12345678"))
+    startJobRequest must beEqualTo(StartJobRequest(Id("12345678")))
   }
 }

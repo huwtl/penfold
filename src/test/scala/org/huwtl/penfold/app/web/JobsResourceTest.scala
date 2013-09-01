@@ -7,9 +7,13 @@ import java.net.URI
 import org.json4s.jackson.JsonMethods._
 import scala.io.Source._
 import org.scalatra.test.specs2.MutableScalatraSpec
-import org.huwtl.penfold.domain.{Cron, Payload, Status, Job}
+import org.huwtl.penfold.domain._
 import org.joda.time.DateTime
 import org.specs2.mock.Mockito
+import org.huwtl.penfold.domain.Payload
+import scala.Some
+import org.huwtl.penfold.domain.Job
+import org.huwtl.penfold.domain.Cron
 
 class JobsResourceTest extends MutableScalatraSpec with Mockito {
   val retrieveJobById = mock[RetrieveJobById]
@@ -19,8 +23,8 @@ class JobsResourceTest extends MutableScalatraSpec with Mockito {
   addServlet(new JobsResource(retrieveJobById, createJob, new JobJsonConverter, new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/feed/triggered"))), "/jobs/*")
 
   "return 200 with hal+json formatted job response" in {
-    val expectedJob = Job("1234", "testType", None, Some(new DateTime(2014, 7, 10, 13, 5, 1)), Status.Waiting, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
-    retrieveJobById.retrieve("1234") returns Some(expectedJob)
+    val expectedJob = Job(Id("1234"), JobType("testType"), None, Some(new DateTime(2014, 7, 10, 13, 5, 1)), Status.Waiting, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    retrieveJobById.retrieve(Id("1234")) returns Some(expectedJob)
 
     get("/jobs/1234") {
       status must beEqualTo(200)
@@ -35,7 +39,7 @@ class JobsResourceTest extends MutableScalatraSpec with Mockito {
   }
 
   "return 201 when posting new job" in {
-    val expectedJob = Job("12345678", "abc", Some(Cron("0 0 * * 0 * *")), None, Status.Waiting, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+    val expectedJob = Job(Id("12345678"), JobType("abc"), Some(Cron("0 0 * * 0 * *")), None, Status.Waiting, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
     createJob.create(expectedJob) returns expectedJob
 
     post("/jobs", textFromFile("fixtures/job.json")) {

@@ -13,19 +13,21 @@ import org.huwtl.penfold.domain.exceptions.JobUpdateConflictException
 
 class MysqlJobStore(database: Database, jobConverter: JobJsonConverter) extends JobStore {
   implicit val getJobFromRow = GetResult(r => Job(
-    r.nextString(),
-    r.nextString(),
-    r.nextStringOption().map(cron => Cron(cron)),
-    r.nextTimestampOption().map(timestamp => new DateTime(timestamp)),
-    Status.from(r.nextString()),
-    jobConverter.jobPayloadFrom(r.nextString())
+    id = Id(r.nextString()),
+    jobType = JobType(r.nextString()),
+    cron = r.nextStringOption().map(cron => Cron(cron)),
+    triggerDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp)),
+    status = Status.from(r.nextString()),
+    payload = jobConverter.jobPayloadFrom(r.nextString()),
+    created = Some(new DateTime(r.nextTimestamp())),
+    lastModified = Some(new DateTime(r.nextTimestamp()))
   ))
 
-  override def retrieveBy(id: String) = {
+  override def retrieveBy(id: Id) = {
     database.withSession {
       sql"""
-        SELECT id, job_type, cron, trigger_date, status, payload FROM jobs
-          WHERE id = $id
+        SELECT id, job_type, cron, trigger_date, status, payload, created, last_modified FROM jobs
+          WHERE id = ${id.value}
       """.as[Job].firstOption
     }
   }
@@ -43,13 +45,15 @@ class MysqlJobStore(database: Database, jobConverter: JobJsonConverter) extends 
   override def add(job: Job) = {
     database.withSession {
       sqlu"""
-        INSERT INTO jobs (id, job_type, cron, trigger_date, status, payload) VALUES (
-          ${job.id},
-          ${job.jobType},
+        INSERT INTO jobs (id, job_type, cron, trigger_date, status, payload, created, last_modified) VALUES (
+          ${job.id.value},
+          ${job.jobType.value},
           ${job.cron.map(_.toString)},
           ${new Timestamp(job.nextTriggerDate.getMillis).toString},
           ${job.status.name},
-          ${jobConverter.jsonFrom(job.payload)}
+          ${jobConverter.jsonFrom(job.payload)},
+          ${new Timestamp(job.created.get.getMillis).toString},
+          ${new Timestamp(job.lastModified.get.getMillis).toString}
         )
       """.execute
       job
@@ -59,7 +63,7 @@ class MysqlJobStore(database: Database, jobConverter: JobJsonConverter) extends 
   override def updateStatus(job: Job, status: Status) = {
     val rowsUpdated = sqlu"""
       UPDATE jobs SET status = ${status.name}
-        WHERE id = ${job.id}
+        WHERE id = ${job.id.value}
         AND status = ${job.status.name}
     """.first
 
@@ -73,15 +77,16 @@ class MysqlJobStore(database: Database, jobConverter: JobJsonConverter) extends 
   override def remove(job: Job) {
     database.withSession {
       sqlu"""
-        DELETE FROM jobs WHERE id = ${job.id}
+        DELETE FROM jobs WHERE id = ${job.id.value}
       """.first
     }
   }
 
   override def retrieve(status: Status) = {
     sql"""
-      SELECT id, job_type, cron, trigger_date, status, payload FROM jobs
+      SELECT id, job_type, cron, trigger_date, status, payload, created, last_modified FROM jobs
         WHERE status = ${status.name}
+        ORDER BY last_modified
     """.as[Job].list
   }
 }

@@ -13,17 +13,17 @@ import org.huwtl.penfold.domain.exceptions.JobNotFoundException
 class StartJobTest extends Specification with Mockito {
 
   trait context extends Scope {
-    val job = Job("1", "type", None, Some(new DateTime(2013, 7, 30, 0, 0, 0)), Status.Waiting, Payload(Map()))
+    val job = Job(Id("1"), JobType("type"), None, Some(new DateTime(2013, 7, 30, 0, 0, 0)), Status.Waiting, Payload(Map()))
 
     val jobStore = mock[JobStore]
 
-    val request = new StartJobRequest("1")
+    val request = new StartJobRequest(Id("1"))
 
     val startJob = new StartJob(jobStore)
   }
 
   "start job" in new context {
-    jobStore.retrieveBy("1") returns Some(job)
+    jobStore.retrieveBy(Id("1")) returns Some(job)
 
     startJob.start(request)
 
@@ -31,7 +31,7 @@ class StartJobTest extends Specification with Mockito {
   }
 
   "throw exception when job not found" in new context {
-    jobStore.retrieveBy("1") returns None
+    jobStore.retrieveBy(Id("1")) returns None
 
     startJob.start(request) must throwA[JobNotFoundException]
   }

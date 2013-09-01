@@ -21,9 +21,9 @@ class HalTriggeredJobFeedFormatter(selfLink: URI, jobLink: URI, startedJobLink: 
   }
 
   private def createHal(job: Job) = {
-    representationFactory.newRepresentation(s"${selfLink.toString}/${job.id}")
-      .withProperty("jobId", job.id)
-      .withLink("job", s"${jobLink.toString}/${job.id}")
+    representationFactory.newRepresentation(s"${selfLink.toString}/${job.id.value}")
+      .withProperty("jobId", job.id.value)
+      .withLink("job", s"${jobLink.toString}/${job.id.value}")
       .withLink("start", s"${startedJobLink.toString}")
   }
 }

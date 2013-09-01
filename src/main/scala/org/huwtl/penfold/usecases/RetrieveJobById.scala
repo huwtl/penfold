@@ -1,9 +1,9 @@
 package org.huwtl.penfold.usecases
 
-import org.huwtl.penfold.domain.JobStore
+import org.huwtl.penfold.domain.{Id, JobStore}
 
 class RetrieveJobById(jobStore: JobStore) {
-  def retrieve(id: String) = {
+  def retrieve(id: Id) = {
     jobStore.retrieveBy(id)
   }
 }

@@ -5,7 +5,7 @@ import org.json4s.jackson.JsonMethods._
 import org.huwtl.penfold.domain.StartJobRequest
 
 class StartJobRequestJsonConverter {
-  implicit val formats = DefaultFormats
+  implicit val formats = DefaultFormats + new IdJsonSerializer
 
   def from(json: String) = {
     parse(json).extract[StartJobRequest]

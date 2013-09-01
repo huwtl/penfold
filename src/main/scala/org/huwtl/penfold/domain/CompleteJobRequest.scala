@@ -1,6 +1,6 @@
 package org.huwtl.penfold.domain
 
-case class CompleteJobRequest(jobId: String)
+case class CompleteJobRequest(jobId: Id)
 
 
 

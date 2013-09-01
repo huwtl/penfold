@@ -1,6 +1,8 @@
 CREATE TABLE jobs
 (
   id VARCHAR(32) NOT NULL,
+  created DATETIME NOT NULL,
+  last_modified DATETIME NOT NULL,
   job_type VARCHAR(64) NOT NULL,
   status VARCHAR(64) NOT NULL,
   cron VARCHAR(64),

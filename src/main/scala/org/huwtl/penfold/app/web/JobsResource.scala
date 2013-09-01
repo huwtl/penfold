@@ -5,6 +5,7 @@ import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import org.huwtl.penfold.app.support.JobJsonConverter
 import org.huwtl.penfold.app.support.hal.HalJobFormatter
 import org.huwtl.penfold.usecases.{RetrieveJobById, CreateJob}
+import org.huwtl.penfold.domain.Id
 
 class JobsResource(retrieveExistingJob: RetrieveJobById, createJob: CreateJob, jsonConverter: JobJsonConverter, halFormatter: HalJobFormatter) extends ScalatraServlet {
 
@@ -13,7 +14,7 @@ class JobsResource(retrieveExistingJob: RetrieveJobById, createJob: CreateJob, j
   }
 
   get("/:id") {
-    retrieveExistingJob.retrieve(params("id")) match {
+    retrieveExistingJob.retrieve(Id(params("id"))) match {
       case Some(job) => Ok(halFormatter.halFrom(job))
       case _ => NotFound("Job not found")
     }

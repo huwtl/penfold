@@ -14,9 +14,9 @@ import org.specs2.specification.Scope
 class CompleteJobTest extends Specification with Mockito {
 
   trait context extends Scope {
-    val job = Job("1", "type", None, Some(new DateTime(2013, 7, 30, 0, 0, 0)), Status.Waiting, Payload(Map()))
+    val job = Job(Id("1"), JobType("type"), None, Some(new DateTime(2013, 7, 30, 0, 0, 0)), Status.Waiting, Payload(Map()))
 
-    val request = new CompleteJobRequest("1")
+    val request = new CompleteJobRequest(Id("1"))
 
     val jobStore = mock[JobStore]
 
@@ -32,7 +32,7 @@ class CompleteJobTest extends Specification with Mockito {
   }
 
   "throw exception when job not found" in new context {
-    jobStore.retrieveBy("1") returns None
+    jobStore.retrieveBy(Id("1")) returns None
 
     completeJob.complete(request) must throwA[JobNotFoundException]
   }
