@@ -27,9 +27,13 @@ libraryDependencies ++= Seq(
   "c3p0" % "c3p0" % "0.9.1.2",
   "org.hsqldb" % "hsqldb" % "2.3.0",
   "com.googlecode.flyway" % "flyway-core" % "2.2",
+  "net.debasishg" % "redisclient_2.10" % "2.11",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "org.specs2" % "specs2_2.10" % "2.1.1" % "test",
-  "org.scalatra" %% "scalatra-specs2" % "2.2.1" % "test"
+  "org.scalatra" %% "scalatra-specs2" % "2.2.1" % "test",
+  "redis.embedded" % "embedded-redis" % "0.1" % "test"
 )
 
 resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
+
+resolvers += "clojars.org" at "http://clojars.org/repo/"
