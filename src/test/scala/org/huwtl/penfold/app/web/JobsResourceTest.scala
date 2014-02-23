@@ -1,30 +1,30 @@
 package org.huwtl.penfold.app.web
 
-import org.huwtl.penfold.usecases.{RetrieveJobById, CreateJob}
-import org.huwtl.penfold.app.support.JobJsonConverter
 import org.huwtl.penfold.app.support.hal.HalJobFormatter
 import java.net.URI
 import org.json4s.jackson.JsonMethods._
 import scala.io.Source._
 import org.scalatra.test.specs2.MutableScalatraSpec
-import org.huwtl.penfold.domain._
 import org.joda.time.DateTime
 import org.specs2.mock.Mockito
-import org.huwtl.penfold.domain.Payload
 import scala.Some
-import org.huwtl.penfold.domain.Job
-import org.huwtl.penfold.domain.Cron
+import org.huwtl.penfold.domain.model.{JobType, Status, Payload, Id}
+import org.huwtl.penfold.query.{JobRecord, QueryRepository}
+import org.huwtl.penfold.command.CommandDispatcher
+import org.huwtl.penfold.app.support.json.ObjectSerializer
 
 class JobsResourceTest extends MutableScalatraSpec with Mockito {
-  val retrieveJobById = mock[RetrieveJobById]
+  sequential
 
-  val createJob = mock[CreateJob]
+  val queryRepository = mock[QueryRepository]
 
-  addServlet(new JobsResource(retrieveJobById, createJob, new JobJsonConverter, new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/feed/triggered"))), "/jobs/*")
+  val commandDispatcher = mock[CommandDispatcher]
+
+  addServlet(new JobsResource(queryRepository, commandDispatcher, new ObjectSerializer, new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/feed/triggered"))), "/jobs/*")
 
   "return 200 with hal+json formatted job response" in {
-    val expectedJob = Job(Id("1234"), JobType("testType"), None, Some(new DateTime(2014, 7, 10, 13, 5, 1)), Status.Waiting, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
-    retrieveJobById.retrieve(Id("1234")) returns Some(expectedJob)
+    val expectedJob = JobRecord(Id("1234"), new DateTime(2014, 2, 14, 12, 0, 0, 0), JobType("testType"), Status.Waiting, new DateTime(2014, 7, 10, 13, 5, 1, 0), Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
     get("/jobs/1234") {
       status must beEqualTo(200)
@@ -39,8 +39,8 @@ class JobsResourceTest extends MutableScalatraSpec with Mockito {
   }
 
   "return 201 when posting new job" in {
-    val expectedJob = Job(Id("12345678"), JobType("abc"), Some(Cron("0 0 * * 0 * *")), None, Status.Waiting, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
-    createJob.create(expectedJob) returns expectedJob
+    val expectedJob = JobRecord(Id("12345678"), new DateTime(2014, 2, 14, 12, 0, 0, 0), JobType("abc"), Status.Waiting, new DateTime(2014, 7, 10, 13, 5, 1, 0), Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+    queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
     post("/jobs", textFromFile("fixtures/job.json")) {
       status must beEqualTo(201)

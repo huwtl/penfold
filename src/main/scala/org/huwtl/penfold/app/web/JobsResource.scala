@@ -2,26 +2,28 @@ package org.huwtl.penfold.app.web
 
 import org.scalatra._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
-import org.huwtl.penfold.app.support.JobJsonConverter
 import org.huwtl.penfold.app.support.hal.HalJobFormatter
-import org.huwtl.penfold.usecases.{RetrieveJobById, CreateJob}
-import org.huwtl.penfold.domain.Id
+import org.huwtl.penfold.domain.model.Id
+import org.huwtl.penfold.query.QueryRepository
+import org.huwtl.penfold.command.{CreateJob, CommandDispatcher}
+import org.huwtl.penfold.app.support.json.ObjectSerializer
 
-class JobsResource(retrieveExistingJob: RetrieveJobById, createJob: CreateJob, jsonConverter: JobJsonConverter, halFormatter: HalJobFormatter) extends ScalatraServlet {
+class JobsResource(queryRepository: QueryRepository, commandDispatcher: CommandDispatcher, jsonConverter: ObjectSerializer, halFormatter: HalJobFormatter) extends ScalatraServlet {
 
   before() {
     contentType = HAL_JSON
   }
 
   get("/:id") {
-    retrieveExistingJob.retrieve(Id(params("id"))) match {
+    queryRepository.retrieveBy(Id(params("id"))) match {
       case Some(job) => Ok(halFormatter.halFrom(job))
       case _ => NotFound("Job not found")
     }
   }
 
   post("/") {
-    val newJob = createJob.create(jsonConverter.jobFrom(request.body))
-    Created(halFormatter.halFrom(newJob))
+    val createJobCommand = jsonConverter.deserialize[CreateJob](request.body)
+    commandDispatcher.dispatch(createJobCommand)
+    Created(halFormatter.halFrom(queryRepository.retrieveBy(createJobCommand.id).get))
   }
 }

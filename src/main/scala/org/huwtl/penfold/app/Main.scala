@@ -2,35 +2,39 @@ package org.huwtl.penfold.app
 
 import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
-import org.huwtl.penfold.app.support._
 import org.huwtl.penfold.app.web._
-import org.huwtl.penfold.app.store.MysqlJobStore
+import org.huwtl.penfold.app.store.RedisEventStore
 import java.net.URI
 import org.huwtl.penfold.app.support.hal.{HalTriggeredJobFeedFormatter, HalStartedJobFormatter, HalJobFormatter, HalCompletedJobFormatter}
-import org.huwtl.penfold.usecases._
 import java.util.concurrent.Executors._
 import java.util.concurrent.TimeUnit._
-import com.googlecode.flyway.core.Flyway
-import com.mchange.v2.c3p0.ComboPooledDataSource
-import scala.slick.session.Database
+import org.huwtl.penfold.command._
+import org.huwtl.penfold.command.CreateJob
+import org.huwtl.penfold.domain.store.DomainRepository
+import com.redis.RedisClient
+import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
+import org.huwtl.penfold.query.{RedisQueryRepository, RedisQueryStoreEventPersister, RedisNewEventsProvider, QueryStoreUpdater}
 
 class Main extends LifeCycle {
   override def init(context: ServletContext) {
-    val jsonJobConverter = new JobJsonConverter
-    val jsonStartJobRequestConverter = new StartJobRequestJsonConverter
-    val jsonCompleteJobRequestConverter = new CompleteJobRequestJsonConverter
 
-    val dataSource = new ComboPooledDataSource
-    dataSource.setDriverClass("org.hsqldb.jdbcDriver")
-    dataSource.setJdbcUrl("jdbc:hsqldb:mem:penfold;sql.syntax_mys=true")
-    dataSource.setUser("sa")
-    dataSource.setPassword("")
+    val redisClient = new RedisClient("localhost", 6379)
+    val eventSerializer = new EventSerializer
+    val objectSerializer = new ObjectSerializer
+    val eventStore = new RedisEventStore(redisClient, eventSerializer)
 
-    val flyway = new Flyway
-    flyway.setDataSource(dataSource)
-    flyway.migrate()
+    val domainRepository = new DomainRepository(eventStore, new QueryStoreUpdater(new RedisNewEventsProvider(redisClient, eventSerializer), new RedisQueryStoreEventPersister(redisClient, objectSerializer)))
 
-    val jobStore = new MysqlJobStore(Database.forDataSource(dataSource), jsonJobConverter)
+    val commandDispatcher = new CommandDispatcher(Map[Class[_ <: Command], CommandHandler[_ <: Command]](//
+      classOf[CreateJob] -> new CreateJobHandler(domainRepository), //
+      classOf[CreateFutureJob] -> new CreateFutureJobHandler(domainRepository), //
+      classOf[TriggerJob] -> new TriggerJobHandler(domainRepository), //
+      classOf[StartJob] -> new StartJobHandler(domainRepository), //
+      classOf[CompleteJob] -> new CompleteJobHandler(domainRepository), //
+      classOf[CancelJob] -> new CancelJobHandler(domainRepository) //
+    ))
+
+    val queryRepository = new RedisQueryRepository(redisClient, objectSerializer)
 
     val baseUrl = new URI("http://localhost:8080")
 
@@ -50,32 +54,17 @@ class Main extends LifeCycle {
 
     val completedJobFormatter = new HalCompletedJobFormatter(completedJobLink, jobLink)
 
-    val createJob = new CreateJob(jobStore)
-    val retrieveJobById = new RetrieveJobById(jobStore)
-
-    val retrieveTriggeredJob = new RetrieveTriggeredJob(jobStore)
-    val retrieveTriggeredJobs = new RetrieveTriggeredJobs(jobStore)
-    val retrieveTriggeredJobsByType = new RetrieveTriggeredJobsByType(jobStore)
-
-    val startJob = new StartJob(jobStore)
-    val retrieveStartedJob = new RetrieveStartedJob(jobStore)
-    val retrieveStartedJobs = new RetrieveStartedJobs(jobStore)
-
-    val completeJob = new CompleteJob(jobStore)
-    val retrieveCompletedJob = new RetrieveCompletedJob(jobStore)
-    val retrieveCompletedJobs = new RetrieveCompletedJobs(jobStore)
-
-    val triggerPendingJobs = new TriggerPendingJobs(jobStore)
-
-    context mount(new JobsResource(retrieveJobById, createJob, jsonJobConverter, jobFormatter), "/jobs/*")
-    context mount(new TriggeredJobFeedResource(retrieveTriggeredJob, retrieveTriggeredJobs, retrieveTriggeredJobsByType, jsonJobConverter, triggeredJobFeedFormatter), "/feed/triggered/*")
-    context mount(new StartedJobFeedResource(startJob, retrieveStartedJob, retrieveStartedJobs, jsonStartJobRequestConverter, startedJobFormatter), "/feed/started/*")
-    context mount(new CompletedJobFeedResource(completeJob, retrieveCompletedJob, retrieveCompletedJobs, jsonCompleteJobRequestConverter, completedJobFormatter), "/feed/completed/*")
+    context mount(new JobsResource(queryRepository, commandDispatcher, objectSerializer, jobFormatter), "/jobs/*")
+    context mount(new TriggeredJobFeedResource(queryRepository, triggeredJobFeedFormatter), "/feed/triggered/*")
+    context mount(new StartedJobFeedResource(commandDispatcher, queryRepository, objectSerializer, startedJobFormatter), "/feed/started/*")
+    context mount(new CompletedJobFeedResource(queryRepository, commandDispatcher, objectSerializer, completedJobFormatter), "/feed/completed/*")
 
     newSingleThreadScheduledExecutor.scheduleAtFixedRate(new Runnable() {
       def run() {
         try {
-          triggerPendingJobs.triggerPending()
+          queryRepository.retrieveWithPendingTrigger.foreach {
+            jobRef => commandDispatcher.dispatch[TriggerJob](TriggerJob(jobRef.id))
+          }
         }
         catch {
           case e: Exception => println(e)

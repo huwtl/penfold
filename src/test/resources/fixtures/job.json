@@ -3,8 +3,6 @@
 
     "jobType": "abc",
 
-    "cron": "0 0 * * 0 * *",
-
     "payload": {
         "stuff": "something",
 
