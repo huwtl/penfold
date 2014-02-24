@@ -4,11 +4,11 @@
             "href": "http://host/jobs/1234"
         },
         "triggeredFeed": {
-            "href": "http://host/feed/triggered?type=testType"
+            "href": "http://host/feed/triggered?queue=testType"
         }
     },
 
-    "jobType": "testType",
+    "queueName": "testType",
 
     "payload": {
         "data": "value",

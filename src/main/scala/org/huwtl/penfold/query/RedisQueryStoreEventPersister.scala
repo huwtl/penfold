@@ -77,7 +77,7 @@ class RedisQueryStoreEventPersister(redisClient: RedisClient, objectSerializer: 
     newEvent.event match {
       case e: JobCreated => {
         val payloadJson = objectSerializer.serialize[Payload](e.payload)
-        redisClient.evalSHA(createJobScript.get, List(queryStoreEventsKey, jobKey, Waiting.name), List(eventId, aggregateId, dateFormatter.print(e.created), e.jobType.value, dateFormatter.print(e.triggerDate), e.triggerDate.getMillis, payloadJson))
+        redisClient.evalSHA(createJobScript.get, List(queryStoreEventsKey, jobKey, Waiting.name), List(eventId, aggregateId, dateFormatter.print(e.created), e.queueName.value, dateFormatter.print(e.triggerDate), e.triggerDate.getMillis, payloadJson))
       }
       case e: JobTriggered => redisClient.evalSHA(updateJobStatusScript.get, List(queryStoreEventsKey, jobKey, Waiting.name, Triggered.name), List(eventId, aggregateId))
       case e: JobStarted => redisClient.evalSHA(updateJobStatusScript.get, List(queryStoreEventsKey, jobKey, Triggered.name, Started.name), List(eventId, aggregateId))

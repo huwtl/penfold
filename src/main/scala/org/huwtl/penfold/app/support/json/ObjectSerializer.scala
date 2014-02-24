@@ -11,7 +11,7 @@ class ObjectSerializer {
     new StatusJsonSerializer +
     new IdJsonSerializer +
     new VersionJsonSerializer +
-    new JobTypeJsonSerializer
+    new QueueNameJsonSerializer
 
   def serialize[T](event: T) = {
     pretty(decompose(event))

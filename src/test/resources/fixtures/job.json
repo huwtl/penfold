@@ -1,7 +1,7 @@
 {
     "id": "12345678",
 
-    "jobType": "abc",
+    "queueName": "abc",
 
     "payload": {
         "stuff": "something",

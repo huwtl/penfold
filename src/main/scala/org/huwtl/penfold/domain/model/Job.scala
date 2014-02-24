@@ -6,12 +6,12 @@ import org.huwtl.penfold.domain.event.JobCreated
 import org.huwtl.penfold.domain.event.JobTriggered
 
 object Job extends AggregateFactory {
-  def create(aggregateId: Id, jobType: JobType, payload: Payload) = {
-    applyJobCreated(JobCreated(aggregateId, Version.init, jobType, DateTime.now(), DateTime.now(), payload))
+  def create(aggregateId: Id, queueName: QueueName, payload: Payload) = {
+    applyJobCreated(JobCreated(aggregateId, Version.init, queueName, DateTime.now(), DateTime.now(), payload))
   }
 
-  def create(aggregateId: Id, jobType: JobType, triggerDate: DateTime, payload: Payload) = {
-    applyJobCreated(JobCreated(aggregateId, Version.init, jobType, DateTime.now(), triggerDate, payload))
+  def create(aggregateId: Id, queueName: QueueName, triggerDate: DateTime, payload: Payload) = {
+    applyJobCreated(JobCreated(aggregateId, Version.init, queueName, DateTime.now(), triggerDate, payload))
   }
 
   def applyEvent = {
@@ -24,7 +24,7 @@ object Job extends AggregateFactory {
     event.aggregateId,
     event.aggregateVersion,
     event.created,
-    event.jobType,
+    event.queueName,
     Status.Waiting,
     event.triggerDate,
     event.payload
@@ -37,7 +37,7 @@ case class ScheduledJob(uncommittedEvents: List[Event],
                         aggregateId: Id,
                         version: Version,
                         created: DateTime,
-                        jobType: JobType,
+                        queueName: QueueName,
                         status: Status,
                         triggerDate: DateTime,
                         payload: Payload) extends Job {

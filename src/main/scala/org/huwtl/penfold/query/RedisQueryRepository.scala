@@ -1,7 +1,7 @@
 package org.huwtl.penfold.query
 
 import com.redis.RedisClient
-import org.huwtl.penfold.domain.model.{Payload, JobType, Status, Id}
+import org.huwtl.penfold.domain.model.{Payload, QueueName, Status, Id}
 import org.joda.time.format.DateTimeFormat
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.joda.time.DateTime._
@@ -27,7 +27,7 @@ class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSer
     """.stripMargin
   )
 
-  override def retrieveBy(status: Status, jobType: JobType) = retrieveBy(status)
+  override def retrieveBy(status: Status, queueName: QueueName) = retrieveBy(status)
 
   override def retrieveBy(status: Status) = {
     val aggregateIds = redisClient.zrange[String](status.name, 0, -1).get
@@ -45,11 +45,11 @@ class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSer
     }
     else {
       val created = jobAttributes(0).get
-      val jobType = jobAttributes(1).get
+      val queueName = jobAttributes(1).get
       val status = jobAttributes(2).get
       val triggerDate = jobAttributes(3).get
       val payload = jobAttributes(4).get
-      Some(JobRecord(aggregateId, dateFormatter.parseDateTime(created), JobType(jobType), Status.from(status), dateFormatter.parseDateTime(triggerDate), objectSerializer.deserialize[Payload](payload)))
+      Some(JobRecord(aggregateId, dateFormatter.parseDateTime(created), QueueName(queueName), Status.from(status), dateFormatter.parseDateTime(triggerDate), objectSerializer.deserialize[Payload](payload)))
     }
   }
 

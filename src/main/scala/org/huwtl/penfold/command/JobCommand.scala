@@ -1,17 +1,17 @@
 package org.huwtl.penfold.command
 
 import org.joda.time.DateTime
-import org.huwtl.penfold.domain.model.{Payload, JobType, Id}
+import org.huwtl.penfold.domain.model.{Payload, QueueName, Id}
 
 sealed trait JobCommand extends Command
 
 case class CreateJob(id: Id,
-                     jobType: JobType,
+                     queueName: QueueName,
                      payload: Payload) extends JobCommand
 
 
 case class CreateFutureJob(id: Id,
-                           jobType: JobType,
+                           queueName: QueueName,
                            triggerDate: DateTime,
                            payload: Payload) extends JobCommand
 

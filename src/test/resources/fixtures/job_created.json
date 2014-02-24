@@ -2,7 +2,7 @@
     "jsonClass" : "JobCreated",
     "aggregateId" : "a1",
     "aggregateVersion" : 1,
-    "jobType" : "abc",
+    "queueName" : "abc",
     "created" : "2014-02-03 12:47:54",
     "triggerDate" : "2014-02-03 14:30:01",
     "payload" : {

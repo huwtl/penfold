@@ -9,12 +9,12 @@ import org.huwtl.penfold.support.RedisSpecification
 import org.huwtl.penfold.domain.model.Id
 import org.huwtl.penfold.domain.model.Payload
 import org.huwtl.penfold.domain.event.JobCreated
-import org.huwtl.penfold.domain.model.JobType
+import org.huwtl.penfold.domain.model.QueueName
 
 class RedisQueryRepositoryTest extends RedisSpecification {
   val aggregateRootId = Id(UUID.randomUUID().toString)
 
-  val jobType = JobType("type")
+  val queueName = QueueName("type")
 
   val payload = Payload(Map("a" -> "123", "b" -> 1))
 
@@ -29,7 +29,7 @@ class RedisQueryRepositoryTest extends RedisSpecification {
   }
 
   "retrieve job by id" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, jobType, created, triggerDate, payload)
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, queueName, created, triggerDate, payload)
 
     queryRepository.retrieveBy(aggregateRootId) must beNone
     queryRepositoryUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
@@ -37,7 +37,7 @@ class RedisQueryRepositoryTest extends RedisSpecification {
   }
 
   "retrieve jobs by status" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, jobType, created, triggerDate, payload)
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, queueName, created, triggerDate, payload)
 
     queryRepository.retrieveBy(Status.Waiting) must beEmpty
     queryRepositoryUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
@@ -45,8 +45,8 @@ class RedisQueryRepositoryTest extends RedisSpecification {
   }
 
   "retrieve jobs ready to trigger" in new context {
-    val triggeredJobCreatedEvent = JobCreated(aggregateRootId, Version.init, jobType, created, DateTime.now().minusHours(1), payload)
-    val untriggeredJobCreatedEvent = JobCreated(aggregateRootId, Version.init, jobType, created, DateTime.now().plusHours(1), payload)
+    val triggeredJobCreatedEvent = JobCreated(aggregateRootId, Version.init, queueName, created, DateTime.now().minusHours(1), payload)
+    val untriggeredJobCreatedEvent = JobCreated(aggregateRootId, Version.init, queueName, created, DateTime.now().plusHours(1), payload)
 
     queryRepository.retrieveWithPendingTrigger must beEmpty
     queryRepositoryUpdater.handle(NewEvent(Id("1"), untriggeredJobCreatedEvent))

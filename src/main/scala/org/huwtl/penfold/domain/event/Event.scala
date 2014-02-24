@@ -1,7 +1,7 @@
 package org.huwtl.penfold.domain.event
 
 import org.joda.time.DateTime
-import org.huwtl.penfold.domain.model.{Version, Payload, JobType, Id}
+import org.huwtl.penfold.domain.model.{Version, Payload, QueueName, Id}
 
 sealed trait Event {
   val aggregateId: Id
@@ -10,7 +10,7 @@ sealed trait Event {
 
 case class JobCreated(aggregateId: Id,
                       aggregateVersion: Version,
-                      jobType: JobType,
+                      queueName: QueueName,
                       created: DateTime,
                       triggerDate: DateTime,
                       payload: Payload) extends Event

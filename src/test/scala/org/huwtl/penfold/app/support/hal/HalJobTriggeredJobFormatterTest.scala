@@ -5,7 +5,7 @@ import scala.io.Source._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.specs2.mutable.Specification
-import org.huwtl.penfold.domain.model.{Payload, JobType, Status, Id}
+import org.huwtl.penfold.domain.model.{Payload, QueueName, Status, Id}
 import org.huwtl.penfold.query.JobRecord
 import org.joda.time.DateTime
 
@@ -13,8 +13,8 @@ class HalJobTriggeredJobFormatterTest extends Specification {
   val jobFormatter = new HalTriggeredJobFeedFormatter(new URI("http://host/triggered"), new URI("http://host/jobs"), new URI("http://host/started"))
 
   "format triggered job feed as hal+json" in {
-    val job1 = JobRecord(Id("1"), DateTime.now, JobType(""), Status.Triggered, DateTime.now, Payload(Map()))
-    val job2 = JobRecord(Id("2"), DateTime.now, JobType(""), Status.Triggered, DateTime.now, Payload(Map()))
+    val job1 = JobRecord(Id("1"), DateTime.now, QueueName(""), Status.Triggered, DateTime.now, Payload(Map()))
+    val job2 = JobRecord(Id("2"), DateTime.now, QueueName(""), Status.Triggered, DateTime.now, Payload(Map()))
 
     val hal = jobFormatter.halFrom(List(job2, job1))
 
@@ -22,7 +22,7 @@ class HalJobTriggeredJobFormatterTest extends Specification {
   }
 
   "format triggered job feed entry as hal+json" in {
-    val job1 = JobRecord(Id("1"), DateTime.now, JobType(""), Status.Triggered, DateTime.now, Payload(Map()))
+    val job1 = JobRecord(Id("1"), DateTime.now, QueueName(""), Status.Triggered, DateTime.now, Payload(Map()))
 
     val hal = jobFormatter.halFrom(job1)
 

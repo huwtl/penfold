@@ -8,11 +8,11 @@ import org.huwtl.penfold.domain.event.{JobCompleted, JobTriggered, JobCreated}
 
 
 import org.huwtl.penfold.domain.store.DomainRepository
-import org.huwtl.penfold.domain.model.{Job, Payload, JobType, Id}
+import org.huwtl.penfold.domain.model.{Job, Payload, QueueName, Id}
 import org.huwtl.penfold.query.{RedisQueryStoreEventPersister, RedisNewEventsProvider, QueryStoreUpdater}
 import org.joda.time.DateTime
 
-Job.create(Id("1"), JobType(""), DateTime.now(), Payload(Map("a" -> "123", "b" -> 1))).trigger().start().complete()
+Job.create(Id("1"), QueueName(""), DateTime.now(), Payload(Map("a" -> "123", "b" -> 1))).trigger().start().complete()
 
 
 
@@ -37,7 +37,7 @@ Job.create(Id("1"), JobType(""), DateTime.now(), Payload(Map("a" -> "123", "b" -
 
 
 
-Job.create(Id("1"), JobType(""), Payload(Map("a" -> "123", "b" -> 1))).trigger().start().complete()
+Job.create(Id("1"), QueueName(""), Payload(Map("a" -> "123", "b" -> 1))).trigger().start().complete()
 
 
 
@@ -81,7 +81,7 @@ Job.create(Id("1"), JobType(""), Payload(Map("a" -> "123", "b" -> 1))).trigger()
 
 
 
-val job: Job = Job.loadFromHistory(JobCreated(Id("1"), JobType(""), DateTime.now(), DateTime.now(), Payload(Map("a" -> "123", "b" -> 1))) :: JobTriggered(Id("1")) :: JobCompleted(Id("1")) :: Nil)
+val job: Job = Job.loadFromHistory(JobCreated(Id("1"), QueueName(""), DateTime.now(), DateTime.now(), Payload(Map("a" -> "123", "b" -> 1))) :: JobTriggered(Id("1")) :: JobCompleted(Id("1")) :: Nil)
 
 List("a", "b", "c").foldLeft(List[String]())((b, a) => a :: b)
 val client = new RedisClient("localhost", 6379)
@@ -138,7 +138,7 @@ val dispatcher = new CommandDispatcher(Map[Class[_ <: Command], CommandHandler[_
 
 
 
-val createJob: Command = new CreateJob(Id("1"), JobType(""), Payload(Map("a" -> "123", "b" -> 1)))
+val createJob: Command = new CreateJob(Id("1"), QueueName(""), Payload(Map("a" -> "123", "b" -> 1)))
 
 
 
@@ -206,7 +206,7 @@ dispatcher.dispatch(createJob)
 
 
 
-val createFutureJob: Command = new CreateFutureJob(Id("2"), JobType(""), DateTime.now(), Payload(Map("a" -> "123", "b" -> 1)))
+val createFutureJob: Command = new CreateFutureJob(Id("2"), QueueName(""), DateTime.now(), Payload(Map("a" -> "123", "b" -> 1)))
 
 
 

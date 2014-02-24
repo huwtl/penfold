@@ -1,3 +1,3 @@
 package org.huwtl.penfold.domain.model
 
-case class JobType(value: String)
+case class QueueName(value: String)

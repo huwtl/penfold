@@ -10,7 +10,7 @@ import org.huwtl.penfold.domain.event.JobCompleted
 import org.huwtl.penfold.domain.model.Id
 import org.huwtl.penfold.domain.model.Payload
 import org.huwtl.penfold.domain.event.JobCreated
-import org.huwtl.penfold.domain.model.JobType
+import org.huwtl.penfold.domain.model.QueueName
 import org.huwtl.penfold.domain.event.JobTriggered
 import org.huwtl.penfold.domain.event.JobStarted
 
@@ -24,7 +24,7 @@ class RedisQueryStoreEventPersisterTest extends RedisSpecification {
   }
 
   "update query store on event" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), JobType("type"), new DateTime(2014, 2, 22, 12, 0, 0, 0), new DateTime(2014, 2, 22, 12, 30, 0, 0), Payload(Map("a" -> "123", "b" -> 1)))
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), QueueName("type"), new DateTime(2014, 2, 22, 12, 0, 0, 0), new DateTime(2014, 2, 22, 12, 30, 0, 0), Payload(Map("a" -> "123", "b" -> 1)))
     val jobTriggeredEvent = JobTriggered(aggregateRootId, Version(2))
     val jobStartedEvent = JobStarted(aggregateRootId, Version(3))
     val jobCompletedEvent = JobCompleted(aggregateRootId, Version(4))
@@ -46,7 +46,7 @@ class RedisQueryStoreEventPersisterTest extends RedisSpecification {
   }
 
   "do not persist events that have already been persisted" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), JobType("type"), new DateTime(2014, 2, 22, 12, 0, 0, 0), new DateTime(2014, 2, 22, 12, 30, 0, 0), Payload(Map("a" -> "123", "b" -> 1)))
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), QueueName("type"), new DateTime(2014, 2, 22, 12, 0, 0, 0), new DateTime(2014, 2, 22, 12, 30, 0, 0), Payload(Map("a" -> "123", "b" -> 1)))
     val jobTriggeredEvent = JobTriggered(aggregateRootId, Version(2))
     val jobStartedEvent = JobStarted(aggregateRootId, Version(3))
     val jobCompletedEvent = JobCompleted(aggregateRootId, Version(4))
