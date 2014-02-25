@@ -51,9 +51,10 @@ class QueueResource(queryRepository: QueryRepository,
   }
 
   private def statusMatch(func: Status => ActionResult) = {
-    Status.from(params.get("status").get) match {
+    val statusValue = params.get("status").get
+    Status.from(statusValue) match {
       case Some(status) => func(status)
-      case None => NotFound(s"unrecognised $status type")
+      case None => NotFound(s"unrecognised $statusValue type")
     }
   }
 }
