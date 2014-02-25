@@ -1,8 +1,0 @@
-{
-    "_links": {
-        "self": {"href": "http://host/triggered/1"},
-        "job": {"href": "http://host/jobs/1"},
-        "start": {"href": "http://host/started"}
-    },
-    "jobId": "1"
-}

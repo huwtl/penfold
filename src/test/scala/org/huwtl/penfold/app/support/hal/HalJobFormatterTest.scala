@@ -10,17 +10,44 @@ import org.huwtl.penfold.domain.model.{Payload, Status, QueueName, Id}
 import org.huwtl.penfold.query.JobRecord
 
 class HalJobFormatterTest extends Specification {
-  val jobFormatter = new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/feed/triggered"))
 
-  "format job as hal+json" in {
-    val job = JobRecord(Id("1234"), new DateTime(2014, 2, 14, 12, 0, 0, 0), QueueName("testType"), Status.Waiting, new DateTime(2014, 7, 10, 13, 5, 1, 0), Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+  val id = Id("1")
 
-    val hal = jobFormatter.halFrom(job)
+  val created = new DateTime(2014, 2, 14, 12, 0, 0, 0)
 
-    parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedJob.json"))
+  val triggerDate = new DateTime(2014, 7, 10, 13, 5, 1, 0)
+
+  val queueName = QueueName("abc")
+
+  val payload = Payload(Map("data" -> "value", "inner" -> Map("bool" -> true)))
+
+  val jobFormatter = new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues"))
+
+  "format waiting job as hal+json" in {
+    hal(Status.Waiting) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingJob.json"))
   }
 
-  def jsonFromFile(filePath: String) = {
+  "format triggered job as hal+json" in {
+    hal(Status.Triggered) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedTriggeredJob.json"))
+  }
+
+  "format started job as hal+json" in {
+    hal(Status.Started) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedStartedJob.json"))
+  }
+
+  "format completed job as hal+json" in {
+    hal(Status.Completed) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCompletedJob.json"))
+  }
+
+  "format cancelled job as hal+json" in {
+    hal(Status.Cancelled) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCancelledJob.json"))
+  }
+
+  private def hal(status: Status) = {
+    parse(jobFormatter.halFrom(JobRecord(id, created, queueName, status, triggerDate, payload)))
+  }
+
+  private def jsonFromFile(filePath: String) = {
     parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString)
   }
 }

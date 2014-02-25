@@ -49,7 +49,7 @@ class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSer
       val status = jobAttributes(2).get
       val triggerDate = jobAttributes(3).get
       val payload = jobAttributes(4).get
-      Some(JobRecord(aggregateId, dateFormatter.parseDateTime(created), QueueName(queueName), Status.from(status), dateFormatter.parseDateTime(triggerDate), objectSerializer.deserialize[Payload](payload)))
+      Some(JobRecord(aggregateId, dateFormatter.parseDateTime(created), QueueName(queueName), Status.from(status).get, dateFormatter.parseDateTime(triggerDate), objectSerializer.deserialize[Payload](payload)))
     }
   }
 

@@ -1,7 +1,0 @@
-{
-    "_links": {
-        "self": {"href": "http://host/completed/1"},
-        "job": {"href": "http://host/jobs/1"}
-    },
-    "jobId": "1"
-}

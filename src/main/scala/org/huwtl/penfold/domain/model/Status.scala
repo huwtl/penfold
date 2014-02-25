@@ -25,12 +25,13 @@ object Status {
     val name = "completed"
   }
 
-  def from(str: String): Status = {
+  def from(str: String): Option[Status] = {
     str.toLowerCase match {
-      case Waiting.name => Waiting
-      case Triggered.name => Triggered
-      case Started.name => Started
-      case Completed.name => Completed
+      case Waiting.name => Some(Waiting)
+      case Triggered.name => Some(Triggered)
+      case Started.name => Some(Started)
+      case Completed.name => Some(Completed)
+      case _ => None
     }
   }
 }

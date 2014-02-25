@@ -5,7 +5,7 @@ import org.scalatra.LifeCycle
 import org.huwtl.penfold.app.web._
 import org.huwtl.penfold.app.store.RedisEventStore
 import java.net.URI
-import org.huwtl.penfold.app.support.hal.{HalTriggeredJobFeedFormatter, HalStartedJobFormatter, HalJobFormatter, HalCompletedJobFormatter}
+import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalJobFormatter}
 import java.util.concurrent.Executors._
 import java.util.concurrent.TimeUnit._
 import org.huwtl.penfold.command._
@@ -38,26 +38,16 @@ class Main extends LifeCycle {
 
     val baseUrl = new URI("http://localhost:8080")
 
-    val jobLink = new URI(s"${baseUrl.toString}/jobs")
+    val baseJobLink = new URI(s"${baseUrl.toString}/jobs")
 
-    val triggeredJobLink = new URI(s"${baseUrl.toString}/feed/triggered")
+    val baseQueueLink = new URI(s"${baseUrl.toString}/queues")
 
-    val startedJobLink = new URI(s"${baseUrl.toString}/feed/started")
+    val jobFormatter = new HalJobFormatter(baseJobLink, baseQueueLink)
 
-    val completedJobLink = new URI(s"${baseUrl.toString}/feed/completed")
+    val queueFormatter = new HalQueueFormatter(baseQueueLink, jobFormatter)
 
-    val jobFormatter = new HalJobFormatter(jobLink, triggeredJobLink)
-
-    val triggeredJobFeedFormatter = new HalTriggeredJobFeedFormatter(triggeredJobLink, jobLink, startedJobLink)
-
-    val startedJobFormatter = new HalStartedJobFormatter(startedJobLink, jobLink, completedJobLink)
-
-    val completedJobFormatter = new HalCompletedJobFormatter(completedJobLink, jobLink)
-
-    context mount(new JobsResource(queryRepository, commandDispatcher, objectSerializer, jobFormatter), "/jobs/*")
-    context mount(new TriggeredJobFeedResource(queryRepository, triggeredJobFeedFormatter), "/feed/triggered/*")
-    context mount(new StartedJobFeedResource(commandDispatcher, queryRepository, objectSerializer, startedJobFormatter), "/feed/started/*")
-    context mount(new CompletedJobFeedResource(queryRepository, commandDispatcher, objectSerializer, completedJobFormatter), "/feed/completed/*")
+    context mount(new JobResource(queryRepository, commandDispatcher, objectSerializer, jobFormatter), "/jobs/*")
+    context mount(new QueueResource(queryRepository, commandDispatcher, objectSerializer, queueFormatter), "/queues/*")
 
     newSingleThreadScheduledExecutor.scheduleAtFixedRate(new Runnable() {
       def run() {

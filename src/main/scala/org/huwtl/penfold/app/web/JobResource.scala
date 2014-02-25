@@ -8,7 +8,7 @@ import org.huwtl.penfold.query.QueryRepository
 import org.huwtl.penfold.command.{CreateJob, CommandDispatcher}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 
-class JobsResource(queryRepository: QueryRepository, commandDispatcher: CommandDispatcher, jsonConverter: ObjectSerializer, halFormatter: HalJobFormatter) extends ScalatraServlet {
+class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDispatcher, jsonConverter: ObjectSerializer, halFormatter: HalJobFormatter) extends ScalatraServlet {
 
   before() {
     contentType = HAL_JSON

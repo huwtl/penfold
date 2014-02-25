@@ -15,8 +15,8 @@ conflictWarning in ThisBuild := ConflictWarning.disable
 parallelExecution in ThisBuild := false
 
 libraryDependencies ++= Seq(
-  "org.scalatra" % "scalatra_2.10" % "2.2.1",
-  "org.scalatra" % "scalatra-scalate_2.10" % "2.2.1",
+  "org.scalatra" % "scalatra_2.10" % "2.2.2",
+  "org.scalatra" % "scalatra-scalate_2.10" % "2.2.2",
   "ch.qos.logback" % "logback-classic" % "1.0.7" % "runtime",
   "org.eclipse.jetty" % "jetty-webapp" % "8.1.7.v20120910" % "container,compile",
   "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container,compile" artifacts Artifact("javax.servlet", "jar", "jar"),
@@ -26,7 +26,7 @@ libraryDependencies ++= Seq(
   "net.debasishg" % "redisclient_2.10" % "2.11",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "org.specs2" % "specs2_2.10" % "2.1.1" % "test",
-  "org.scalatra" %% "scalatra-specs2" % "2.2.1" % "test",
+  "org.scalatra" %% "scalatra-specs2" % "2.2.2" % "test",
   "redis.embedded" % "embedded-redis" % "0.1" % "test"
 )
 

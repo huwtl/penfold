@@ -9,7 +9,7 @@ class StatusJsonSerializer extends Serializer[Status] {
   private val StatusClass = classOf[Status]
 
   override def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), Status] = {
-    case (TypeInfo(StatusClass, _), json) => Status.from(json.extract[String])
+    case (TypeInfo(StatusClass, _), json) => Status.from(json.extract[String]).get
   }
 
   override def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
