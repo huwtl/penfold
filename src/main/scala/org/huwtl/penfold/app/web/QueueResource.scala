@@ -17,7 +17,7 @@ class QueueResource(queryRepository: QueryRepository,
     contentType = HAL_JSON
   }
 
-  get("/queues/:queue/:status") {
+  get("/:queue/:status") {
     statusMatch {
       status => {
         val queue = QueueName(params.get("queue").get)
@@ -27,7 +27,7 @@ class QueueResource(queryRepository: QueryRepository,
     }
   }
 
-  get("/queues/:queue/:status/:id") {
+  get("/:queue/:status/:id") {
     statusMatch {
       status => {
         queryRepository.retrieveBy(Id(params("id"))) match {
@@ -38,16 +38,16 @@ class QueueResource(queryRepository: QueryRepository,
     }
   }
 
-  post("/queues/:queue/started") {
+  put("/:queue/started") {
     val startJobCommand = jsonConverter.deserialize[StartJob](request.body)
     commandDispatcher.dispatch[StartJob](startJobCommand)
-    Created(halFormatter.halFrom(queryRepository.retrieveBy(startJobCommand.id).get))
+    Ok(halFormatter.halFrom(queryRepository.retrieveBy(startJobCommand.id).get))
   }
 
-  post("/queues/:queue/completed") {
+  put("/:queue/completed") {
     val completeJobCommand = jsonConverter.deserialize[CompleteJob](request.body)
     commandDispatcher.dispatch[CompleteJob](completeJobCommand)
-    Created(halFormatter.halFrom(queryRepository.retrieveBy(completeJobCommand.id).get))
+    Ok(halFormatter.halFrom(queryRepository.retrieveBy(completeJobCommand.id).get))
   }
 
   private def statusMatch(func: Status => ActionResult) = {
