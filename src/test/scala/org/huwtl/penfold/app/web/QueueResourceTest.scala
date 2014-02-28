@@ -9,7 +9,7 @@ import org.joda.time.DateTime
 import org.specs2.mock.Mockito
 import scala.Some
 import org.huwtl.penfold.domain.model.{QueueName, Status, Payload, Id}
-import org.huwtl.penfold.query.{JobRecord, QueryRepository}
+import org.huwtl.penfold.query.{PageResult, PageRequest, JobRecord, QueryRepository}
 import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 
@@ -33,7 +33,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
   "return 200 with hal+json formatted queue response" in {
     val expectedJob1 = JobRecord(Id("1"), created, queueName, Status.Triggered, triggerDate, payload)
     val expectedJob2 = JobRecord(Id("2"), created, queueName, Status.Triggered, triggerDate, payload)
-    queryRepository.retrieveBy(Status.Triggered, queueName) returns List(expectedJob2, expectedJob1)
+    queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(0, 10)) returns PageResult(List(expectedJob2, expectedJob1), earlierExists = false, laterExists = true)
 
     get("/queues/abc/triggered") {
       status must beEqualTo(200)

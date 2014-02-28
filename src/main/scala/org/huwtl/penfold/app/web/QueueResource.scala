@@ -4,7 +4,7 @@ import org.scalatra._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import org.huwtl.penfold.app.support.hal.HalQueueFormatter
 import org.huwtl.penfold.domain.model.{Status, Id, QueueName}
-import org.huwtl.penfold.query.QueryRepository
+import org.huwtl.penfold.query.{PageRequest, QueryRepository}
 import org.huwtl.penfold.command.{CompleteJob, CommandDispatcher, StartJob}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 
@@ -21,7 +21,7 @@ class QueueResource(queryRepository: QueryRepository,
     statusMatch {
       status => {
         val queue = QueueName(params.get("queue").get)
-        Ok(halFormatter.halFrom(queue, status, queryRepository.retrieveBy(status, queue)
+        Ok(halFormatter.halFrom(queue, status, queryRepository.retrieveBy(queue, status, PageRequest(0, 10)).jobs
         ))
       }
     }

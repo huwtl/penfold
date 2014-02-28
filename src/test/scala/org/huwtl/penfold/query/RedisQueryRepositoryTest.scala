@@ -6,12 +6,13 @@ import org.specs2.specification.Scope
 import java.util.UUID
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.support.RedisSpecification
+import org.specs2.matcher.DataTables
+import org.huwtl.penfold.domain.model.QueueName
 import org.huwtl.penfold.domain.model.Id
 import org.huwtl.penfold.domain.model.Payload
 import org.huwtl.penfold.domain.event.JobCreated
-import org.huwtl.penfold.domain.model.QueueName
 
-class RedisQueryRepositoryTest extends RedisSpecification {
+class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
   val aggregateRootId = Id(UUID.randomUUID().toString)
 
   val queueName = QueueName("type")
@@ -21,6 +22,8 @@ class RedisQueryRepositoryTest extends RedisSpecification {
   val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
 
   val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
+
+  val status = Status.Waiting
 
   class context extends Scope {
     val redisClient = newRedisClient()
@@ -36,12 +39,37 @@ class RedisQueryRepositoryTest extends RedisSpecification {
     queryRepository.retrieveBy(aggregateRootId) must not(beNone)
   }
 
+
   "retrieve jobs by status" in new context {
     val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, queueName, created, triggerDate, payload)
 
-    queryRepository.retrieveBy(Status.Waiting) must beEmpty
+    queryRepository.retrieveBy(queueName, status, PageRequest(0, 10)).jobs must beEmpty
     queryRepositoryUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
-    queryRepository.retrieveBy(Status.Waiting).size must beEqualTo(1)
+    queryRepository.retrieveBy(queueName, status, PageRequest(0, 10)).jobs.size must beEqualTo(1)
+  }
+
+  "retrieve jobs by page" in new context {
+    createJobEvent(Id("a1"), Id("1"), queryRepositoryUpdater)
+    createJobEvent(Id("a2"), Id("2"), queryRepositoryUpdater)
+    createJobEvent(Id("a3"), Id("3"), queryRepositoryUpdater)
+    createJobEvent(Id("a4"), Id("4"), queryRepositoryUpdater)
+    createJobEvent(Id("a5"), Id("5"), queryRepositoryUpdater)
+
+    "pageRequest"        | "expected"                         | "earlier" | "later" |
+    PageRequest(0, 10)   ! List("a1", "a2", "a3", "a4", "a5") ! false     ! false   |
+    PageRequest(0, 1)    ! List("a1")                         ! false     ! true    |
+    PageRequest(2, 2)    ! List("a5")                         ! true      ! false   |
+    PageRequest(3, 2)    ! List()                             ! true      ! false   |
+    PageRequest(9, 2)    ! List()                             ! true      ! false   |
+    PageRequest(0, 0)    ! List()                             ! false     ! true    |
+    PageRequest(1, 1)    ! List("a2")                         ! true      ! true    |
+    PageRequest(1, 2)    ! List("a3", "a4")                   ! true      ! true    |> {
+      (pageRequest, expected, earlier, later) =>
+        val pageResult = queryRepository.retrieveBy(queueName, status, pageRequest)
+        pageResult.jobs.map(_.id) must beEqualTo(expected.map(Id))
+        pageResult.earlierExists must beEqualTo(earlier)
+        pageResult.laterExists must beEqualTo(later)
+    }
   }
 
   "retrieve jobs ready to trigger" in new context {
@@ -53,5 +81,11 @@ class RedisQueryRepositoryTest extends RedisSpecification {
     queryRepository.retrieveWithPendingTrigger must beEmpty
     queryRepositoryUpdater.handle(NewEvent(Id("2"), triggeredJobCreatedEvent))
     queryRepository.retrieveWithPendingTrigger.size must beEqualTo(1)
+  }
+
+  private def createJobEvent(aggregateId: Id, eventId: Id, queryRepositoryUpdater: RedisQueryStoreEventPersister) = {
+    val event = JobCreated(aggregateId, Version.init, queueName, created, triggerDate, payload)
+    queryRepositoryUpdater.handle(NewEvent(eventId, event))
+    event
   }
 }

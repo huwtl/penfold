@@ -5,9 +5,7 @@ import org.huwtl.penfold.domain.model.{QueueName, Status, Id}
 trait QueryRepository {
   def retrieveBy(id: Id): Option[JobRecord]
 
-  def retrieveBy(status: Status): List[JobRecord]
-
-  def retrieveBy(status: Status, queueName: QueueName): List[JobRecord]
+  def retrieveBy(queueName: QueueName, status: Status, pageRequest: PageRequest): PageResult
 
   def retrieveWithPendingTrigger: Stream[JobRecordReference]
 }

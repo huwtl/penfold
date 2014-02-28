@@ -17,6 +17,11 @@ import org.huwtl.penfold.domain.event.JobStarted
 class RedisQueryStoreEventPersisterTest extends RedisSpecification {
   trait context extends Scope {
     val aggregateRootId = Id(UUID.randomUUID().toString)
+    val queueName = QueueName("type")
+    val payload = Payload(Map("a" -> "123", "b" -> 1))
+    val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
+    val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
+    val pageRequest = PageRequest(0, 10)
     val redisClient = newRedisClient()
     val serializer = new EventSerializer
     val queryRepository = new RedisQueryRepository(redisClient, new ObjectSerializer)
@@ -24,36 +29,36 @@ class RedisQueryStoreEventPersisterTest extends RedisSpecification {
   }
 
   "update query store on event" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), QueueName("type"), new DateTime(2014, 2, 22, 12, 0, 0, 0), new DateTime(2014, 2, 22, 12, 30, 0, 0), Payload(Map("a" -> "123", "b" -> 1)))
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), queueName, created, triggerDate, payload)
     val jobTriggeredEvent = JobTriggered(aggregateRootId, Version(2))
     val jobStartedEvent = JobStarted(aggregateRootId, Version(3))
     val jobCompletedEvent = JobCompleted(aggregateRootId, Version(4))
 
     queryStoreUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
-    queryRepository.retrieveBy(Status.Waiting).size must beEqualTo(1)
+    queryRepository.retrieveBy(queueName, Status.Waiting, pageRequest).jobs.size must beEqualTo(1)
 
     queryStoreUpdater.handle(NewEvent(Id("2"), jobTriggeredEvent))
-    queryRepository.retrieveBy(Status.Waiting) must beEmpty
-    queryRepository.retrieveBy(Status.Triggered).size must beEqualTo(1)
+    queryRepository.retrieveBy(queueName, Status.Waiting, pageRequest).jobs must beEmpty
+    queryRepository.retrieveBy(queueName, Status.Triggered, pageRequest).jobs.size must beEqualTo(1)
 
     queryStoreUpdater.handle(NewEvent(Id("3"), jobStartedEvent))
-    queryRepository.retrieveBy(Status.Triggered) must beEmpty
-    queryRepository.retrieveBy(Status.Started).size must beEqualTo(1)
+    queryRepository.retrieveBy(queueName, Status.Triggered, pageRequest).jobs must beEmpty
+    queryRepository.retrieveBy(queueName, Status.Started, pageRequest).jobs.size must beEqualTo(1)
 
     queryStoreUpdater.handle(NewEvent(Id("4"), jobCompletedEvent))
-    queryRepository.retrieveBy(Status.Started) must beEmpty
-    queryRepository.retrieveBy(Status.Completed).size must beEqualTo(1)
+    queryRepository.retrieveBy(queueName, Status.Started, pageRequest).jobs must beEmpty
+    queryRepository.retrieveBy(queueName, Status.Completed, pageRequest).jobs.size must beEqualTo(1)
   }
 
   "do not persist events that have already been persisted" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), QueueName("type"), new DateTime(2014, 2, 22, 12, 0, 0, 0), new DateTime(2014, 2, 22, 12, 30, 0, 0), Payload(Map("a" -> "123", "b" -> 1)))
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), queueName, created, triggerDate, payload)
     val jobTriggeredEvent = JobTriggered(aggregateRootId, Version(2))
     val jobStartedEvent = JobStarted(aggregateRootId, Version(3))
     val jobCompletedEvent = JobCompleted(aggregateRootId, Version(4))
 
     queryStoreUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
-    queryRepository.retrieveBy(Status.Waiting).size must beEqualTo(1)
+    queryRepository.retrieveBy(queueName, Status.Waiting, pageRequest).jobs.size must beEqualTo(1)
     queryStoreUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
-    queryRepository.retrieveBy(Status.Waiting).size must beEqualTo(1)
+    queryRepository.retrieveBy(queueName, Status.Waiting, pageRequest).jobs.size must beEqualTo(1)
   }
 }
