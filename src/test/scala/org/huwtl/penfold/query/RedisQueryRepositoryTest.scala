@@ -55,20 +55,20 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
     createJobEvent(Id("a4"), Id("4"), queryRepositoryUpdater)
     createJobEvent(Id("a5"), Id("5"), queryRepositoryUpdater)
 
-    "pageRequest"        | "expected"                         | "earlier" | "later" |
-    PageRequest(0, 10)   ! List("a1", "a2", "a3", "a4", "a5") ! false     ! false   |
-    PageRequest(0, 1)    ! List("a1")                         ! false     ! true    |
-    PageRequest(2, 2)    ! List("a5")                         ! true      ! false   |
-    PageRequest(3, 2)    ! List()                             ! true      ! false   |
-    PageRequest(9, 2)    ! List()                             ! true      ! false   |
-    PageRequest(0, 0)    ! List()                             ! false     ! true    |
-    PageRequest(1, 1)    ! List("a2")                         ! true      ! true    |
-    PageRequest(1, 2)    ! List("a3", "a4")                   ! true      ! true    |> {
-      (pageRequest, expected, earlier, later) =>
+    "pageRequest"        | "expected"                         | "prevPage" | "nextPage" |
+    PageRequest(0, 10)   ! List("a1", "a2", "a3", "a4", "a5") ! false      ! false      |
+    PageRequest(0, 1)    ! List("a1")                         ! false      ! true       |
+    PageRequest(2, 2)    ! List("a5")                         ! true       ! false      |
+    PageRequest(3, 2)    ! List()                             ! true       ! false      |
+    PageRequest(9, 2)    ! List()                             ! true       ! false      |
+    PageRequest(0, 0)    ! List()                             ! false      ! true       |
+    PageRequest(1, 1)    ! List("a2")                         ! true       ! true       |
+    PageRequest(1, 2)    ! List("a3", "a4")                   ! true       ! true       |> {
+      (pageRequest, expected, prevPage, nextPage) =>
         val pageResult = queryRepository.retrieveBy(queueName, status, pageRequest)
         pageResult.jobs.map(_.id) must beEqualTo(expected.map(Id))
-        pageResult.earlierExists must beEqualTo(earlier)
-        pageResult.laterExists must beEqualTo(later)
+        pageResult.previousExists must beEqualTo(prevPage)
+        pageResult.nextExists must beEqualTo(nextPage)
     }
   }
 

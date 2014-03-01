@@ -13,6 +13,8 @@ class QueueResource(queryRepository: QueryRepository,
                     jsonConverter: ObjectSerializer,
                     halFormatter: HalQueueFormatter) extends ScalatraServlet {
 
+  private val pageSize = 10
+
   before() {
     contentType = HAL_JSON
   }
@@ -20,8 +22,9 @@ class QueueResource(queryRepository: QueryRepository,
   get("/:queue/:status") {
     statusMatch {
       status => {
-        val queue = QueueName(params.get("queue").get)
-        Ok(halFormatter.halFrom(queue, status, queryRepository.retrieveBy(queue, status, PageRequest(0, 10)).jobs
+        val queue = QueueName(params("queue"))
+        val pageNumber = params.getOrElse("page", "0").toInt
+        Ok(halFormatter.halFrom(queue, status, queryRepository.retrieveBy(queue, status, PageRequest(pageNumber, pageSize))
         ))
       }
     }
@@ -38,20 +41,20 @@ class QueueResource(queryRepository: QueryRepository,
     }
   }
 
-  put("/:queue/started") {
+  post("/:queue/started") {
     val startJobCommand = jsonConverter.deserialize[StartJob](request.body)
     commandDispatcher.dispatch[StartJob](startJobCommand)
     Ok(halFormatter.halFrom(queryRepository.retrieveBy(startJobCommand.id).get))
   }
 
-  put("/:queue/completed") {
+  post("/:queue/completed") {
     val completeJobCommand = jsonConverter.deserialize[CompleteJob](request.body)
     commandDispatcher.dispatch[CompleteJob](completeJobCommand)
     Ok(halFormatter.halFrom(queryRepository.retrieveBy(completeJobCommand.id).get))
   }
 
   private def statusMatch(func: Status => ActionResult) = {
-    val statusValue = params.get("status").get
+    val statusValue = params("status")
     Status.from(statusValue) match {
       case Some(status) => func(status)
       case None => NotFound(s"unrecognised $statusValue type")

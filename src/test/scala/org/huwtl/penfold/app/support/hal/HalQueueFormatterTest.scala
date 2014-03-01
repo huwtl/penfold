@@ -6,7 +6,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.specs2.mutable.Specification
 import org.huwtl.penfold.domain.model.{Payload, QueueName, Status, Id}
-import org.huwtl.penfold.query.JobRecord
+import org.huwtl.penfold.query.{PageResult, PageRequest, JobRecord}
 import org.joda.time.DateTime
 
 class HalQueueFormatterTest extends Specification {
@@ -25,9 +25,18 @@ class HalQueueFormatterTest extends Specification {
     val job1 = JobRecord(Id("1"), createdDate, queueName, status, triggerDate, Payload(Map()))
     val job2 = JobRecord(Id("2"), createdDate, queueName, status, triggerDate, Payload(Map()))
 
-    val hal = queueFormatter.halFrom(queueName, status, List(job2, job1))
+    val hal = queueFormatter.halFrom(queueName, status, PageResult(0, List(job2, job1), previousExists = false, nextExists = false))
 
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueue.json"))
+  }
+
+  "format queue as hal+json with pagination links" in {
+    val job1 = JobRecord(Id("1"), createdDate, queueName, status, triggerDate, Payload(Map()))
+    val job2 = JobRecord(Id("2"), createdDate, queueName, status, triggerDate, Payload(Map()))
+
+    val hal = queueFormatter.halFrom(queueName, status, PageResult(1, List(job2, job1), previousExists = true, nextExists = true))
+
+    parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueWithPaginationLinks.json"))
   }
 
   "format queue entry as hal+json" in {

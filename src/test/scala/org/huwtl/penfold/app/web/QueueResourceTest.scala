@@ -24,6 +24,8 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
 
   val triggerDate = new DateTime(2014, 2, 25, 14, 0, 0, 0)
 
+  val pageSize = 10
+
   val queryRepository = mock[QueryRepository]
 
   val commandDispatcher = mock[CommandDispatcher]
@@ -33,11 +35,22 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
   "return 200 with hal+json formatted queue response" in {
     val expectedJob1 = JobRecord(Id("1"), created, queueName, Status.Triggered, triggerDate, payload)
     val expectedJob2 = JobRecord(Id("2"), created, queueName, Status.Triggered, triggerDate, payload)
-    queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(0, 10)) returns PageResult(List(expectedJob2, expectedJob1), earlierExists = false, laterExists = true)
+    queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(0, pageSize)) returns PageResult(0, List(expectedJob2, expectedJob1), previousExists = false, nextExists = false)
 
     get("/queues/abc/triggered") {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueue.json"))
+    }
+  }
+
+  "return 200 with hal+json formatted queue response with pagination links" in {
+    val expectedJob1 = JobRecord(Id("1"), created, queueName, Status.Triggered, triggerDate, payload)
+    val expectedJob2 = JobRecord(Id("2"), created, queueName, Status.Triggered, triggerDate, payload)
+    queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(1, pageSize)) returns PageResult(1, List(expectedJob2, expectedJob1), previousExists = true, nextExists = true)
+
+    get("/queues/abc/triggered?page=1") {
+      status must beEqualTo(200)
+      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueWithPaginationLinks.json"))
     }
   }
 
@@ -64,20 +77,20 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
     }
   }
 
-  "return 200 when putting job into started queue" in {
+  "return 200 when posting job into started queue" in {
     val expectedJob = JobRecord(Id("3"), created, queueName, Status.Triggered, triggerDate, payload)
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
-    put("/queues/abc/started", """{"id": "3"}""") {
+    post("/queues/abc/started", """{"id": "3"}""") {
       status must beEqualTo(200)
     }
   }
 
-  "return 200 when putting job into completed queue" in {
+  "return 200 when posting job into completed queue" in {
     val expectedJob = JobRecord(Id("4"), created, queueName, Status.Started, triggerDate, payload)
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
-    put("/queues/abc/completed", """{"id": "4"}""") {
+    post("/queues/abc/completed", """{"id": "4"}""") {
       status must beEqualTo(200)
     }
   }
