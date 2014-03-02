@@ -22,8 +22,8 @@ class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDi
   }
 
   post("/") {
-    val createJobCommand = jsonConverter.deserialize[CreateJob](request.body)
-    commandDispatcher.dispatch(createJobCommand)
-    Created(halFormatter.halFrom(queryRepository.retrieveBy(createJobCommand.id).get))
+    val createJobRequest = jsonConverter.deserialize[JobCreationRequest](request.body)
+    commandDispatcher.dispatch(createJobRequest.toCommand)
+    Created(halFormatter.halFrom(queryRepository.retrieveBy(createJobRequest.id).get))
   }
 }

@@ -43,12 +43,12 @@ case class ScheduledJob(uncommittedEvents: List[Event],
                         payload: Payload) extends Job {
 
   def trigger(): ScheduledJob = {
-    require(status == Status.Waiting, "Can only trigger a waiting job")
+    require(status == Status.Waiting, s"Can only trigger a waiting job but was $status")
     applyJobTriggered(JobTriggered(aggregateId, version.next))
   }
 
   def start(): ScheduledJob = {
-    require(status == Status.Triggered, "Can only start a triggered job")
+    require(status == Status.Triggered, s"Can only start a triggered job but was $status")
     applyJobStarted(JobStarted(aggregateId, version.next))
   }
 
@@ -57,7 +57,7 @@ case class ScheduledJob(uncommittedEvents: List[Event],
   }
 
   def complete(): CompletedJob = {
-    require(status == Status.Started, "Can only complete a started job")
+    require(status == Status.Started, s"Can only complete a started job but was $status")
     applyJobCompleted(JobCompleted(aggregateId, version.next))
   }
 

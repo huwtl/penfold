@@ -13,7 +13,7 @@ import org.huwtl.penfold.query.{EventSequenceId, EventRecord, NewEventListener}
 class RedisQueryStoreUpdater(redisClient: RedisClient, objectSerializer: ObjectSerializer) extends NewEventListener {
   private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
-  private val queryStoreEventsKey = "queryStoreEvents"
+  private val queryStoreEventsKey = "queryEventsStore"
 
   private val success = true
 
