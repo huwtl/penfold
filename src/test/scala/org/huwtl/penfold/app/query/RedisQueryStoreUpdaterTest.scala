@@ -16,6 +16,7 @@ import org.huwtl.penfold.domain.event.JobStarted
 import org.huwtl.penfold.query.{EventSequenceId, EventRecord, PageRequest}
 
 class RedisQueryStoreUpdaterTest extends RedisSpecification {
+
   trait context extends Scope {
     val aggregateRootId = AggregateId(UUID.randomUUID().toString)
     val queueName = QueueName("type")

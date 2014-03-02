@@ -1,12 +1,12 @@
 package org.huwtl.penfold.query
 
-class NewEventsProvider(queryStoreNextExpectedEventProvider: NextExpectedEventIdProvider, eventStoreQueryRepository: EventStoreQueryRepository) {
+class NewEventsProvider(nextExpectedEventProvider: NextExpectedEventIdProvider, eventStoreQueryService: EventStoreQueryService) {
   def newEvents: Stream[EventRecord] = {
-    val nextExpectedEventId = queryStoreNextExpectedEventProvider.nextExpectedEvent
-    val lastEventId = eventStoreQueryRepository.retrieveIdOfLast getOrElse EventSequenceId(-1)
+    val nextExpectedEventId = nextExpectedEventProvider.nextExpectedEvent
+    val lastEventId = eventStoreQueryService.retrieveIdOfLast getOrElse EventSequenceId(-1)
     for {
       eventId <- (nextExpectedEventId.value.toInt to lastEventId.value.toInt).toStream
-      event <- eventStoreQueryRepository.retrieveBy(EventSequenceId(eventId))
+      event <- eventStoreQueryService.retrieveBy(EventSequenceId(eventId))
     } yield event
   }
 }

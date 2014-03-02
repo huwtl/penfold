@@ -36,13 +36,20 @@ class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSer
   )
 
   override def retrieveBy(queueName: QueueName, status: Status, pageRequest: PageRequest) = {
-    val aggregateIdsWithOverflow = redisClient.zrange(status.name, pageRequest.start, pageRequest.end).get
+    val queueKey = s"${queueName.value}.${status.name}"
+    val aggregateIdsWithOverflow = redisClient.zrange(queueKey, pageRequest.start, pageRequest.end).get
     val aggregateIdsWithoutOverflow = aggregateIdsWithOverflow.take(pageRequest.pageSize)
 
     val previousPageExists = !pageRequest.firstPage
     val nextPageExists = aggregateIdsWithOverflow.size != aggregateIdsWithoutOverflow.size
 
-    PageResult(pageRequest.pageNumber, aggregateIdsWithoutOverflow.map(id => retrieveBy(AggregateId(id)).get), previousPageExists, nextPageExists)
+    PageResult(
+      pageRequest.pageNumber,
+      aggregateIdsWithoutOverflow.map {
+        id => retrieveBy(AggregateId(id)).get
+      },
+      previousPageExists,
+      nextPageExists)
   }
 
   override def retrieveBy(aggregateId: AggregateId) = {

@@ -14,7 +14,7 @@ import org.huwtl.penfold.domain.store.DomainRepository
 import com.redis.RedisClient
 import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
 import org.huwtl.penfold.query.{NewEventsProvider, NewEventPublisher}
-import org.huwtl.penfold.app.query.{RedisEventStoreQueryRepository, RedisNextExpectedEventIdProvider, RedisQueryStoreUpdater, RedisQueryRepository}
+import org.huwtl.penfold.app.query.{RedisEventStoreQueryService, RedisNextExpectedEventIdProvider, RedisQueryStoreUpdater, RedisQueryRepository}
 
 class Main extends LifeCycle {
   override def init(context: ServletContext) {
@@ -24,7 +24,7 @@ class Main extends LifeCycle {
     val objectSerializer = new ObjectSerializer
     val eventStore = new RedisEventStore(redisClient, eventSerializer)
 
-    val newEventsProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(redisClient), new RedisEventStoreQueryRepository(redisClient, eventSerializer))
+    val newEventsProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(redisClient), new RedisEventStoreQueryService(redisClient, eventSerializer))
 
     val domainRepository = new DomainRepository(eventStore, new NewEventPublisher(newEventsProvider, List(new RedisQueryStoreUpdater(redisClient, objectSerializer))))
 

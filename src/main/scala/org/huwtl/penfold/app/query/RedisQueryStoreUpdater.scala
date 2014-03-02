@@ -7,15 +7,17 @@ import com.redis.RedisClient
 import org.joda.time.format.DateTimeFormat
 import org.huwtl.penfold.domain.model.Status._
 import org.huwtl.penfold.app.support.json.ObjectSerializer
-import org.huwtl.penfold.domain.model.Payload
-import org.huwtl.penfold.query.{EventRecord, NewEventListener}
+import org.huwtl.penfold.domain.model.{AggregateId, Status, Payload}
+import org.huwtl.penfold.query.{EventSequenceId, EventRecord, NewEventListener}
 
 class RedisQueryStoreUpdater(redisClient: RedisClient, objectSerializer: ObjectSerializer) extends NewEventListener {
   private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
   private val queryStoreEventsKey = "queryStoreEvents"
 
-  private val updateQueryStoreEvents =
+  private val success = true
+
+  private val trackQueryStoreEvent =
     """
       | local queryStoreEvents = KEYS[1]
       | local eventId = ARGV[1]
@@ -26,10 +28,11 @@ class RedisQueryStoreUpdater(redisClient: RedisClient, objectSerializer: ObjectS
 
   private val createJobScript = redisClient.scriptLoad(
     s"""
-      | $updateQueryStoreEvents
+      | $trackQueryStoreEvent
       |
       | local jobKey = KEYS[2]
-      | local status = KEYS[3]
+      | local queueKey = KEYS[3]
+      | local status = KEYS[4]
       | local aggregateId = ARGV[2]
       | local created = ARGV[3]
       | local type = ARGV[4]
@@ -45,6 +48,7 @@ class RedisQueryStoreUpdater(redisClient: RedisClient, objectSerializer: ObjectS
       | redis.call('hset', jobKey, 'payload', payload)
       |
       | redis.call('zadd', status, triggerEpoch, aggregateId)
+      | redis.call('zadd', queueKey, triggerEpoch, aggregateId)
       |
       | return '1'
     """.stripMargin
@@ -52,11 +56,13 @@ class RedisQueryStoreUpdater(redisClient: RedisClient, objectSerializer: ObjectS
 
   private val updateJobStatusScript = redisClient.scriptLoad(
     s"""
-      | $updateQueryStoreEvents
+      | $trackQueryStoreEvent
       |
       | local jobKey = KEYS[2]
-      | local oldStatus = KEYS[3]
-      | local newStatus = KEYS[4]
+      | local oldQueueKey = KEYS[3]
+      | local newQueueKey = KEYS[4]
+      | local oldStatus = KEYS[5]
+      | local newStatus = KEYS[6]
       | local aggregateId = ARGV[2]
       |
       | local triggerEpoch = redis.call('hget', jobKey, 'trigger.epoch')
@@ -64,29 +70,54 @@ class RedisQueryStoreUpdater(redisClient: RedisClient, objectSerializer: ObjectS
       | redis.call('hset', jobKey, 'status', newStatus)
       |
       | redis.call('zrem', oldStatus, aggregateId)
+      | redis.call('zrem', oldQueueKey, aggregateId)
       | redis.call('zadd', newStatus, triggerEpoch, aggregateId)
+      | redis.call('zadd', newQueueKey, triggerEpoch, aggregateId)
       |
       | return '1'
     """.stripMargin
   )
 
-  override def handle(newEvent: EventRecord) = {
-    val eventId = newEvent.id.value
-    val aggregateId = newEvent.event.aggregateId.value
-    val jobKey = s"job:$aggregateId"
+  override def handle(eventRecord: EventRecord) = {
+    val eventId = eventRecord.id
+    val aggregateId = eventRecord.event.aggregateId
+    val jobKey = s"job:${aggregateId.value}"
 
-    newEvent.event match {
+    eventRecord.event match {
       case e: JobCreated => {
+        val queueKey = s"${e.queueName.value}.${Waiting.name}"
         val payloadJson = objectSerializer.serialize[Payload](e.payload)
-        redisClient.evalSHA(createJobScript.get, List(queryStoreEventsKey, jobKey, Waiting.name), List(eventId, aggregateId, dateFormatter.print(e.created), e.queueName.value, dateFormatter.print(e.triggerDate), e.triggerDate.getMillis, payloadJson))
+        redisClient.evalSHA(createJobScript.get,
+          List(queryStoreEventsKey, jobKey, queueKey, Waiting.name),
+          List(eventId.value, aggregateId.value, dateFormatter.print(e.created), e.queueName.value,
+            dateFormatter.print(e.triggerDate), e.triggerDate.getMillis, payloadJson))
       }
-      case e: JobTriggered => redisClient.evalSHA(updateJobStatusScript.get, List(queryStoreEventsKey, jobKey, Waiting.name, Triggered.name), List(eventId, aggregateId))
-      case e: JobStarted => redisClient.evalSHA(updateJobStatusScript.get, List(queryStoreEventsKey, jobKey, Triggered.name, Started.name), List(eventId, aggregateId))
-      case e: JobCompleted => redisClient.evalSHA(updateJobStatusScript.get, List(queryStoreEventsKey, jobKey, Started.name, Completed.name), List(eventId, aggregateId))
-      case e: JobCancelled => redisClient.evalSHA(updateJobStatusScript.get, List(queryStoreEventsKey, jobKey, Waiting.name, Cancelled.name), List(eventId, aggregateId))
-      case _ =>
+      case e: JobTriggered => {
+        updateJobStatus(jobKey, eventId, aggregateId, Triggered)
+      }
+      case e: JobStarted => {
+        updateJobStatus(jobKey, eventId, aggregateId, Started)
+      }
+      case e: JobCompleted => {
+        updateJobStatus(jobKey, eventId, aggregateId, Completed)
+      }
+      case e: JobCancelled => {
+        updateJobStatus(jobKey, eventId, aggregateId, Cancelled)
+      }
+      case _ => throw new RuntimeException(s"Unhandled event $eventRecord")
     }
 
-    true
+    success
+  }
+
+  private def updateJobStatus(jobKey: String, eventId: EventSequenceId, aggregateId: AggregateId, newStatus: Status) {
+    val queueName = redisClient.hget(jobKey, "type").get
+    val oldStatus = redisClient.hget(jobKey, "status").get
+    val oldQueueKey = s"$queueName.${oldStatus}"
+    val newQueueKey = s"$queueName.${newStatus.name}"
+
+    redisClient.evalSHA(updateJobStatusScript.get,
+      List(queryStoreEventsKey, jobKey, oldQueueKey, newQueueKey, oldStatus, newStatus.name),
+      List(eventId.value, aggregateId.value))
   }
 }
