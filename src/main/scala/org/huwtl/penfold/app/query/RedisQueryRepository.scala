@@ -1,10 +1,18 @@
-package org.huwtl.penfold.query
+package org.huwtl.penfold.app.query
 
 import com.redis.RedisClient
-import org.huwtl.penfold.domain.model.{Payload, QueueName, Status, Id}
+import org.huwtl.penfold.domain.model.Status
 import org.joda.time.format.DateTimeFormat
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.joda.time.DateTime._
+import org.huwtl.penfold.query._
+import org.huwtl.penfold.domain.model.QueueName
+import org.huwtl.penfold.domain.model.AggregateId
+import org.huwtl.penfold.domain.model.Payload
+import scala.Some
+import org.huwtl.penfold.query.PageRequest
+import org.huwtl.penfold.query.JobRecord
+import org.huwtl.penfold.query.PageResult
 
 class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSerializer) extends QueryRepository {
   val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
@@ -34,10 +42,10 @@ class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSer
     val previousPageExists = !pageRequest.firstPage
     val nextPageExists = aggregateIdsWithOverflow.size != aggregateIdsWithoutOverflow.size
 
-    PageResult(pageRequest.pageNumber, aggregateIdsWithoutOverflow.map(id => retrieveBy(Id(id)).get), previousPageExists, nextPageExists)
+    PageResult(pageRequest.pageNumber, aggregateIdsWithoutOverflow.map(id => retrieveBy(AggregateId(id)).get), previousPageExists, nextPageExists)
   }
 
-  override def retrieveBy(aggregateId: Id) = {
+  override def retrieveBy(aggregateId: AggregateId) = {
     val jobKeyName = s"job:${aggregateId.value}"
 
     val jobAttributes = redisClient.evalMultiSHA[String](retrieveJobScript.get, List(jobKeyName), Nil).get
@@ -61,7 +69,7 @@ class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSer
     def nextPageOfJobsToTrigger(offset: Int) = {
       val nextPageOfEarliestTriggeredJobs = redisClient.zrangebyscore(key = Status.Waiting.name, max = now().getMillis, limit = Some(offset, pageSize))
       nextPageOfEarliestTriggeredJobs.getOrElse(Nil).map {
-        aggregateId => new JobRecordReference(Id(aggregateId))
+        aggregateId => new JobRecordReference(AggregateId(aggregateId))
       }
     }
 

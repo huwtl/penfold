@@ -6,12 +6,12 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification
-import org.huwtl.penfold.domain.model.{Payload, Status, QueueName, Id}
+import org.huwtl.penfold.domain.model.{Payload, Status, QueueName, AggregateId}
 import org.huwtl.penfold.query.JobRecord
 
 class HalJobFormatterTest extends Specification {
 
-  val id = Id("1")
+  val id = AggregateId("1")
 
   val created = new DateTime(2014, 2, 14, 12, 0, 0, 0)
 

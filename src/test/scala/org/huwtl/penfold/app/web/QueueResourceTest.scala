@@ -8,7 +8,7 @@ import org.scalatra.test.specs2.MutableScalatraSpec
 import org.joda.time.DateTime
 import org.specs2.mock.Mockito
 import scala.Some
-import org.huwtl.penfold.domain.model.{QueueName, Status, Payload, Id}
+import org.huwtl.penfold.domain.model.{QueueName, Status, Payload, AggregateId}
 import org.huwtl.penfold.query.{PageResult, PageRequest, JobRecord, QueryRepository}
 import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
@@ -33,8 +33,8 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
   addServlet(new QueueResource(queryRepository, commandDispatcher, new ObjectSerializer, new HalQueueFormatter(new URI("http://host/queues"), new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues")))), "/queues/*")
 
   "return 200 with hal+json formatted queue response" in {
-    val expectedJob1 = JobRecord(Id("1"), created, queueName, Status.Triggered, triggerDate, payload)
-    val expectedJob2 = JobRecord(Id("2"), created, queueName, Status.Triggered, triggerDate, payload)
+    val expectedJob1 = JobRecord(AggregateId("1"), created, queueName, Status.Triggered, triggerDate, payload)
+    val expectedJob2 = JobRecord(AggregateId("2"), created, queueName, Status.Triggered, triggerDate, payload)
     queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(0, pageSize)) returns PageResult(0, List(expectedJob2, expectedJob1), previousExists = false, nextExists = false)
 
     get("/queues/abc/triggered") {
@@ -44,8 +44,8 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
   }
 
   "return 200 with hal+json formatted queue response with pagination links" in {
-    val expectedJob1 = JobRecord(Id("1"), created, queueName, Status.Triggered, triggerDate, payload)
-    val expectedJob2 = JobRecord(Id("2"), created, queueName, Status.Triggered, triggerDate, payload)
+    val expectedJob1 = JobRecord(AggregateId("1"), created, queueName, Status.Triggered, triggerDate, payload)
+    val expectedJob2 = JobRecord(AggregateId("2"), created, queueName, Status.Triggered, triggerDate, payload)
     queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(1, pageSize)) returns PageResult(1, List(expectedJob2, expectedJob1), previousExists = true, nextExists = true)
 
     get("/queues/abc/triggered?page=1") {
@@ -61,7 +61,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
   }
 
   "return 200 with hal+json formatted queue entry response" in {
-    val expectedJob = JobRecord(Id("1"), created, queueName, Status.Triggered, triggerDate, payload)
+    val expectedJob = JobRecord(AggregateId("1"), created, queueName, Status.Triggered, triggerDate, payload)
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
     get(s"/queues/abc/triggered/${expectedJob.id.value}") {
@@ -72,13 +72,13 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
 
   "return 404 when queue entry not found" in {
     get("/queues/abc/triggered/5") {
-      queryRepository.retrieveBy(Id("5")) returns None
+      queryRepository.retrieveBy(AggregateId("5")) returns None
       status must beEqualTo(404)
     }
   }
 
   "return 200 when posting job into started queue" in {
-    val expectedJob = JobRecord(Id("3"), created, queueName, Status.Triggered, triggerDate, payload)
+    val expectedJob = JobRecord(AggregateId("3"), created, queueName, Status.Triggered, triggerDate, payload)
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
     post("/queues/abc/started", """{"id": "3"}""") {
@@ -87,7 +87,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
   }
 
   "return 200 when posting job into completed queue" in {
-    val expectedJob = JobRecord(Id("4"), created, queueName, Status.Started, triggerDate, payload)
+    val expectedJob = JobRecord(AggregateId("4"), created, queueName, Status.Started, triggerDate, payload)
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
     post("/queues/abc/completed", """{"id": "4"}""") {

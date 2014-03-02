@@ -1,4 +1,4 @@
-package org.huwtl.penfold.query
+package org.huwtl.penfold.app.query
 
 import org.huwtl.penfold.domain.model._
 import org.joda.time.DateTime
@@ -8,12 +8,13 @@ import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.support.RedisSpecification
 import org.specs2.matcher.DataTables
 import org.huwtl.penfold.domain.model.QueueName
-import org.huwtl.penfold.domain.model.Id
+import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.Payload
 import org.huwtl.penfold.domain.event.JobCreated
+import org.huwtl.penfold.query.{EventSequenceId, PageRequest, EventRecord}
 
 class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
-  val aggregateRootId = Id(UUID.randomUUID().toString)
+  val aggregateRootId = AggregateId(UUID.randomUUID().toString)
 
   val queueName = QueueName("type")
 
@@ -27,7 +28,7 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
 
   class context extends Scope {
     val redisClient = newRedisClient()
-    val queryRepositoryUpdater = new RedisQueryStoreEventPersister(redisClient, new ObjectSerializer)
+    val queryRepositoryUpdater = new RedisQueryStoreUpdater(redisClient, new ObjectSerializer)
     val queryRepository = new RedisQueryRepository(redisClient, new ObjectSerializer)
   }
 
@@ -35,7 +36,7 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
     val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, queueName, created, triggerDate, payload)
 
     queryRepository.retrieveBy(aggregateRootId) must beNone
-    queryRepositoryUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
+    queryRepositoryUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
     queryRepository.retrieveBy(aggregateRootId) must not(beNone)
   }
 
@@ -44,16 +45,16 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
     val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, queueName, created, triggerDate, payload)
 
     queryRepository.retrieveBy(queueName, status, PageRequest(0, 10)).jobs must beEmpty
-    queryRepositoryUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
+    queryRepositoryUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
     queryRepository.retrieveBy(queueName, status, PageRequest(0, 10)).jobs.size must beEqualTo(1)
   }
 
   "retrieve jobs by page" in new context {
-    createJobEvent(Id("a1"), Id("1"), queryRepositoryUpdater)
-    createJobEvent(Id("a2"), Id("2"), queryRepositoryUpdater)
-    createJobEvent(Id("a3"), Id("3"), queryRepositoryUpdater)
-    createJobEvent(Id("a4"), Id("4"), queryRepositoryUpdater)
-    createJobEvent(Id("a5"), Id("5"), queryRepositoryUpdater)
+    createJobEvent(AggregateId("a1"), EventSequenceId(1), queryRepositoryUpdater)
+    createJobEvent(AggregateId("a2"), EventSequenceId(2), queryRepositoryUpdater)
+    createJobEvent(AggregateId("a3"), EventSequenceId(3), queryRepositoryUpdater)
+    createJobEvent(AggregateId("a4"), EventSequenceId(4), queryRepositoryUpdater)
+    createJobEvent(AggregateId("a5"), EventSequenceId(5), queryRepositoryUpdater)
 
     "pageRequest"        | "expected"                         | "prevPage" | "nextPage" |
     PageRequest(0, 10)   ! List("a1", "a2", "a3", "a4", "a5") ! false      ! false      |
@@ -66,7 +67,7 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
     PageRequest(1, 2)    ! List("a3", "a4")                   ! true       ! true       |> {
       (pageRequest, expected, prevPage, nextPage) =>
         val pageResult = queryRepository.retrieveBy(queueName, status, pageRequest)
-        pageResult.jobs.map(_.id) must beEqualTo(expected.map(Id))
+        pageResult.jobs.map(_.id) must beEqualTo(expected.map(AggregateId))
         pageResult.previousExists must beEqualTo(prevPage)
         pageResult.nextExists must beEqualTo(nextPage)
     }
@@ -77,15 +78,15 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
     val untriggeredJobCreatedEvent = JobCreated(aggregateRootId, Version.init, queueName, created, DateTime.now().plusHours(1), payload)
 
     queryRepository.retrieveWithPendingTrigger must beEmpty
-    queryRepositoryUpdater.handle(NewEvent(Id("1"), untriggeredJobCreatedEvent))
+    queryRepositoryUpdater.handle(EventRecord(EventSequenceId(1), untriggeredJobCreatedEvent))
     queryRepository.retrieveWithPendingTrigger must beEmpty
-    queryRepositoryUpdater.handle(NewEvent(Id("2"), triggeredJobCreatedEvent))
+    queryRepositoryUpdater.handle(EventRecord(EventSequenceId(2), triggeredJobCreatedEvent))
     queryRepository.retrieveWithPendingTrigger.size must beEqualTo(1)
   }
 
-  private def createJobEvent(aggregateId: Id, eventId: Id, queryRepositoryUpdater: RedisQueryStoreEventPersister) = {
+  private def createJobEvent(aggregateId: AggregateId, eventId: EventSequenceId, queryRepositoryUpdater: RedisQueryStoreUpdater) = {
     val event = JobCreated(aggregateId, Version.init, queueName, created, triggerDate, payload)
-    queryRepositoryUpdater.handle(NewEvent(eventId, event))
+    queryRepositoryUpdater.handle(EventRecord(eventId, event))
     event
   }
 }

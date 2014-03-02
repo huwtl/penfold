@@ -13,7 +13,8 @@ import org.huwtl.penfold.command.CreateJob
 import org.huwtl.penfold.domain.store.DomainRepository
 import com.redis.RedisClient
 import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
-import org.huwtl.penfold.query.{RedisQueryRepository, RedisQueryStoreEventPersister, RedisNewEventsProvider, QueryStoreUpdater}
+import org.huwtl.penfold.query.{NewEventsProvider, NewEventPublisher}
+import org.huwtl.penfold.app.query.{RedisEventStoreQueryRepository, RedisNextExpectedEventIdProvider, RedisQueryStoreUpdater, RedisQueryRepository}
 
 class Main extends LifeCycle {
   override def init(context: ServletContext) {
@@ -23,7 +24,9 @@ class Main extends LifeCycle {
     val objectSerializer = new ObjectSerializer
     val eventStore = new RedisEventStore(redisClient, eventSerializer)
 
-    val domainRepository = new DomainRepository(eventStore, new QueryStoreUpdater(new RedisNewEventsProvider(redisClient, eventSerializer), new RedisQueryStoreEventPersister(redisClient, objectSerializer)))
+    val newEventsProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(redisClient), new RedisEventStoreQueryRepository(redisClient, eventSerializer))
+
+    val domainRepository = new DomainRepository(eventStore, new NewEventPublisher(newEventsProvider, List(new RedisQueryStoreUpdater(redisClient, objectSerializer))))
 
     val commandDispatcher = new CommandDispatcher(Map[Class[_ <: Command], CommandHandler[_ <: Command]](//
       classOf[CreateJob] -> new CreateJobHandler(domainRepository), //

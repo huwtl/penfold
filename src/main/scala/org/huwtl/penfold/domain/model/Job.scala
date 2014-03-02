@@ -6,11 +6,11 @@ import org.huwtl.penfold.domain.event.JobCreated
 import org.huwtl.penfold.domain.event.JobTriggered
 
 object Job extends AggregateFactory {
-  def create(aggregateId: Id, queueName: QueueName, payload: Payload) = {
+  def create(aggregateId: AggregateId, queueName: QueueName, payload: Payload) = {
     applyJobCreated(JobCreated(aggregateId, Version.init, queueName, DateTime.now(), DateTime.now(), payload))
   }
 
-  def create(aggregateId: Id, queueName: QueueName, triggerDate: DateTime, payload: Payload) = {
+  def create(aggregateId: AggregateId, queueName: QueueName, triggerDate: DateTime, payload: Payload) = {
     applyJobCreated(JobCreated(aggregateId, Version.init, queueName, DateTime.now(), triggerDate, payload))
   }
 
@@ -34,7 +34,7 @@ object Job extends AggregateFactory {
 sealed trait Job extends AggregateRoot
 
 case class ScheduledJob(uncommittedEvents: List[Event],
-                        aggregateId: Id,
+                        aggregateId: AggregateId,
                         version: Version,
                         created: DateTime,
                         queueName: QueueName,
@@ -80,13 +80,13 @@ case class ScheduledJob(uncommittedEvents: List[Event],
   private def applyJobCompleted(event: JobCompleted) = CompletedJob(event :: uncommittedEvents, event.aggregateId, version = version.next, Status.Completed)
 }
 
-case class CompletedJob(uncommittedEvents: List[Event], aggregateId: Id, version: Version, status: Status) extends Job {
+case class CompletedJob(uncommittedEvents: List[Event], aggregateId: AggregateId, version: Version, status: Status) extends Job {
   def markCommitted = copy(uncommittedEvents = Nil)
 
   def applyEvent = unhandled
 }
 
-case class CancelledJob(uncommittedEvents: List[Event], aggregateId: Id, version: Version, status: Status) extends Job {
+case class CancelledJob(uncommittedEvents: List[Event], aggregateId: AggregateId, version: Version, status: Status) extends Job {
   def markCommitted = copy(uncommittedEvents = Nil)
 
   def applyEvent = unhandled

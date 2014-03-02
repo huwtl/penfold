@@ -3,7 +3,7 @@ package org.huwtl.penfold.app.web
 import org.scalatra._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import org.huwtl.penfold.app.support.hal.HalQueueFormatter
-import org.huwtl.penfold.domain.model.{Status, Id, QueueName}
+import org.huwtl.penfold.domain.model.{Status, AggregateId, QueueName}
 import org.huwtl.penfold.query.{PageRequest, QueryRepository}
 import org.huwtl.penfold.command.{CompleteJob, CommandDispatcher, StartJob}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
@@ -33,7 +33,7 @@ class QueueResource(queryRepository: QueryRepository,
   get("/:queue/:status/:id") {
     statusMatch {
       status => {
-        queryRepository.retrieveBy(Id(params("id"))) match {
+        queryRepository.retrieveBy(AggregateId(params("id"))) match {
           case Some(job) => Ok(halFormatter.halFrom(job))
           case _ => NotFound(s"$status job not found")
         }

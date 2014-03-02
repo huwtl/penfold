@@ -1,4 +1,4 @@
-package org.huwtl.penfold.query
+package org.huwtl.penfold.app.query
 
 import org.huwtl.penfold.domain.event._
 import org.huwtl.penfold.domain.event.JobCreated
@@ -8,13 +8,14 @@ import org.joda.time.format.DateTimeFormat
 import org.huwtl.penfold.domain.model.Status._
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.domain.model.Payload
+import org.huwtl.penfold.query.{EventRecord, NewEventListener}
 
-class RedisQueryStoreEventPersister(redisClient: RedisClient, objectSerializer: ObjectSerializer) extends NewEventHandler {
-  val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+class RedisQueryStoreUpdater(redisClient: RedisClient, objectSerializer: ObjectSerializer) extends NewEventListener {
+  private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
-  val queryStoreEventsKey = "queryStoreEvents"
+  private val queryStoreEventsKey = "queryStoreEvents"
 
-  val updateQueryStoreEvents =
+  private val updateQueryStoreEvents =
     """
       | local queryStoreEvents = KEYS[1]
       | local eventId = ARGV[1]
@@ -23,7 +24,7 @@ class RedisQueryStoreEventPersister(redisClient: RedisClient, objectSerializer: 
       | end
     """.stripMargin
 
-  val createJobScript = redisClient.scriptLoad(
+  private val createJobScript = redisClient.scriptLoad(
     s"""
       | $updateQueryStoreEvents
       |
@@ -49,7 +50,7 @@ class RedisQueryStoreEventPersister(redisClient: RedisClient, objectSerializer: 
     """.stripMargin
   )
 
-  val updateJobStatusScript = redisClient.scriptLoad(
+  private val updateJobStatusScript = redisClient.scriptLoad(
     s"""
       | $updateQueryStoreEvents
       |
@@ -69,7 +70,7 @@ class RedisQueryStoreEventPersister(redisClient: RedisClient, objectSerializer: 
     """.stripMargin
   )
 
-  override def handle(newEvent: NewEvent) {
+  override def handle(newEvent: EventRecord) = {
     val eventId = newEvent.id.value
     val aggregateId = newEvent.event.aggregateId.value
     val jobKey = s"job:$aggregateId"
@@ -85,5 +86,7 @@ class RedisQueryStoreEventPersister(redisClient: RedisClient, objectSerializer: 
       case e: JobCancelled => redisClient.evalSHA(updateJobStatusScript.get, List(queryStoreEventsKey, jobKey, Waiting.name, Cancelled.name), List(eventId, aggregateId))
       case _ =>
     }
+
+    true
   }
 }

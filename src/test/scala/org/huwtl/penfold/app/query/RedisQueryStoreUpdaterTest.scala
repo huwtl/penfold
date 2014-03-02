@@ -1,4 +1,4 @@
-package org.huwtl.penfold.query
+package org.huwtl.penfold.app.query
 
 import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
 import org.huwtl.penfold.domain.model._
@@ -7,16 +7,17 @@ import org.specs2.specification.Scope
 import java.util.UUID
 import org.huwtl.penfold.support.RedisSpecification
 import org.huwtl.penfold.domain.event.JobCompleted
-import org.huwtl.penfold.domain.model.Id
+import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.Payload
 import org.huwtl.penfold.domain.event.JobCreated
 import org.huwtl.penfold.domain.model.QueueName
 import org.huwtl.penfold.domain.event.JobTriggered
 import org.huwtl.penfold.domain.event.JobStarted
+import org.huwtl.penfold.query.{EventSequenceId, EventRecord, PageRequest}
 
-class RedisQueryStoreEventPersisterTest extends RedisSpecification {
+class RedisQueryStoreUpdaterTest extends RedisSpecification {
   trait context extends Scope {
-    val aggregateRootId = Id(UUID.randomUUID().toString)
+    val aggregateRootId = AggregateId(UUID.randomUUID().toString)
     val queueName = QueueName("type")
     val payload = Payload(Map("a" -> "123", "b" -> 1))
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
@@ -25,7 +26,7 @@ class RedisQueryStoreEventPersisterTest extends RedisSpecification {
     val redisClient = newRedisClient()
     val serializer = new EventSerializer
     val queryRepository = new RedisQueryRepository(redisClient, new ObjectSerializer)
-    val queryStoreUpdater = new RedisQueryStoreEventPersister(redisClient, new ObjectSerializer)
+    val queryStoreUpdater = new RedisQueryStoreUpdater(redisClient, new ObjectSerializer)
   }
 
   "update query store on event" in new context {
@@ -34,18 +35,18 @@ class RedisQueryStoreEventPersisterTest extends RedisSpecification {
     val jobStartedEvent = JobStarted(aggregateRootId, Version(3))
     val jobCompletedEvent = JobCompleted(aggregateRootId, Version(4))
 
-    queryStoreUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
+    queryStoreUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
     queryRepository.retrieveBy(queueName, Status.Waiting, pageRequest).jobs.size must beEqualTo(1)
 
-    queryStoreUpdater.handle(NewEvent(Id("2"), jobTriggeredEvent))
+    queryStoreUpdater.handle(EventRecord(EventSequenceId(2), jobTriggeredEvent))
     queryRepository.retrieveBy(queueName, Status.Waiting, pageRequest).jobs must beEmpty
     queryRepository.retrieveBy(queueName, Status.Triggered, pageRequest).jobs.size must beEqualTo(1)
 
-    queryStoreUpdater.handle(NewEvent(Id("3"), jobStartedEvent))
+    queryStoreUpdater.handle(EventRecord(EventSequenceId(3), jobStartedEvent))
     queryRepository.retrieveBy(queueName, Status.Triggered, pageRequest).jobs must beEmpty
     queryRepository.retrieveBy(queueName, Status.Started, pageRequest).jobs.size must beEqualTo(1)
 
-    queryStoreUpdater.handle(NewEvent(Id("4"), jobCompletedEvent))
+    queryStoreUpdater.handle(EventRecord(EventSequenceId(4), jobCompletedEvent))
     queryRepository.retrieveBy(queueName, Status.Started, pageRequest).jobs must beEmpty
     queryRepository.retrieveBy(queueName, Status.Completed, pageRequest).jobs.size must beEqualTo(1)
   }
@@ -56,9 +57,9 @@ class RedisQueryStoreEventPersisterTest extends RedisSpecification {
     val jobStartedEvent = JobStarted(aggregateRootId, Version(3))
     val jobCompletedEvent = JobCompleted(aggregateRootId, Version(4))
 
-    queryStoreUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
+    queryStoreUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
     queryRepository.retrieveBy(queueName, Status.Waiting, pageRequest).jobs.size must beEqualTo(1)
-    queryStoreUpdater.handle(NewEvent(Id("1"), jobCreatedEvent))
+    queryStoreUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
     queryRepository.retrieveBy(queueName, Status.Waiting, pageRequest).jobs.size must beEqualTo(1)
   }
 }

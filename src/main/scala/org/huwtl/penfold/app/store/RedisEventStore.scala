@@ -1,7 +1,7 @@
 package org.huwtl.penfold.app.store
 
 import org.huwtl.penfold.domain.store.EventStore
-import org.huwtl.penfold.domain.model.Id
+import org.huwtl.penfold.domain.model.AggregateId
 import com.redis.RedisClient
 import org.huwtl.penfold.app.support.json.EventSerializer
 import org.huwtl.penfold.domain.event.Event
@@ -20,7 +20,7 @@ class RedisEventStore(redisClient: RedisClient, eventSerializer: EventSerializer
       | local event = ARGV[1]
       | local expectedVersion = tonumber(ARGV[2])
       |
-      | local eventId = redis.call('hlen', eventStore) + 1
+      | local eventId = redis.call('hlen', eventStore)
       |
       | local version = tonumber(redis.call('llen', aggregateId)) + 1
       | if expectedVersion ~= version then
@@ -43,7 +43,7 @@ class RedisEventStore(redisClient: RedisClient, eventSerializer: EventSerializer
     }
   }
 
-  override def getByAggregateId(id: Id) = {
+  override def retrieveBy(id: AggregateId) = {
     val events = for {
       optEventId <- redisClient.lrange(id.value, 0, -1).get
       eventId <- optEventId

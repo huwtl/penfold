@@ -9,7 +9,7 @@ trait EventSourced {
 }
 
 trait AggregateRoot extends EventSourced {
-  def aggregateId : Id
+  def aggregateId : AggregateId
 
   def version: Version
 

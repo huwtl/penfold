@@ -1,18 +1,18 @@
 package org.huwtl.penfold.domain.store
 
-import org.huwtl.penfold.domain.model.{Job, Id, AggregateRoot}
-import org.huwtl.penfold.query.QueryStoreUpdater
+import org.huwtl.penfold.domain.model.{Job, AggregateId, AggregateRoot}
+import org.huwtl.penfold.query.NewEventPublisher
 
-class DomainRepository(eventStore: EventStore, queryStoreUpdater: QueryStoreUpdater) {
-  def getById[T <: AggregateRoot](id: Id): Option[T] = {
-    Some(Job.loadFromHistory[T](eventStore.getByAggregateId(id)))
+class DomainRepository(eventStore: EventStore, eventPublisher: NewEventPublisher) {
+  def getById[T <: AggregateRoot](id: AggregateId): Option[T] = {
+    Some(Job.loadFromHistory[T](eventStore.retrieveBy(id)))
   }
 
   def add(aggregateRoot: AggregateRoot): AggregateRoot = {
     val uncommittedEvents = aggregateRoot.uncommittedEvents.reverse
     uncommittedEvents.foreach (eventStore.add)
 
-    queryStoreUpdater.updateWithNewEvents()
+    eventPublisher.publishNewEvents()
 
     aggregateRoot.markCommitted
   }
