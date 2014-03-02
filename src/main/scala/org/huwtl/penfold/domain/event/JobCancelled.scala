@@ -2,16 +2,4 @@ package org.huwtl.penfold.domain.event
 
 import org.huwtl.penfold.domain.model.{Version, AggregateId}
 
-trait Event {
-  val aggregateId: AggregateId
-  val aggregateVersion: Version
-}
-
-
-
-
-
-
-
-
-
+case class JobCancelled(aggregateId: AggregateId, aggregateVersion: Version) extends Event
