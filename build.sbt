@@ -4,7 +4,7 @@ name := "penfold"
 
 version := "0.1.0-SNAPSHOT"
 
-scalaVersion := "2.10.1"
+scalaVersion := "2.10.3"
 
 scalacOptions ++= Seq( "-deprecation", "-unchecked", "-feature" )
 
@@ -33,3 +33,4 @@ libraryDependencies ++= Seq(
 resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
 
 resolvers += "clojars.org" at "http://clojars.org/repo/"
+
