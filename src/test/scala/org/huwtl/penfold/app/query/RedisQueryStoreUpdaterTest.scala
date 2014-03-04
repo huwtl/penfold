@@ -24,10 +24,10 @@ class RedisQueryStoreUpdaterTest extends RedisSpecification {
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val pageRequest = PageRequest(0, 10)
-    val redisClient = newRedisClient()
+    val redisClientPool = newRedisClientPool()
     val serializer = new EventSerializer
-    val queryRepository = new RedisQueryRepository(redisClient, new ObjectSerializer)
-    val queryStoreUpdater = new RedisQueryStoreUpdater(redisClient, new ObjectSerializer)
+    val queryRepository = new RedisQueryRepository(redisClientPool, new ObjectSerializer)
+    val queryStoreUpdater = new RedisQueryStoreUpdater(redisClientPool, new ObjectSerializer)
   }
 
   "update query store on event" in new context {

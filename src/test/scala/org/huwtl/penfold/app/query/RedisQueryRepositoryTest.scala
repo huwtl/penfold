@@ -27,9 +27,9 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
   val status = Status.Waiting
 
   class context extends Scope {
-    val redisClient = newRedisClient()
-    val queryRepositoryUpdater = new RedisQueryStoreUpdater(redisClient, new ObjectSerializer)
-    val queryRepository = new RedisQueryRepository(redisClient, new ObjectSerializer)
+    val redisClientPool = newRedisClientPool()
+    val queryRepositoryUpdater = new RedisQueryStoreUpdater(redisClientPool, new ObjectSerializer)
+    val queryRepository = new RedisQueryRepository(redisClientPool, new ObjectSerializer)
   }
 
   "retrieve job by id" in new context {

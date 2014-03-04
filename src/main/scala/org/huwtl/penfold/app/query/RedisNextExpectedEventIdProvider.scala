@@ -1,12 +1,14 @@
 package org.huwtl.penfold.app.query
 
-import com.redis.RedisClient
+import com.redis.RedisClientPool
 import org.huwtl.penfold.query.{EventSequenceId, NextExpectedEventIdProvider}
 
-class RedisNextExpectedEventIdProvider(redisClient: RedisClient) extends NextExpectedEventIdProvider {
+class RedisNextExpectedEventIdProvider(redisClientPool: RedisClientPool) extends NextExpectedEventIdProvider {
   val queryEventsStore = "queryEventsStore"
 
   override def nextExpectedEvent = {
-    EventSequenceId(redisClient.scard(queryEventsStore) getOrElse 0L)
+    EventSequenceId(
+      redisClientPool.withClient(_.scard(queryEventsStore) getOrElse 0L)
+    )
   }
 }

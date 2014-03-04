@@ -1,6 +1,6 @@
 package org.huwtl.penfold.app.query
 
-import com.redis.RedisClient
+import com.redis.RedisClientPool
 import org.huwtl.penfold.domain.model.Status
 import org.joda.time.format.DateTimeFormat
 import org.huwtl.penfold.app.support.json.ObjectSerializer
@@ -14,10 +14,10 @@ import org.huwtl.penfold.query.PageRequest
 import org.huwtl.penfold.query.JobRecord
 import org.huwtl.penfold.query.PageResult
 
-class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSerializer) extends QueryRepository {
+class RedisQueryRepository(redisClientPool: RedisClientPool, objectSerializer: ObjectSerializer) extends QueryRepository {
   val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
-  val retrieveJobScript = redisClient.scriptLoad(
+  lazy val retrieveJobScript = redisClientPool.withClient(_.scriptLoad(
     """
       | local jobKey = KEYS[1]
       |
@@ -33,11 +33,11 @@ class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSer
       |
       | return {created, type, status, trigger, payload}
     """.stripMargin
-  )
+  ))
 
   override def retrieveBy(queueName: QueueName, status: Status, pageRequest: PageRequest) = {
     val queueKey = s"${queueName.value}.${status.name}"
-    val aggregateIdsWithOverflow = redisClient.zrange(queueKey, pageRequest.start, pageRequest.end).get
+    val aggregateIdsWithOverflow = redisClientPool.withClient(_.zrange(queueKey, pageRequest.start, pageRequest.end).get)
     val aggregateIdsWithoutOverflow = aggregateIdsWithOverflow.take(pageRequest.pageSize)
 
     val previousPageExists = !pageRequest.firstPage
@@ -55,7 +55,7 @@ class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSer
   override def retrieveBy(aggregateId: AggregateId) = {
     val jobKeyName = s"job:${aggregateId.value}"
 
-    val jobAttributes = redisClient.evalMultiSHA[String](retrieveJobScript.get, List(jobKeyName), Nil).get
+    val jobAttributes = redisClientPool.withClient(_.evalMultiSHA[String](retrieveJobScript.get, List(jobKeyName), Nil).get)
 
     if (jobAttributes.isEmpty) {
       None
@@ -74,7 +74,7 @@ class RedisQueryRepository(redisClient: RedisClient, objectSerializer: ObjectSer
     val pageSize = 50
 
     def nextPageOfJobsToTrigger(offset: Int) = {
-      val nextPageOfEarliestTriggeredJobs = redisClient.zrangebyscore(key = Status.Waiting.name, max = now().getMillis, limit = Some(offset, pageSize))
+      val nextPageOfEarliestTriggeredJobs = redisClientPool.withClient(_.zrangebyscore(key = Status.Waiting.name, max = now().getMillis, limit = Some(offset, pageSize)))
       nextPageOfEarliestTriggeredJobs.getOrElse(Nil).map {
         aggregateId => new JobRecordReference(AggregateId(aggregateId))
       }

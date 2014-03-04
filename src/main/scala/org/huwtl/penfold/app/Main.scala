@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit._
 import org.huwtl.penfold.command._
 import org.huwtl.penfold.command.CreateJob
 import org.huwtl.penfold.domain.store.DomainRepository
-import com.redis.RedisClient
+import com.redis.RedisClientPool
 import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
 import org.huwtl.penfold.query.{NewEventsProvider, NewEventPublisher}
 import org.huwtl.penfold.app.query.{RedisEventStoreQueryService, RedisNextExpectedEventIdProvider, RedisQueryStoreUpdater, RedisQueryRepository}
@@ -19,14 +19,17 @@ import org.huwtl.penfold.app.query.{RedisEventStoreQueryService, RedisNextExpect
 class Main extends LifeCycle {
   override def init(context: ServletContext) {
 
-    val redisClient = new RedisClient("localhost", 6379)
+    val domainRedisClientPool = new RedisClientPool("localhost", 6379, database = 0)
+
+    val queryRedisClientPool = new RedisClientPool("localhost", 6379, database = 1)
+
     val eventSerializer = new EventSerializer
     val objectSerializer = new ObjectSerializer
-    val eventStore = new RedisEventStore(redisClient, eventSerializer)
+    val eventStore = new RedisEventStore(domainRedisClientPool, eventSerializer)
 
-    val newEventsProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(redisClient), new RedisEventStoreQueryService(redisClient, eventSerializer))
+    val newEventsProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryRedisClientPool), new RedisEventStoreQueryService(domainRedisClientPool, eventSerializer))
 
-    val domainRepository = new DomainRepository(eventStore, new NewEventPublisher(newEventsProvider, List(new RedisQueryStoreUpdater(redisClient, objectSerializer))))
+    val domainRepository = new DomainRepository(eventStore, new NewEventPublisher(newEventsProvider, List(new RedisQueryStoreUpdater(queryRedisClientPool, objectSerializer))))
 
     val commandDispatcher = new CommandDispatcher(Map[Class[_ <: Command], CommandHandler[_ <: Command]](//
       classOf[CreateJob] -> new CreateJobHandler(domainRepository), //
@@ -37,7 +40,7 @@ class Main extends LifeCycle {
       classOf[CancelJob] -> new CancelJobHandler(domainRepository) //
     ))
 
-    val queryRepository = new RedisQueryRepository(redisClient, objectSerializer)
+    val queryRepository = new RedisQueryRepository(queryRedisClientPool, objectSerializer)
 
     val baseUrl = new URI("http://localhost:8080")
 

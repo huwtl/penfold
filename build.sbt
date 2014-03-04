@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
   "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided",
   "com.theoryinpractise" % "halbuilder-core" % "2.0.2",
   "org.json4s" %% "json4s-jackson" % "3.2.4",
-  "net.debasishg" % "redisclient_2.10" % "2.11",
+  "net.debasishg" % "redisclient_2.10" % "2.12",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "org.specs2" % "specs2_2.10" % "2.1.1" % "test",
   "org.scalatra" %% "scalatra-specs2" % "2.2.2" % "test",

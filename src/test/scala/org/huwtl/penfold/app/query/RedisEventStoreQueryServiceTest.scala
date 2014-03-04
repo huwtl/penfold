@@ -9,11 +9,12 @@ import org.huwtl.penfold.support.RedisSpecification
 import org.huwtl.penfold.query.{EventSequenceId, EventRecord}
 
 class RedisEventStoreQueryServiceTest extends RedisSpecification {
+
   class context extends Scope {
     val eventSerializer = new EventSerializer
-    val redisClient = newRedisClient()
-    val redisEventStore = new RedisEventStore(redisClient, eventSerializer)
-    val eventStoreQueryRepository = new RedisEventStoreQueryService(redisClient, eventSerializer)
+    val redisClientPool = newRedisClientPool()
+    val redisEventStore = new RedisEventStore(redisClientPool, eventSerializer)
+    val eventStoreQueryRepository = new RedisEventStoreQueryService(redisClientPool, eventSerializer)
   }
 
   "retrieve nothing for last id when domain event store is empty" in new context {

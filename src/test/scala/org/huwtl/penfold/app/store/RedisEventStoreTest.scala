@@ -19,8 +19,8 @@ class RedisEventStoreTest extends Specification with RedisSpecification {
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val payload = Payload(Map("a" -> "123", "b" -> 1))
     val serializer = new EventSerializer
-    val redisClient = newRedisClient()
-    val redisEventStore = new RedisEventStore(redisClient, serializer)
+    val redisPool = newRedisClientPool()
+    val redisEventStore = new RedisEventStore(redisPool, serializer)
   }
 
   "store events in event store" in new context {
