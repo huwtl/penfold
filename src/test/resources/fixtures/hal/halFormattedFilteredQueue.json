@@ -1,0 +1,46 @@
+{
+    "_links": {
+        "self": {"href": "http://host/queues/abc/triggered?_data=value"}
+    },
+    "_embedded": {
+        "queue": [
+            {
+                "_links": {
+                    "self": {"href": "http://host/queues/abc/triggered/2"}
+                },
+                "jobId": "2",
+                "_embedded": {
+                    "job": {
+                        "_links": {
+                            "self": {"href": "http://host/jobs/2"},
+                            "currentQueue": {"href": "http://host/queues/abc/triggered"},
+                            "start": {"href": "http://host/queues/abc/started"}
+                        },
+                        "payload": {},
+                        "queueName": "abc",
+                        "status": "triggered",
+                        "triggerDate": "2014-02-25 14:00:00"
+                    }
+                }
+            },
+            {
+                "_links": {
+                    "self": {"href": "http://host/queues/abc/triggered/1"}
+                },
+                "jobId": "1",
+                "_embedded": {
+                    "job": {
+                        "_links": {
+                            "self": {"href": "http://host/jobs/1"},
+                            "currentQueue": {"href": "http://host/queues/abc/triggered"},
+                            "start": {"href": "http://host/queues/abc/started"}
+                        },
+                        "payload": {},
+                        "queueName": "abc",
+                        "status": "triggered",
+                        "triggerDate": "2014-02-25 14:00:00"
+                    }
+                }
+            }
+    ]
+}}

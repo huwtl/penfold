@@ -12,7 +12,7 @@ seq(webSettings :_*)
 
 conflictWarning in ThisBuild := ConflictWarning.disable
 
-parallelExecution in ThisBuild := false
+parallelExecution in Test := false
 
 libraryDependencies ++= Seq(
   "org.scalatra" % "scalatra_2.10" % "2.2.2",
@@ -27,7 +27,7 @@ libraryDependencies ++= Seq(
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "org.specs2" % "specs2_2.10" % "2.1.1" % "test",
   "org.scalatra" %% "scalatra-specs2" % "2.2.2" % "test",
-  "redis.embedded" % "embedded-redis" % "0.1" % "test"
+  "redis.embedded" % "embedded-redis" % "0.2" % "test"
 )
 
 resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"

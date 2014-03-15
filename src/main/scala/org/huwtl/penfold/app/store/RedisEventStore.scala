@@ -9,26 +9,26 @@ import org.huwtl.penfold.domain.exceptions.EventConflictException
 import scala.util.{Success, Failure, Try}
 
 class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializer) extends EventStore {
-  val eventStore = "events"
+  val eventsKey = "events"
 
   val conflictError = "CONFLICT"
 
   lazy val script = redisPool.withClient(_.scriptLoad(
     s"""
-      | local eventStore = KEYS[1]
-      | local aggregateId = KEYS[2]
+      | local eventsKey = KEYS[1]
+      | local aggregateEventsKey = KEYS[2]
       | local event = ARGV[1]
       | local expectedVersion = tonumber(ARGV[2])
       |
-      | local eventId = redis.call('hlen', eventStore)
+      | local eventId = redis.call('hlen', eventsKey)
       |
-      | local version = tonumber(redis.call('llen', aggregateId)) + 1
+      | local version = tonumber(redis.call('llen', aggregateEventsKey)) + 1
       | if expectedVersion ~= version then
       |   return redis.error_reply('$conflictError')
       | end
       |
-      | redis.call('hset', eventStore, eventId, event)
-      | redis.call('rpush', aggregateId, eventId)
+      | redis.call('hset', eventsKey, eventId, event)
+      | redis.call('rpush', aggregateEventsKey, eventId)
       |
       | return 'OK'
     """.stripMargin
@@ -38,7 +38,9 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
     val serialized = eventSerializer.serialize(event)
     redisPool.withClient {
       client =>
-        Try(client.evalSHA(script.get, List(eventStore, event.aggregateId.value), List(serialized, event.aggregateVersion.number))) match {
+        Try(client.evalSHA(script.get,
+          keys = List(eventsKey, aggregateEventsKey(event.aggregateId)),
+          args = List(serialized, event.aggregateVersion.number))) match {
           case Failure(e) if e.getMessage.contains(conflictError) => throw new EventConflictException(s"event conflict ${event.aggregateId}")
           case Success(value) =>
         }
@@ -49,11 +51,15 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
     redisPool.withClient {
       client =>
         val events = for {
-          optEventId <- client.lrange(id.value, 0, -1).get
+          optEventId <- client.lrange(aggregateEventsKey(id), 0, -1).get
           eventId <- optEventId
-          event <- client.hget(eventStore, eventId)
+          event <- client.hget(eventsKey, eventId)
         } yield eventSerializer.deserialize(event)
         events
     }
+  }
+
+  private def aggregateEventsKey(id: AggregateId) = {
+    s"agg:${id.value}:events"
   }
 }

@@ -11,7 +11,7 @@ import org.huwtl.penfold.app.support.json.ObjectSerializer
 class QueueResource(queryRepository: QueryRepository,
                     commandDispatcher: CommandDispatcher,
                     jsonConverter: ObjectSerializer,
-                    halFormatter: HalQueueFormatter) extends ScalatraServlet {
+                    halFormatter: HalQueueFormatter) extends ScalatraServlet with FilterParamsProvider {
 
   private val pageSize = 10
 
@@ -23,9 +23,9 @@ class QueueResource(queryRepository: QueryRepository,
     statusMatch {
       status => {
         val queue = QueueName(params("queue"))
-        val pageNumber = params.getOrElse("page", "0").toInt
-        Ok(halFormatter.halFrom(queue, status, queryRepository.retrieveBy(queue, status, PageRequest(pageNumber, pageSize))
-        ))
+        val page = PageRequest(params.getOrElse("page", "0").toInt, pageSize)
+        val filters = parseFilters(params)
+        Ok(halFormatter.halFrom(queue, status, queryRepository.retrieveBy(queue, status, page, filters), filters))
       }
     }
   }

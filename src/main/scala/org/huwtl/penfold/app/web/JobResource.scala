@@ -4,11 +4,13 @@ import org.scalatra._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import org.huwtl.penfold.app.support.hal.HalJobFormatter
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.query.QueryRepository
-import org.huwtl.penfold.command.{CreateJob, CommandDispatcher}
+import org.huwtl.penfold.query.{PageRequest, QueryRepository}
+import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 
-class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDispatcher, jsonConverter: ObjectSerializer, halFormatter: HalJobFormatter) extends ScalatraServlet {
+class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDispatcher, jsonConverter: ObjectSerializer, halFormatter: HalJobFormatter) extends ScalatraServlet with FilterParamsProvider {
+
+  private val pageSize = 10
 
   before() {
     contentType = HAL_JSON
@@ -19,6 +21,12 @@ class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDi
       case Some(job) => Ok(halFormatter.halFrom(job))
       case _ => NotFound("Job not found")
     }
+  }
+
+  get("/") {
+    val filters = parseFilters(params)
+    val page = PageRequest(params.getOrElse("page", "0").toInt, pageSize)
+    Ok(halFormatter.halFrom(queryRepository.retrieveBy(filters, page), filters))
   }
 
   post("/") {

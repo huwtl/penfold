@@ -14,7 +14,8 @@ import org.huwtl.penfold.query.PageRequest
 import org.huwtl.penfold.query.JobRecord
 import org.huwtl.penfold.query.PageResult
 
-class RedisQueryRepository(redisClientPool: RedisClientPool, objectSerializer: ObjectSerializer) extends QueryRepository {
+class RedisQueryRepository(redisClientPool: RedisClientPool, indexes: Indexes, objectSerializer: ObjectSerializer,
+                           keyFactory: RedisKeyFactory) extends QueryRepository {
   val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
   lazy val retrieveJobScript = redisClientPool.withClient(_.scriptLoad(
@@ -26,34 +27,29 @@ class RedisQueryRepository(redisClientPool: RedisClientPool, objectSerializer: O
       | end
       |
       | local created = redis.call('hget', jobKey, 'created')
-      | local type = redis.call('hget', jobKey, 'type')
+      | local queue = redis.call('hget', jobKey, 'queue')
       | local status = redis.call('hget', jobKey, 'status')
       | local trigger = redis.call('hget', jobKey, 'trigger')
       | local payload = redis.call('hget', jobKey, 'payload')
       |
-      | return {created, type, status, trigger, payload}
+      | return {created, queue, status, trigger, payload}
     """.stripMargin
   ))
 
-  override def retrieveBy(queueName: QueueName, status: Status, pageRequest: PageRequest) = {
-    val queueKey = s"${queueName.value}.${status.name}"
-    val aggregateIdsWithOverflow = redisClientPool.withClient(_.zrange(queueKey, pageRequest.start, pageRequest.end).get)
-    val aggregateIdsWithoutOverflow = aggregateIdsWithOverflow.take(pageRequest.pageSize)
+  override def retrieveBy(queueName: QueueName, status: Status, pageRequest: PageRequest, filters: Filters) = {
+    val retrievalKey = indexes.keyFor(filters, queueName, status) getOrElse keyFactory.queueKey(queueName, status)
+    retrievePage(retrievalKey, pageRequest)
+  }
 
-    val previousPageExists = !pageRequest.firstPage
-    val nextPageExists = aggregateIdsWithOverflow.size != aggregateIdsWithoutOverflow.size
-
-    PageResult(
-      pageRequest.pageNumber,
-      aggregateIdsWithoutOverflow.map {
-        id => retrieveBy(AggregateId(id)).get
-      },
-      previousPageExists,
-      nextPageExists)
+  override def retrieveBy(filters: Filters, pageRequest: PageRequest) = {
+    indexes.keyFor(filters) match {
+      case Some(indexKey) => retrievePage(indexKey, pageRequest)
+      case None => PageResult(0, List(), previousExists = false, nextExists = false)
+    }
   }
 
   override def retrieveBy(aggregateId: AggregateId) = {
-    val jobKeyName = s"job:${aggregateId.value}"
+    val jobKeyName = keyFactory.jobKey(aggregateId)
 
     val jobAttributes = redisClientPool.withClient(_.evalMultiSHA[String](retrieveJobScript.get, List(jobKeyName), Nil).get)
 
@@ -74,22 +70,37 @@ class RedisQueryRepository(redisClientPool: RedisClientPool, objectSerializer: O
     val pageSize = 50
 
     def nextPageOfJobsToTrigger(offset: Int) = {
-      val nextPageOfEarliestTriggeredJobs = redisClientPool.withClient(_.zrangebyscore(key = Status.Waiting.name, max = now().getMillis, limit = Some(offset, pageSize)))
+      val statusKey = keyFactory.statusKey(Status.Waiting)
+      val nextPageOfEarliestTriggeredJobs = redisClientPool.withClient(_.zrangebyscore(key = statusKey, max = now().getMillis, limit = Some(offset, pageSize)))
       nextPageOfEarliestTriggeredJobs.getOrElse(Nil).map {
         aggregateId => new JobRecordReference(AggregateId(aggregateId))
       }
     }
 
-    def allPagesOfJobsToTrigger(offset: Int): Stream[List[JobRecordReference]] = {
+    def allPagesOfJobsToTrigger(offset: Int = 0): Stream[List[JobRecordReference]] = {
       val page = nextPageOfJobsToTrigger(offset)
       if (page.isEmpty) Stream.empty else page #:: allPagesOfJobsToTrigger(offset + pageSize)
     }
 
     val allJobsToTrigger = for {
-      pageOfJobsToTrigger <- allPagesOfJobsToTrigger(0)
+      pageOfJobsToTrigger <- allPagesOfJobsToTrigger()
       jobToTrigger <- pageOfJobsToTrigger
     } yield jobToTrigger
 
     allJobsToTrigger
+  }
+
+  private def retrievePage(indexKey: String, pageRequest: PageRequest): PageResult = {
+    val aggregateIdsWithOverflow = redisClientPool.withClient(_.zrange(indexKey, pageRequest.start, pageRequest.end).get)
+    val aggregateIdsWithoutOverflow = aggregateIdsWithOverflow.take(pageRequest.pageSize)
+
+    val previousPageExists = !pageRequest.firstPage
+    val nextPageExists = aggregateIdsWithOverflow.size != aggregateIdsWithoutOverflow.size
+
+    PageResult(
+      pageRequest.pageNumber,
+      aggregateIdsWithoutOverflow.map(id => retrieveBy(AggregateId(id)).get),
+      previousPageExists,
+      nextPageExists)
   }
 }

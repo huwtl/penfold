@@ -18,16 +18,16 @@ import org.huwtl.penfold.query.{EventSequenceId, EventRecord, PageRequest}
 class RedisQueryStoreUpdaterTest extends RedisSpecification {
 
   trait context extends Scope {
+    val redisClientPool = newRedisClientPool()
     val aggregateRootId = AggregateId(UUID.randomUUID().toString)
     val queueName = QueueName("type")
     val payload = Payload(Map("a" -> "123", "b" -> 1))
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val pageRequest = PageRequest(0, 10)
-    val redisClientPool = newRedisClientPool()
     val serializer = new EventSerializer
-    val queryRepository = new RedisQueryRepository(redisClientPool, new ObjectSerializer)
-    val queryStoreUpdater = new RedisQueryStoreUpdater(redisClientPool, new ObjectSerializer)
+    val queryRepository = new RedisQueryRepository(redisClientPool, Indexes(Nil, redisKeyFactory), new ObjectSerializer, redisKeyFactory)
+    val queryStoreUpdater = new RedisQueryStoreUpdater(redisClientPool, new ObjectSerializer, redisKeyFactory)
   }
 
   "update query store on event" in new context {

@@ -7,17 +7,18 @@ import org.huwtl.penfold.query.EventSequenceId
 class RedisNextExpectedEventIdProviderTest extends RedisSpecification {
 
   class context extends Scope {
+    val trackingKey = "trackingKey"
     val redisClientPool = newRedisClientPool()
-    val nextExpectedEventIdProvider = new RedisNextExpectedEventIdProvider(redisClientPool)
+    val nextExpectedEventIdProvider = new RedisNextExpectedEventIdProvider(redisClientPool, trackingKey)
   }
 
   "provide id of next expected event to update into query store" in new context {
     nextExpectedEventIdProvider.nextExpectedEvent must beEqualTo(EventSequenceId(0))
 
-    redisClientPool.withClient(_.sadd(nextExpectedEventIdProvider.queryEventsStore, "a"))
+    redisClientPool.withClient(_.sadd(trackingKey, "a"))
     nextExpectedEventIdProvider.nextExpectedEvent must beEqualTo(EventSequenceId(1))
 
-    redisClientPool.withClient(_.sadd(nextExpectedEventIdProvider.queryEventsStore, "b"))
+    redisClientPool.withClient(_.sadd(trackingKey, "b"))
     nextExpectedEventIdProvider.nextExpectedEvent must beEqualTo(EventSequenceId(2))
   }
 }

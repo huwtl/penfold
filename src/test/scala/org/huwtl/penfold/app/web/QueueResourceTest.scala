@@ -7,11 +7,17 @@ import scala.io.Source._
 import org.scalatra.test.specs2.MutableScalatraSpec
 import org.joda.time.DateTime
 import org.specs2.mock.Mockito
-import scala.Some
-import org.huwtl.penfold.domain.model.{QueueName, Status, Payload, AggregateId}
-import org.huwtl.penfold.query.{PageResult, PageRequest, JobRecord, QueryRepository}
+import org.huwtl.penfold.domain.model.Status
+import org.huwtl.penfold.query._
 import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
+import org.huwtl.penfold.domain.model.QueueName
+import org.huwtl.penfold.domain.model.Payload
+import org.huwtl.penfold.query.PageRequest
+import org.huwtl.penfold.domain.model.AggregateId
+import org.huwtl.penfold.query.JobRecord
+import scala.Some
+import org.huwtl.penfold.query.PageResult
 
 class QueueResourceTest extends MutableScalatraSpec with Mockito {
   sequential
@@ -35,7 +41,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
   "return 200 with hal+json formatted queue response" in {
     val expectedJob1 = JobRecord(AggregateId("1"), created, queueName, Status.Triggered, triggerDate, payload)
     val expectedJob2 = JobRecord(AggregateId("2"), created, queueName, Status.Triggered, triggerDate, payload)
-    queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(0, pageSize)) returns PageResult(0, List(expectedJob2, expectedJob1), previousExists = false, nextExists = false)
+    queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(0, pageSize), Filters.empty) returns PageResult(0, List(expectedJob2, expectedJob1), previousExists = false, nextExists = false)
 
     get("/queues/abc/triggered") {
       status must beEqualTo(200)
@@ -43,10 +49,22 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
     }
   }
 
+  "return 200 with hal+json formatted filtered queue response" in {
+    val expectedJob1 = JobRecord(AggregateId("1"), created, queueName, Status.Triggered, triggerDate, payload)
+    val expectedJob2 = JobRecord(AggregateId("2"), created, queueName, Status.Triggered, triggerDate, payload)
+    val filters = Filters(List(Filter("data", "value")))
+    queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(0, pageSize), filters) returns PageResult(0, List(expectedJob2, expectedJob1), previousExists = false, nextExists = false)
+
+    get("/queues/abc/triggered?_data=value") {
+      status must beEqualTo(200)
+      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueue.json"))
+    }
+  }
+
   "return 200 with hal+json formatted queue response with pagination links" in {
     val expectedJob1 = JobRecord(AggregateId("1"), created, queueName, Status.Triggered, triggerDate, payload)
     val expectedJob2 = JobRecord(AggregateId("2"), created, queueName, Status.Triggered, triggerDate, payload)
-    queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(1, pageSize)) returns PageResult(1, List(expectedJob2, expectedJob1), previousExists = true, nextExists = true)
+    queryRepository.retrieveBy(queueName, Status.Triggered, PageRequest(1, pageSize), Filters.empty) returns PageResult(1, List(expectedJob2, expectedJob1), previousExists = true, nextExists = true)
 
     get("/queues/abc/triggered?page=1") {
       status must beEqualTo(200)

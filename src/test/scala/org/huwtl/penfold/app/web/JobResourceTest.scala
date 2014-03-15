@@ -9,10 +9,16 @@ import org.joda.time.DateTime
 import org.specs2.mock.Mockito
 import scala.Some
 import org.huwtl.penfold.domain.model.{QueueName, Status, Payload, AggregateId}
-import org.huwtl.penfold.query.{JobRecord, QueryRepository}
+import org.huwtl.penfold.query._
 import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.specs2.specification.Scope
+import org.huwtl.penfold.domain.model.QueueName
+import org.huwtl.penfold.domain.model.Payload
+import org.huwtl.penfold.query.PageRequest
+import org.huwtl.penfold.domain.model.AggregateId
+import org.huwtl.penfold.query.JobRecord
+import scala.Some
 
 class JobResourceTest extends MutableScalatraSpec with Mockito {
   sequential
@@ -36,6 +42,17 @@ class JobResourceTest extends MutableScalatraSpec with Mockito {
     get("/jobs/1") {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingJob.json"))
+    }
+  }
+
+  "return 200 with hal+json formatted filtered jobs response" in {
+    val expectedJob = JobRecord(AggregateId("1"), created, queueName, Status.Waiting, triggerDate, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    val filters = Filters(List(Filter("data", "value")))
+    queryRepository.retrieveBy(filters, PageRequest(0, 10)) returns PageResult(0, List(expectedJob), previousExists = false, nextExists = false)
+
+    get("/jobs?_data=value") {
+      status must beEqualTo(200)
+      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredJobs.json"))
     }
   }
 

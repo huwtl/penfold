@@ -1,15 +1,15 @@
 package org.huwtl.penfold.app.support.hal
 
-import scala.collection.JavaConversions._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import org.joda.time.format.DateTimeFormat
 import java.net.URI
 import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
-import org.huwtl.penfold.query.JobRecord
+import org.huwtl.penfold.query.{Filters, PageResult, JobRecord}
 import org.huwtl.penfold.domain.model.Status._
 import com.theoryinpractise.halbuilder.api.Representation
+import org.huwtl.penfold.app.support.JavaMapUtil
 
-class HalJobFormatter(baseJobLink: URI, baseQueueLink: URI) {
+class HalJobFormatter(baseJobLink: URI, baseQueueLink: URI) extends PaginatedRepresentationProvider {
   private val representationFactory = new DefaultRepresentationFactory
 
   private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
@@ -19,7 +19,7 @@ class HalJobFormatter(baseJobLink: URI, baseQueueLink: URI) {
       .withProperty("queueName", job.queueName.value)
       .withProperty("status", job.status.name)
       .withProperty("triggerDate", dateFormatter.print(job.triggerDate))
-      .withProperty("payload", deepConvertToJavaMap(job.payload.content))
+      .withProperty("payload", JavaMapUtil.deepConvertToJavaMap(job.payload.content))
       .withLink("currentQueue", s"${baseQueueLink.toString}/${job.queueName.value}/${job.status.name}")
 
     job.status match {
@@ -42,10 +42,15 @@ class HalJobFormatter(baseJobLink: URI, baseQueueLink: URI) {
     halRepresentationFrom(job).toString(HAL_JSON)
   }
 
-  private def deepConvertToJavaMap(scalaMap: Map[String, Any]): java.util.Map[String, Any] = {
-    scalaMap.map {
-      case (key, innerMap: Map[_, _]) => (key, mapAsJavaMap(deepConvertToJavaMap(innerMap.asInstanceOf[Map[String, Any]])))
-      case notMap => notMap
-    }
+  def halFrom(pageOfJobs: PageResult, filters: Filters = Filters.empty) = {
+    val baseSelfLink = s"${baseJobLink.toString}"
+
+    val root = getRepresentation(pageOfJobs, filters, baseSelfLink, representationFactory)
+
+    pageOfJobs.jobs.foreach(job => {
+      root.withRepresentation("jobs", halRepresentationFrom(job))
+    })
+
+    root.toString(HAL_JSON)
   }
 }

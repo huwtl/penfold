@@ -28,8 +28,8 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
 
   class context extends Scope {
     val redisClientPool = newRedisClientPool()
-    val queryRepositoryUpdater = new RedisQueryStoreUpdater(redisClientPool, new ObjectSerializer)
-    val queryRepository = new RedisQueryRepository(redisClientPool, new ObjectSerializer)
+    val queryRepositoryUpdater = new RedisQueryStoreUpdater(redisClientPool, new ObjectSerializer, redisKeyFactory)
+    val queryRepository = new RedisQueryRepository(redisClientPool, Indexes(Nil, redisKeyFactory), new ObjectSerializer, redisKeyFactory)
   }
 
   "retrieve job by id" in new context {
