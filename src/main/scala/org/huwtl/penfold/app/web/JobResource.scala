@@ -8,7 +8,7 @@ import org.huwtl.penfold.query.{PageRequest, QueryRepository}
 import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 
-class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDispatcher, jsonConverter: ObjectSerializer, halFormatter: HalJobFormatter) extends ScalatraServlet with FilterParamsProvider {
+class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDispatcher, jsonConverter: ObjectSerializer, halFormatter: HalJobFormatter) extends ScalatraServlet with FilterParamsProvider with ErrorHandling {
 
   private val pageSize = 10
 

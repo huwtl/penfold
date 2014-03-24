@@ -11,7 +11,7 @@ import org.huwtl.penfold.app.support.json.ObjectSerializer
 class QueueResource(queryRepository: QueryRepository,
                     commandDispatcher: CommandDispatcher,
                     jsonConverter: ObjectSerializer,
-                    halFormatter: HalQueueFormatter) extends ScalatraServlet with FilterParamsProvider {
+                    halFormatter: HalQueueFormatter) extends ScalatraServlet with FilterParamsProvider with ErrorHandling {
 
   private val pageSize = 10
 

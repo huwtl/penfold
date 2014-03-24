@@ -98,6 +98,7 @@ class Bootstrap extends LifeCycle {
 
     val queueFormatter = new HalQueueFormatter(baseQueueLink, jobFormatter)
 
+    context mount(new PingResource, "/ping")
     context mount(new JobResource(queryRepository, commandDispatcher, objectSerializer, jobFormatter), "/jobs/*")
     context mount(new QueueResource(queryRepository, commandDispatcher, objectSerializer, queueFormatter), "/queues/*")
 
