@@ -5,7 +5,7 @@ assemblySettings
 jarName in assembly := "penfold.jar"
 
 // your assembly settings here
-mainClass in assembly := Some("org.huwtl.penfold.app.JarLauncher")
+mainClass in assembly := Some("org.huwtl.penfold.app.Main")
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
     case PathList("about.html") => MergeStrategy.rename

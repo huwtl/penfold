@@ -5,7 +5,7 @@
 
     <context-param>
         <param-name>org.scalatra.LifeCycle</param-name>
-        <param-value>org.huwtl.penfold.app.Main</param-value>
+        <param-value>org.huwtl.penfold.app.Bootstrap</param-value>
     </context-param>
 
     <listener>
