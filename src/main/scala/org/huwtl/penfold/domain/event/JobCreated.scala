@@ -7,7 +7,7 @@ import org.huwtl.penfold.domain.model.Payload
 
 case class JobCreated(aggregateId: AggregateId,
                       aggregateVersion: Version,
-                      binding: Binding,
                       created: DateTime,
+                      binding: Binding,
                       triggerDate: DateTime,
                       payload: Payload) extends Event

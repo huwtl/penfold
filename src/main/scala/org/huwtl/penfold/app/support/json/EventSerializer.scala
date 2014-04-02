@@ -25,7 +25,7 @@ class EventSerializer {
     new QueueIdJsonSerializer
 
   def serialize(event: Event) = {
-    pretty(decompose(event))
+    compact(decompose(event))
   }
 
   def deserialize(json: String) = {

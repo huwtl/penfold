@@ -2,12 +2,12 @@
     "jsonClass" : "JobCreated",
     "aggregateId" : "a1",
     "aggregateVersion" : 1,
+    "created" : "2014-02-03 12:47:54",
     "binding": {
         "queues": [
-            {"id": "abc"}
+            {"id": "q1"}
         ]
     },
-    "created" : "2014-02-03 12:47:54",
     "triggerDate" : "2014-02-03 14:30:01",
     "payload" : {
         "stuff" : "something",

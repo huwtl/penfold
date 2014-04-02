@@ -7,10 +7,12 @@ import org.huwtl.penfold.domain.model.{Version, AggregateId}
 import org.huwtl.penfold.support.RedisSpecification
 import org.huwtl.penfold.query.{EventSequenceId, EventRecord}
 import org.huwtl.penfold.app.store.redis.RedisEventStore
+import org.joda.time.DateTime
 
 class RedisEventStoreQueryServiceTest extends RedisSpecification {
 
   class context extends Scope {
+    val created = new DateTime(2014, 3, 1, 12, 0, 0, 0)
     val eventSerializer = new EventSerializer
     val redisClientPool = newRedisClientPool()
     val redisEventStore = new RedisEventStore(redisClientPool, eventSerializer)
@@ -22,8 +24,8 @@ class RedisEventStoreQueryServiceTest extends RedisSpecification {
   }
 
   "retrieve id of last event added to domain event store" in new context {
-    val event1 = JobTriggered(AggregateId("a0"), Version.init, List())
-    val event2 = JobTriggered(AggregateId("a1"), Version.init, List())
+    val event1 = JobTriggered(AggregateId("a0"), Version.init, created, List())
+    val event2 = JobTriggered(AggregateId("a1"), Version.init, created, List())
     redisEventStore.add(event1)
     redisEventStore.add(event2)
 
@@ -31,8 +33,8 @@ class RedisEventStoreQueryServiceTest extends RedisSpecification {
   }
 
   "retrieve event from domain event store" in new context {
-    val event1 = JobTriggered(AggregateId("a0"), Version.init, List())
-    val event2 = JobTriggered(AggregateId("a1"), Version.init, List())
+    val event1 = JobTriggered(AggregateId("a0"), Version.init, created, List())
+    val event2 = JobTriggered(AggregateId("a1"), Version.init, created, List())
     redisEventStore.add(event1)
     redisEventStore.add(event2)
 

@@ -37,7 +37,7 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
   }
 
   "retrieve job by id" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, Binding(List(BoundQueue(queueId))), created, triggerDate, payload)
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
 
     queryRepository.retrieveBy(aggregateRootId) must beNone
     queryRepositoryUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
@@ -45,7 +45,7 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
   }
 
   "retrieve jobs by queue" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, Binding(List(BoundQueue(queueId))), created, triggerDate, payload)
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
 
     queryRepository.retrieveByQueue(queueId, status, PageRequest(0, 10)).jobs must beEmpty
     queryRepositoryUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
@@ -78,8 +78,8 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
   }
 
   "retrieve jobs ready to queue" in new context {
-    val readyToTriggerJobCreatedEvent = JobCreated(aggregateRootId, Version.init, Binding(List(BoundQueue(queueId))), created, DateTime.now().minusHours(1), payload)
-    val notReadyToTriggerJobCreatedEvent = JobCreated(aggregateRootId, Version.init, Binding(List(BoundQueue(queueId))), created, DateTime.now().plusHours(1), payload)
+    val readyToTriggerJobCreatedEvent = JobCreated(aggregateRootId, Version.init, created, Binding(List(BoundQueue(queueId))), DateTime.now().minusHours(1), payload)
+    val notReadyToTriggerJobCreatedEvent = JobCreated(aggregateRootId, Version.init, created, Binding(List(BoundQueue(queueId))), DateTime.now().plusHours(1), payload)
 
     queryRepository.retrieveJobsToQueue must beEmpty
     queryRepositoryUpdater.handle(EventRecord(EventSequenceId(1), notReadyToTriggerJobCreatedEvent))
@@ -91,7 +91,7 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
   }
 
   private def createJobEvent(aggregateId: AggregateId, eventId: EventSequenceId, queryRepositoryUpdater: RedisQueryStoreUpdater, indexUpdater: RedisIndexUpdater) = {
-    val event = JobCreated(aggregateId, Version.init, Binding(List(BoundQueue(queueId))), created, triggerDate, payload)
+    val event = JobCreated(aggregateId, Version.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
     queryRepositoryUpdater.handle(EventRecord(eventId, event))
     indexUpdater.handle(EventRecord(eventId, event))
     event

@@ -29,8 +29,8 @@ class RedisEventStoreTest extends Specification with RedisSpecification {
   }
 
   "store events in event store" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, Binding(List(BoundQueue(queueId))), created, triggerDate, payload)
-    val jobTriggeredEvent = JobTriggered(aggregateRootId, jobCreatedEvent.aggregateVersion.next, List(queueId))
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
+    val jobTriggeredEvent = JobTriggered(aggregateRootId, jobCreatedEvent.aggregateVersion.next, created, List(queueId))
 
     redisEventStore.add(jobCreatedEvent)
     redisEventStore.add(jobTriggeredEvent)
@@ -39,8 +39,8 @@ class RedisEventStoreTest extends Specification with RedisSpecification {
   }
 
   "prevent concurrent modifications to aggregate" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, Binding(List(BoundQueue(queueId))), created, triggerDate, payload)
-    val jobTriggeredEvent = JobTriggered(aggregateRootId, jobCreatedEvent.aggregateVersion, List(queueId))
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
+    val jobTriggeredEvent = JobTriggered(aggregateRootId, jobCreatedEvent.aggregateVersion, created, List(queueId))
     redisEventStore.add(jobCreatedEvent)
 
     redisEventStore.add(jobTriggeredEvent) must throwA[EventConflictException]

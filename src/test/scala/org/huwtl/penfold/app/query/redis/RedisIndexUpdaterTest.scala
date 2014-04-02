@@ -37,7 +37,7 @@ class RedisIndexUpdaterTest extends RedisSpecification {
   }
 
   "create new index" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), Binding(List(boundQueue)), created, triggerDate, payload)
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), created, Binding(List(boundQueue)), triggerDate, payload)
 
     queryStoreUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
     queryIndexUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
@@ -49,8 +49,8 @@ class RedisIndexUpdaterTest extends RedisSpecification {
   }
 
   "update existing index" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), Binding(List(boundQueue)), created, triggerDate, payload)
-    val jobTriggeredEvent = JobTriggered(aggregateRootId, Version(2), List(queueId))
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), created, Binding(List(boundQueue)), triggerDate, payload)
+    val jobTriggeredEvent = JobTriggered(aggregateRootId, Version(2), created, List(queueId))
 
     queryStoreUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
     queryIndexUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))

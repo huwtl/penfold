@@ -1,17 +1,18 @@
 package org.huwtl.penfold.domain.model
 
 import org.joda.time.DateTime
+import org.joda.time.DateTime.now
 import org.huwtl.penfold.domain.event._
 import org.huwtl.penfold.domain.event.JobCreated
 import org.huwtl.penfold.domain.model.Status._
 
 object Job extends AggregateFactory {
   def create(aggregateId: AggregateId, binding: Binding, payload: Payload) = {
-    applyJobCreated(JobCreated(aggregateId, Version.init, binding, DateTime.now(), DateTime.now(), payload))
+    applyJobCreated(JobCreated(aggregateId, Version.init, now, binding, now, payload))
   }
 
   def create(aggregateId: AggregateId, binding: Binding, triggerDate: DateTime, payload: Payload) = {
-    applyJobCreated(JobCreated(aggregateId, Version.init, binding, DateTime.now(), triggerDate, payload))
+    applyJobCreated(JobCreated(aggregateId, Version.init, now, binding, triggerDate, payload))
   }
 
   def applyEvent = {
@@ -42,21 +43,21 @@ case class Job(uncommittedEvents: List[Event],
 
   def trigger(): Job = {
     require(status == Waiting, s"Can only queue a waiting job but was $status")
-    applyJobTriggered(JobTriggered(aggregateId, version.next, binding.queues.map(_.id)))
+    applyJobTriggered(JobTriggered(aggregateId, version.next, now, binding.queues.map(_.id)))
   }
 
   def start(queue: QueueId): Job = {
-    require(status == Ready, s"Can only start a ready job but was $status")
-    applyJobStarted(JobStarted(aggregateId, version.next, queue))
+    require(status == Ready, s"Can only start a job that is ready but was $status")
+    applyJobStarted(JobStarted(aggregateId, version.next, now, queue))
   }
 
   def cancel(queue: QueueId): Job = {
-    applyJobCancelled(JobCancelled(aggregateId, version.next, List(queue)))
+    applyJobCancelled(JobCancelled(aggregateId, version.next, now, List(queue)))
   }
 
   def complete(queue: QueueId): Job = {
     require(status == Started, s"Can only complete a started job but was $status")
-    applyJobCompleted(JobCompleted(aggregateId, version.next, queue))
+    applyJobCompleted(JobCompleted(aggregateId, version.next, now, queue))
   }
 
   def markCommitted = copy(uncommittedEvents = Nil)

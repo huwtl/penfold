@@ -11,7 +11,7 @@ class RedisKeyFactory(jsonExtractor: JsonPathExtractor) {
 
   def jobKey(aggregateId: AggregateId) = s"job:${aggregateId.value}"
 
-  def indexedJobKey(index: Index, aggregateId: AggregateId) = s"${indexKeyPrefix(index)}:${jobKey(aggregateId)}"
+  def indexedJobKey(index: Index, aggregateId: AggregateId) = s"${jobKey(aggregateId)}:${indexKeyPrefix(index)}"
 
   def indexKey(index: Index, indexValues: List[String]) = s"${indexKeyPrefix(index)}:${indexValues mkString ":"}"
 

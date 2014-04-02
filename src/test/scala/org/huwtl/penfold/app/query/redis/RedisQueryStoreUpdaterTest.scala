@@ -33,10 +33,10 @@ class RedisQueryStoreUpdaterTest extends RedisSpecification {
   }
 
   "update query store on event" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), Binding(List(BoundQueue(queueId))), created, triggerDate, payload)
-    val jobTriggeredEvent = JobTriggered(aggregateRootId, Version(2), List(queueId))
-    val jobStartedEvent = JobStarted(aggregateRootId, Version(3), queueId)
-    val jobCompletedEvent = JobCompleted(aggregateRootId, Version(4), queueId)
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
+    val jobTriggeredEvent = JobTriggered(aggregateRootId, Version(2), created, List(queueId))
+    val jobStartedEvent = JobStarted(aggregateRootId, Version(3), created, queueId)
+    val jobCompletedEvent = JobCompleted(aggregateRootId, Version(4), created, queueId)
 
     queryStoreUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
     indexUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
@@ -59,10 +59,10 @@ class RedisQueryStoreUpdaterTest extends RedisSpecification {
   }
 
   "do not persist events that have already been persisted" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), Binding(List(BoundQueue(queueId))), created, triggerDate, payload)
-    val jobTriggeredEvent = JobTriggered(aggregateRootId, Version(2), List(queueId))
-    val jobStartedEvent = JobStarted(aggregateRootId, Version(3), queueId)
-    val jobCompletedEvent = JobCompleted(aggregateRootId, Version(4), queueId)
+    val jobCreatedEvent = JobCreated(aggregateRootId, Version(1), created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
+    val jobTriggeredEvent = JobTriggered(aggregateRootId, Version(2), created, List(queueId))
+    val jobStartedEvent = JobStarted(aggregateRootId, Version(3), created, queueId)
+    val jobCompletedEvent = JobCompleted(aggregateRootId, Version(4), created, queueId)
 
     queryStoreUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
     indexUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
