@@ -13,7 +13,7 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
 
   val conflictError = "CONFLICT"
 
-  lazy val script = redisPool.withClient(_.scriptLoad(
+  lazy val storeEventScript = redisPool.withClient(_.scriptLoad(
     s"""
       | local eventsKey = KEYS[1]
       | local aggregateEventsKey = KEYS[2]
@@ -38,7 +38,7 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
     val serialized = eventSerializer.serialize(event)
     redisPool.withClient {
       client =>
-        Try(client.evalSHA(script.get,
+        Try(client.evalSHA(storeEventScript.get,
           keys = List(eventsKey, aggregateEventsKey(event.aggregateId)),
           args = List(serialized, event.aggregateVersion.number))) match {
           case Failure(e) if e.getMessage.contains(conflictError) => throw new EventConflictException(s"event conflict ${event.aggregateId}")
@@ -51,7 +51,7 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
     redisPool.withClient {
       client =>
         val events = for {
-          optEventId <- client.lrange(aggregateEventsKey(id), 0, -1).get
+          optEventId <- client.lrange(aggregateEventsKey(id), 0, -1).getOrElse(Nil)
           eventId <- optEventId
           event <- client.hget(eventsKey, eventId)
         } yield eventSerializer.deserialize(event)

@@ -23,6 +23,8 @@ class RedisEventTracker(trackerKey: String, redisClientPool: RedisClientPool) ex
   ))
 
   override def trackEvent(eventId: EventSequenceId) = {
-    redisClientPool.withClient(_.evalSHA(trackEventScript.get, keys = List(trackerKey), args = List(eventId.value)))
+    redisClientPool.withClient(client =>
+      client.evalSHA(trackEventScript.get, keys = List(trackerKey), args = List(eventId.value))
+    )
   }
 }

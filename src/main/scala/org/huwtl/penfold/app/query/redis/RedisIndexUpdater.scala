@@ -94,7 +94,7 @@ class RedisIndexUpdater(index: Index, redisClientPool: RedisClientPool, objectSe
 
         client.hget(jobKey, "search") match {
           case Some(oldSearchRecordJson) => {
-            val score = client.hget(jobKey, "score").get
+            val score = client.hget(jobKey, "score").getOrElse("0")
             val newSearchRecord = objectSerializer.deserialize[JobSearchRecord](oldSearchRecordJson).copy(status = newStatus, queues = queues)
             updateIndex(eventRecord.id, eventRecord.event.aggregateId, oldSearchRecordJson, newSearchRecord, score)
           }
