@@ -22,7 +22,7 @@ class EventSerializer {
     new StatusJsonSerializer +
     new IdJsonSerializer +
     new VersionJsonSerializer +
-    new QueueNameJsonSerializer
+    new QueueIdJsonSerializer
 
   def serialize(event: Event) = {
     pretty(decompose(event))

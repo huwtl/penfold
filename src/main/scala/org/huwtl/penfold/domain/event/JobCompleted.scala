@@ -1,5 +1,5 @@
 package org.huwtl.penfold.domain.event
 
-import org.huwtl.penfold.domain.model.{AggregateId, Version}
+import org.huwtl.penfold.domain.model.{QueueId, AggregateId, Version}
 
-case class JobCompleted(aggregateId: AggregateId, aggregateVersion: Version) extends Event
+case class JobCompleted(aggregateId: AggregateId, aggregateVersion: Version, queue: QueueId) extends Event

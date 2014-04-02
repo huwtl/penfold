@@ -9,8 +9,8 @@ import org.specs2.mutable.Specification
 
 class NewEventsProviderTest extends Specification with Mockito with DataTables {
   class context extends Scope {
-    val event1 = EventRecord(EventSequenceId(0), JobTriggered(AggregateId("1"), Version.init))
-    val event2 = EventRecord(EventSequenceId(1), JobTriggered(AggregateId("2"), Version.init))
+    val event1 = EventRecord(EventSequenceId(0), JobTriggered(AggregateId("1"), Version.init, List()))
+    val event2 = EventRecord(EventSequenceId(1), JobTriggered(AggregateId("2"), Version.init, List()))
 
     val nextExpectedEventIdProvider = mock[NextExpectedEventIdProvider]
 

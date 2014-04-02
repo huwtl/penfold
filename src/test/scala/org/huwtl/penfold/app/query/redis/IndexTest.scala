@@ -1,4 +1,4 @@
-package org.huwtl.penfold.app.query
+package org.huwtl.penfold.app.query.redis
 
 import org.specs2.mutable.Specification
 import org.huwtl.penfold.query.{Filter, Filters}

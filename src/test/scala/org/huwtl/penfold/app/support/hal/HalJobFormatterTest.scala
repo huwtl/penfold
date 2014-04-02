@@ -6,8 +6,14 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification
-import org.huwtl.penfold.domain.model.{Payload, Status, QueueName, AggregateId}
-import org.huwtl.penfold.query.{Filter, Filters, PageResult, JobRecord}
+import org.huwtl.penfold.domain.model._
+import org.huwtl.penfold.query.Filters
+import org.huwtl.penfold.domain.model.Payload
+import org.huwtl.penfold.query.Filter
+import org.huwtl.penfold.domain.model.QueueId
+import org.huwtl.penfold.domain.model.AggregateId
+import org.huwtl.penfold.query.JobRecord
+import org.huwtl.penfold.query.PageResult
 
 class HalJobFormatterTest extends Specification {
 
@@ -19,7 +25,7 @@ class HalJobFormatterTest extends Specification {
 
   val filters = Filters(List(Filter("data", "value")))
 
-  val queueName = QueueName("abc")
+  val queueId = QueueId("abc")
 
   val payload = Payload(Map("data" -> "value", "inner" -> Map("bool" -> true)))
 
@@ -29,8 +35,8 @@ class HalJobFormatterTest extends Specification {
     hal(Status.Waiting) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingJob.json"))
   }
 
-  "format triggered job as hal+json" in {
-    hal(Status.Triggered) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedTriggeredJob.json"))
+  "format ready job as hal+json" in {
+    hal(Status.Ready, Binding(List(BoundQueue(QueueId("abc")), BoundQueue(QueueId("def"))))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedReadyJob.json"))
   }
 
   "format started job as hal+json" in {
@@ -61,18 +67,18 @@ class HalJobFormatterTest extends Specification {
   "format job as hal+json with complex payload" in {
     val complexPayload = Payload(
       Map("data" -> "value", "inner" -> Map("bool" -> true, "inner2" -> List(Map("a" -> "1", "b" -> 1), Map("a" -> "2", "b" -> 2)))))
-    val job = JobRecord(id, created, queueName, Status.Waiting, triggerDate, complexPayload)
+    val job = JobRecord(id, created, Binding(List(BoundQueue(queueId))), Status.Waiting, triggerDate, complexPayload)
     hal(job) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedJobWithComplexPayload.json"))
   }
 
   private def halJobs(filters: Filters, pageNumber: Int = 0, previousPage: Boolean = false, nextPage: Boolean = false) = {
     parse(jobFormatter.halFrom(
-      PageResult(pageNumber, List(JobRecord(id, created, queueName, Status.Waiting, triggerDate, payload)), previousExists = previousPage, nextExists = nextPage), filters
+      PageResult(pageNumber, List(JobRecord(id, created, Binding(List(BoundQueue(queueId))), Status.Waiting, triggerDate, payload)), previousExists = previousPage, nextExists = nextPage), filters
     ))
   }
 
-  private def hal(status: Status) = {
-    parse(jobFormatter.halFrom(JobRecord(id, created, queueName, status, triggerDate, payload)))
+  private def hal(status: Status, binding: Binding = Binding(List(BoundQueue(queueId)))) = {
+    parse(jobFormatter.halFrom(JobRecord(id, created, binding, status, triggerDate, payload)))
   }
 
   private def hal(job: JobRecord) = {

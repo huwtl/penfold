@@ -1,18 +1,17 @@
 package org.huwtl.penfold.app.web
 
-import org.huwtl.penfold.domain.model.{Payload, QueueName, AggregateId}
+import org.huwtl.penfold.domain.model.{Binding, Payload, AggregateId}
 import org.joda.time.DateTime
-import org.huwtl.penfold.command.{CreateJob, CreateFutureJob, Command}
+import org.huwtl.penfold.command.{CreateJob, CreateFutureJob}
 
-case class JobCreationRequest(id: AggregateId,
-                              queueName: QueueName,
-                              triggerDate: Option[DateTime],
-                              payload: Payload) {
+case class JobCreationRequest(triggerDate: Option[DateTime],
+                              payload: Payload,
+                              binding: Binding) {
 
   def toCommand = {
     triggerDate match {
-      case Some(date) => CreateFutureJob(id, queueName, date, payload)
-      case None => CreateJob(id, queueName, payload)
+      case Some(date) => CreateFutureJob(binding, date, payload)
+      case None => CreateJob(binding, payload)
     }
   }
 }

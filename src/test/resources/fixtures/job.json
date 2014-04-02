@@ -1,13 +1,15 @@
 {
-    "id": "2",
-
-    "queueName": "abc",
-
     "payload": {
         "stuff": "something",
 
         "nested": {
             "inner": true
         }
+    },
+
+    "binding": {
+        "queues": [
+            {"id": "abc"}
+        ]
     }
 }

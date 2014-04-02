@@ -1,4 +1,4 @@
-package org.huwtl.penfold.app.query
+package org.huwtl.penfold.app.query.redis
 
 import org.huwtl.penfold.query.Filters
 

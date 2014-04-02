@@ -27,6 +27,7 @@ class JsonPathExtractorTest extends Specification {
               "age": 2.33
             }
           ],
+          "arrayOfValues" : ["1", "2"],
           "empty" : [],
           "nothing" : null
         }
@@ -37,6 +38,7 @@ class JsonPathExtractorTest extends Specification {
     jsonPathExtractor.extract(json, "array / age") must beEqualTo(List("1", "2.33"))
     jsonPathExtractor.extract(json, "array / innerObj / inner") must beEqualTo(List("true"))
     jsonPathExtractor.extract(json, "array / missing") must beEqualTo(Nil)
+    jsonPathExtractor.extract(json, "arrayOfValues") must beEqualTo(List("1", "2"))
     jsonPathExtractor.extract(json, "missing") must beEqualTo(Nil)
     jsonPathExtractor.extract(json, "obj") must beEqualTo(Nil)
     jsonPathExtractor.extract(json, "array") must beEqualTo(Nil)

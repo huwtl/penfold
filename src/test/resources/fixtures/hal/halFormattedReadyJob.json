@@ -1,0 +1,22 @@
+{
+    "_links": {
+        "self": {"href": "http://host/jobs/1"},
+        "queue": {"href": "http://host/queues/{queueId}", "templated": true},
+        "start": {"href": "http://host/queues/{queueId}/started", "templated": true}
+    },
+    "id": "1",
+    "payload": {
+        "data": "value",
+        "inner": {
+            "bool": true
+        }
+    },
+    "status": "ready",
+    "triggerDate": "2014-07-10 13:05:01",
+    "binding": {
+        "queues": [
+            {"id": "abc"},
+            {"id": "def"}
+        ]
+    }
+}

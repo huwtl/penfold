@@ -9,8 +9,8 @@ object Status {
     val name = "waiting"
   }
 
-  case object Triggered extends Status {
-    val name = "triggered"
+  case object Ready extends Status {
+    val name = "ready"
   }
 
   case object Started extends Status {
@@ -28,7 +28,7 @@ object Status {
   def from(str: String): Option[Status] = {
     str.toLowerCase match {
       case Waiting.name => Some(Waiting)
-      case Triggered.name => Some(Triggered)
+      case Ready.name => Some(Ready)
       case Started.name => Some(Started)
       case Completed.name => Some(Completed)
       case _ => None

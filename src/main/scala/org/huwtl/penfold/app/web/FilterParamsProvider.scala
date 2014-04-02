@@ -8,6 +8,6 @@ trait FilterParamsProvider {
     val filters = params.filterKeys(_.startsWith("_")).collect {
       case param if !param._2.isEmpty => Filter(param._1.tail.toLowerCase, param._2)
     }
-    Filters(filters)
+    Filters(filters.toList)
   }
 }

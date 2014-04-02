@@ -8,29 +8,33 @@ import org.huwtl.penfold.query.{Filters, PageResult, JobRecord}
 import org.huwtl.penfold.domain.model.Status._
 import com.theoryinpractise.halbuilder.api.Representation
 import org.huwtl.penfold.app.support.JavaMapUtil
+import org.huwtl.penfold.domain.model.{Binding, QueueId}
 
 class HalJobFormatter(baseJobLink: URI, baseQueueLink: URI) extends PaginatedRepresentationProvider {
   private val representationFactory = new DefaultRepresentationFactory
 
   private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
-  def halRepresentationFrom(job: JobRecord) = {
+  def halRepresentationFrom(job: JobRecord, knownQueue: Option[QueueId] = None) = {
+    val queueIdParam = knownQueue match {
+      case Some(queueId) => queueId.value
+      case None => if (job.binding.queues.size == 1) job.binding.queues.head.id.value else "{queueId}"
+    }
+
     val representation: Representation = representationFactory.newRepresentation(s"${baseJobLink.toString}/${job.id.value}")
-      .withProperty("queueName", job.queueName.value)
+      .withProperty("id", job.id.value)
       .withProperty("status", job.status.name)
       .withProperty("triggerDate", dateFormatter.print(job.triggerDate))
       .withProperty("payload", JavaMapUtil.deepConvertToJavaMap(job.payload.content))
-      .withLink("currentQueue", s"${baseQueueLink.toString}/${job.queueName.value}/${job.status.name}")
+      .withProperty("binding", JavaMapUtil.deepConvertToJavaMap(bindingToMap(job.binding)))
+      .withLink("queue", s"${baseQueueLink.toString}/$queueIdParam")
 
     job.status match {
-      case Waiting => {
-        representation.withLink("triggeredQueue", s"${baseQueueLink.toString}/${job.queueName.value}/${Triggered.name}")
-      }
-      case Triggered => {
-        representation.withLink("start", s"${baseQueueLink.toString}/${job.queueName.value}/${Started.name}")
+      case Ready => {
+        representation.withLink("start", s"${baseQueueLink.toString}/$queueIdParam/${Started.name}")
       }
       case Started => {
-        representation.withLink("complete", s"${baseQueueLink.toString}/${job.queueName.value}/${Completed.name}")
+        representation.withLink("complete", s"${baseQueueLink.toString}/$queueIdParam/${Completed.name}")
       }
       case _ =>
     }
@@ -52,5 +56,9 @@ class HalJobFormatter(baseJobLink: URI, baseQueueLink: URI) extends PaginatedRep
     })
 
     root.toString(HAL_JSON)
+  }
+
+  def bindingToMap(binding: Binding) = {
+    Map("queues" -> binding.queues.map(queue => Map("id" -> queue.id.value)))
   }
 }

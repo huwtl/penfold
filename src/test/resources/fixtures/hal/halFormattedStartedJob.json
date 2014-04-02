@@ -2,15 +2,20 @@
     "_links": {
         "self": {"href": "http://host/jobs/1"},
         "complete": {"href": "http://host/queues/abc/completed"},
-        "currentQueue": {"href": "http://host/queues/abc/started"}
+        "queue": {"href": "http://host/queues/abc"}
     },
+    "id": "1",
     "payload": {
         "data": "value",
         "inner": {
             "bool": true
         }
     },
-    "queueName": "abc",
     "status": "started",
-    "triggerDate": "2014-07-10 13:05:01"
+    "triggerDate": "2014-07-10 13:05:01",
+    "binding": {
+        "queues": [
+            {"id": "abc"}
+        ]
+    }
 }

@@ -1,11 +1,13 @@
 package org.huwtl.penfold.query
 
-import org.huwtl.penfold.domain.model.{Payload, Status, QueueName, AggregateId}
+import org.huwtl.penfold.domain.model._
 import org.joda.time.DateTime
+import org.huwtl.penfold.domain.model.AggregateId
+import org.huwtl.penfold.domain.model.Payload
 
 case class JobRecord(id: AggregateId,
                      created: DateTime,
-                     queueName: QueueName,
+                     binding: Binding,
                      status: Status,
                      triggerDate: DateTime,
                      payload: Payload)

@@ -3,15 +3,15 @@ package org.huwtl.penfold.domain.model
 import org.joda.time.DateTime
 import org.huwtl.penfold.domain.event._
 import org.huwtl.penfold.domain.event.JobCreated
-import org.huwtl.penfold.domain.event.JobTriggered
+import org.huwtl.penfold.domain.model.Status._
 
 object Job extends AggregateFactory {
-  def create(aggregateId: AggregateId, queueName: QueueName, payload: Payload) = {
-    applyJobCreated(JobCreated(aggregateId, Version.init, queueName, DateTime.now(), DateTime.now(), payload))
+  def create(aggregateId: AggregateId, binding: Binding, payload: Payload) = {
+    applyJobCreated(JobCreated(aggregateId, Version.init, binding, DateTime.now(), DateTime.now(), payload))
   }
 
-  def create(aggregateId: AggregateId, queueName: QueueName, triggerDate: DateTime, payload: Payload) = {
-    applyJobCreated(JobCreated(aggregateId, Version.init, queueName, DateTime.now(), triggerDate, payload))
+  def create(aggregateId: AggregateId, binding: Binding, triggerDate: DateTime, payload: Payload) = {
+    applyJobCreated(JobCreated(aggregateId, Version.init, binding, DateTime.now(), triggerDate, payload))
   }
 
   def applyEvent = {
@@ -19,46 +19,44 @@ object Job extends AggregateFactory {
     case event => unhandled(event)
   }
 
-  private def applyJobCreated(event: JobCreated) = ScheduledJob(
+  private def applyJobCreated(event: JobCreated) = Job(
     event :: Nil,
     event.aggregateId,
     event.aggregateVersion,
     event.created,
-    event.queueName,
-    Status.Waiting,
+    event.binding,
+    Waiting,
     event.triggerDate,
     event.payload
   )
 }
 
-sealed trait Job extends AggregateRoot
-
-case class ScheduledJob(uncommittedEvents: List[Event],
+case class Job(uncommittedEvents: List[Event],
                         aggregateId: AggregateId,
                         version: Version,
                         created: DateTime,
-                        queueName: QueueName,
+                        binding: Binding,
                         status: Status,
                         triggerDate: DateTime,
-                        payload: Payload) extends Job {
+                        payload: Payload) extends AggregateRoot {
 
-  def trigger(): ScheduledJob = {
-    require(status == Status.Waiting, s"Can only trigger a waiting job but was $status")
-    applyJobTriggered(JobTriggered(aggregateId, version.next))
+  def trigger(): Job = {
+    require(status == Waiting, s"Can only queue a waiting job but was $status")
+    applyJobTriggered(JobTriggered(aggregateId, version.next, binding.queues.map(_.id)))
   }
 
-  def start(): ScheduledJob = {
-    require(status == Status.Triggered, s"Can only start a triggered job but was $status")
-    applyJobStarted(JobStarted(aggregateId, version.next))
+  def start(queue: QueueId): Job = {
+    require(status == Ready, s"Can only start a ready job but was $status")
+    applyJobStarted(JobStarted(aggregateId, version.next, queue))
   }
 
-  def cancel(): CancelledJob = {
-    applyJobCancelled(JobCancelled(aggregateId, version.next))
+  def cancel(queue: QueueId): Job = {
+    applyJobCancelled(JobCancelled(aggregateId, version.next, List(queue)))
   }
 
-  def complete(): CompletedJob = {
-    require(status == Status.Started, s"Can only complete a started job but was $status")
-    applyJobCompleted(JobCompleted(aggregateId, version.next))
+  def complete(queue: QueueId): Job = {
+    require(status == Started, s"Can only complete a started job but was $status")
+    applyJobCompleted(JobCompleted(aggregateId, version.next, queue))
   }
 
   def markCommitted = copy(uncommittedEvents = Nil)
@@ -71,23 +69,11 @@ case class ScheduledJob(uncommittedEvents: List[Event],
     case event => unhandled(event)
   }
 
-  private def applyJobTriggered(event: JobTriggered) = copy(event :: uncommittedEvents, version = version.next, status = Status.Triggered)
+  private def applyJobTriggered(event: JobTriggered) = copy(event :: uncommittedEvents, version = version.next, status = Ready)
 
-  private def applyJobStarted(event: JobStarted) = copy(event :: uncommittedEvents, version = version.next, status = Status.Started)
+  private def applyJobStarted(event: JobStarted) = copy(event :: uncommittedEvents, version = version.next, status = Started)
 
-  private def applyJobCancelled(event: JobCancelled) = CancelledJob(event :: uncommittedEvents, event.aggregateId, version = version.next, Status.Cancelled)
+  private def applyJobCancelled(event: JobCancelled) = copy(event :: uncommittedEvents, event.aggregateId, version = version.next, status = Cancelled)
 
-  private def applyJobCompleted(event: JobCompleted) = CompletedJob(event :: uncommittedEvents, event.aggregateId, version = version.next, Status.Completed)
-}
-
-case class CompletedJob(uncommittedEvents: List[Event], aggregateId: AggregateId, version: Version, status: Status) extends Job {
-  def markCommitted = copy(uncommittedEvents = Nil)
-
-  def applyEvent = unhandled
-}
-
-case class CancelledJob(uncommittedEvents: List[Event], aggregateId: AggregateId, version: Version, status: Status) extends Job {
-  def markCommitted = copy(uncommittedEvents = Nil)
-
-  def applyEvent = unhandled
+  private def applyJobCompleted(event: JobCompleted) = copy(event :: uncommittedEvents, event.aggregateId, version = version.next, status = Completed)
 }

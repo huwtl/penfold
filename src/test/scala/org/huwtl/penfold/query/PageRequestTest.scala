@@ -17,7 +17,7 @@ class PageRequestTest extends Specification {
   }
 
   "know when first page" in {
-    PageRequest(0, 10).firstPage must beTrue
-    PageRequest(1, 10).firstPage must beFalse
+    PageRequest(0, 10).isFirstPage must beTrue
+    PageRequest(1, 10).isFirstPage must beFalse
   }
 }

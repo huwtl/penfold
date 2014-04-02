@@ -1,8 +1,8 @@
 package org.huwtl.penfold.app
 
-import org.huwtl.penfold.app.query.Index
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
+import org.huwtl.penfold.app.query.redis.Index
 
 case class ServerConfiguration(publicUrl: String,
                                httpPort: Int,

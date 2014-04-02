@@ -1,4 +1,4 @@
-package org.huwtl.penfold.app.query
+package org.huwtl.penfold.app.query.redis
 
 import org.huwtl.penfold.support.RedisSpecification
 import org.specs2.specification.Scope
@@ -15,10 +15,10 @@ class RedisNextExpectedEventIdProviderTest extends RedisSpecification {
   "provide id of next expected event to update into query store" in new context {
     nextExpectedEventIdProvider.nextExpectedEvent must beEqualTo(EventSequenceId(0))
 
-    redisClientPool.withClient(_.sadd(trackingKey, "a"))
+    redisClientPool.withClient(_.set(trackingKey, "0"))
     nextExpectedEventIdProvider.nextExpectedEvent must beEqualTo(EventSequenceId(1))
 
-    redisClientPool.withClient(_.sadd(trackingKey, "b"))
+    redisClientPool.withClient(_.set(trackingKey, "1"))
     nextExpectedEventIdProvider.nextExpectedEvent must beEqualTo(EventSequenceId(2))
   }
 }

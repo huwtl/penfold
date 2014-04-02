@@ -1,19 +1,24 @@
 {
     "_links": {
-        "self": {"href": "http://host/queues/abc/triggered/1"}
+        "self": {"href": "http://host/queues/abc/ready/1"}
     },
     "jobId": "1",
     "_embedded": {
         "job": {
             "_links": {
                 "self": {"href": "http://host/jobs/1"},
-                "currentQueue": {"href": "http://host/queues/abc/triggered"},
+                "queue": {"href": "http://host/queues/abc"},
                 "start": {"href": "http://host/queues/abc/started"}
             },
+            "id": "1",
             "payload": {},
-            "queueName": "abc",
-            "status": "triggered",
-            "triggerDate": "2014-02-25 14:00:00"
+            "status": "ready",
+            "triggerDate": "2014-02-25 14:00:00",
+            "binding": {
+                "queues": [
+                    {"id": "abc"}
+                ]
+            }
         }
     }
 }

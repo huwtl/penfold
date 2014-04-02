@@ -1,5 +1,5 @@
 package org.huwtl.penfold.query
 
-trait NewEventListener {
+trait EventListener {
   def handle(newEvent: EventRecord): Boolean
 }

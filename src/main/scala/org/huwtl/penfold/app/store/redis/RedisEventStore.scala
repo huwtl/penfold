@@ -1,4 +1,4 @@
-package org.huwtl.penfold.app.store
+package org.huwtl.penfold.app.store.redis
 
 import org.huwtl.penfold.domain.store.EventStore
 import org.huwtl.penfold.domain.model.AggregateId

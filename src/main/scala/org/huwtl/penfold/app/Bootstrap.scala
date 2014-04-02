@@ -3,7 +3,6 @@ package org.huwtl.penfold.app
 import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
 import org.huwtl.penfold.app.web._
-import org.huwtl.penfold.app.store.RedisEventStore
 import java.net.URI
 import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalJobFormatter}
 import java.util.concurrent.Executors._
@@ -13,7 +12,7 @@ import org.huwtl.penfold.domain.store.DomainRepository
 import com.redis.RedisClientPool
 import org.huwtl.penfold.app.support.json.{JsonPathExtractor, ObjectSerializer, EventSerializer}
 import org.huwtl.penfold.query.{NewEventsPublisher, NewEventsNotifier, NewEventsProvider}
-import org.huwtl.penfold.app.query._
+import org.huwtl.penfold.app.query.redis._
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import org.huwtl.penfold.command.CreateFutureJobHandler
@@ -21,18 +20,17 @@ import org.huwtl.penfold.command.StartJobHandler
 import org.huwtl.penfold.command.CreateJobHandler
 import org.huwtl.penfold.command.CancelJobHandler
 import org.huwtl.penfold.command.CompleteJob
-import org.huwtl.penfold.command.TriggerJob
-import org.huwtl.penfold.app.query.Indexes
-import org.huwtl.penfold.command.TriggerJobHandler
 import org.huwtl.penfold.command.CompleteJobHandler
 import org.huwtl.penfold.command.CreateFutureJob
 import org.huwtl.penfold.command.StartJob
 import org.huwtl.penfold.command.CreateJob
 import org.huwtl.penfold.command.CancelJob
 import org.slf4j.LoggerFactory
+import org.huwtl.penfold.app.store.redis.RedisEventStore
+import org.huwtl.penfold.app.support.UUIDFactory
 
 class Bootstrap extends LifeCycle {
-  val logger =  LoggerFactory.getLogger(getClass)
+  private val logger =  LoggerFactory.getLogger(getClass)
 
   override def init(context: ServletContext) {
 
@@ -59,6 +57,8 @@ class Bootstrap extends LifeCycle {
     val eventSerializer = new EventSerializer
     val objectSerializer = new ObjectSerializer
 
+    val aggregateIdFactory = new UUIDFactory
+
     val eventStore = new RedisEventStore(domainRedisClientPool, eventSerializer)
 
     val eventQueryService = new RedisEventStoreQueryService(domainRedisClientPool, eventSerializer)
@@ -70,7 +70,7 @@ class Bootstrap extends LifeCycle {
     val indexUpdaters = indexes.all.map {
       index =>
         val searchEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryRedisClientPool, redisKeyFactory.indexEventTrackerKey(index)), eventQueryService)
-        new NewEventsNotifier(searchEventProvider, new RedisPayloadIndexUpdater(index, queryRedisClientPool, objectSerializer, redisKeyFactory))
+        new NewEventsNotifier(searchEventProvider, new RedisIndexUpdater(index, queryRedisClientPool, objectSerializer, redisKeyFactory))
     }
 
     val eventNotifiers = queryStoreUpdater :: indexUpdaters
@@ -78,8 +78,8 @@ class Bootstrap extends LifeCycle {
     val domainRepository = new DomainRepository(eventStore, new NewEventsPublisher(eventNotifiers))
 
     val commandDispatcher = new CommandDispatcher(Map[Class[_ <: Command], CommandHandler[_ <: Command]](//
-      classOf[CreateJob] -> new CreateJobHandler(domainRepository), //
-      classOf[CreateFutureJob] -> new CreateFutureJobHandler(domainRepository), //
+      classOf[CreateJob] -> new CreateJobHandler(domainRepository, aggregateIdFactory), //
+      classOf[CreateFutureJob] -> new CreateFutureJobHandler(domainRepository, aggregateIdFactory), //
       classOf[TriggerJob] -> new TriggerJobHandler(domainRepository), //
       classOf[StartJob] -> new StartJobHandler(domainRepository), //
       classOf[CompleteJob] -> new CompleteJobHandler(domainRepository), //
@@ -105,7 +105,7 @@ class Bootstrap extends LifeCycle {
     newSingleThreadScheduledExecutor.scheduleAtFixedRate(new Runnable() {
       def run() {
         try {
-          queryRepository.retrieveWithPendingTrigger.foreach {
+          queryRepository.retrieveJobsToQueue.foreach {
             jobRef => commandDispatcher.dispatch[TriggerJob](TriggerJob(jobRef.id))
           }
         }

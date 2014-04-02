@@ -7,32 +7,16 @@ import org.specs2.mock.Mockito
 class NewEventsPublisherTest extends Specification with Mockito {
 
   class context extends Scope {
-    val event1 = mock[EventRecord]
-    val event2 = mock[EventRecord]
+    val newEventNotifier1 = mock[NewEventsNotifier]
+    val newEventNotifier2 = mock[NewEventsNotifier]
 
-    val newEventsProvider = mock[NewEventsProvider]
-
-    val newEventListener1 = mock[NewEventListener]
-    val newEventListener2 = mock[NewEventListener]
-
-    val newEventPublisher = null/*new NewEventsPublisher(newEventsProvider, List(newEventListener1, newEventListener2))*/
+    val newEventPublisher = new NewEventsPublisher(List(newEventNotifier1, newEventNotifier2))
   }
 
   "publish new events" in new context {
-    newEventsProvider.newEvents returns Stream(event1, event2)
+    newEventPublisher.publishNewEvents()
 
-    //newEventPublisher.publishNewEvents()
-
-    there was one(newEventListener1).handle(event1) andThen one(newEventListener1).handle(event2)
-    there was one(newEventListener2).handle(event1) andThen one(newEventListener2).handle(event2)
-  }
-
-  "publish nothing when no new events" in new context {
-    newEventsProvider.newEvents returns Stream.empty
-
-    //newEventPublisher.publishNewEvents()
-
-    there was no(newEventListener1).handle(any[EventRecord])
-    there was no(newEventListener2).handle(any[EventRecord])
+    there was one(newEventNotifier1).notifyListener() andThen one(newEventNotifier1).notifyListener()
+    there was one(newEventNotifier2).notifyListener() andThen one(newEventNotifier2).notifyListener()
   }
 }

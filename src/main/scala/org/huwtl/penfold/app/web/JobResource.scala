@@ -19,7 +19,7 @@ class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDi
   get("/:id") {
     queryRepository.retrieveBy(AggregateId(params("id"))) match {
       case Some(job) => Ok(halFormatter.halFrom(job))
-      case _ => NotFound("Job not found")
+      case _ => errorResponse(NotFound("Job not found"))
     }
   }
 
@@ -31,7 +31,7 @@ class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDi
 
   post("/") {
     val createJobRequest = jsonConverter.deserialize[JobCreationRequest](request.body)
-    commandDispatcher.dispatch(createJobRequest.toCommand)
-    Created(halFormatter.halFrom(queryRepository.retrieveBy(createJobRequest.id).get))
+    val aggregateId = commandDispatcher.dispatch(createJobRequest.toCommand)
+    Created(halFormatter.halFrom(queryRepository.retrieveBy(aggregateId).get))
   }
 }
