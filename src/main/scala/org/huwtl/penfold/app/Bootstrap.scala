@@ -113,6 +113,6 @@ class Bootstrap extends LifeCycle {
           case e: Exception => logger.error("error checking for jobs to check", e)
         }
       }
-    }, 0, 30, SECONDS)
+    }, 0, config.triggeredJobCheckFrequency.length, config.triggeredJobCheckFrequency.unit)
   }
 }
