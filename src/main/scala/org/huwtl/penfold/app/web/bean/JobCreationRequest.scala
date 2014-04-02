@@ -1,6 +1,6 @@
-package org.huwtl.penfold.app.web
+package org.huwtl.penfold.app.web.bean
 
-import org.huwtl.penfold.domain.model.{Binding, Payload, AggregateId}
+import org.huwtl.penfold.domain.model.{Binding, Payload}
 import org.joda.time.DateTime
 import org.huwtl.penfold.command.{CreateJob, CreateFutureJob}
 

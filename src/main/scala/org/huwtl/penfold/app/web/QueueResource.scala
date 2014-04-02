@@ -7,6 +7,7 @@ import org.huwtl.penfold.domain.model.{Status, AggregateId, QueueId}
 import org.huwtl.penfold.query.{PageRequest, QueryRepository}
 import org.huwtl.penfold.command.{CompleteJob, CommandDispatcher, StartJob}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
+import org.huwtl.penfold.app.web.bean.{CompleteJobRequest, StartJobRequest}
 
 class QueueResource(queryRepository: QueryRepository,
                     commandDispatcher: CommandDispatcher,
@@ -42,15 +43,17 @@ class QueueResource(queryRepository: QueryRepository,
   }
 
   post("/:queue/started") {
-    val startJobCommand = jsonConverter.deserialize[StartJob](request.body)
-    commandDispatcher.dispatch[StartJob](startJobCommand)
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), queryRepository.retrieveBy(startJobCommand.id).get))
+    val queue = QueueId(queueIdParam)
+    val startJobRequest = jsonConverter.deserialize[StartJobRequest](request.body)
+    commandDispatcher.dispatch[StartJob](startJobRequest.toCommand(queue))
+    Ok(halFormatter.halFrom(QueueId(queueIdParam), queryRepository.retrieveBy(startJobRequest.id).get))
   }
 
   post("/:queue/completed") {
-    val completeJobCommand = jsonConverter.deserialize[CompleteJob](request.body)
-    commandDispatcher.dispatch[CompleteJob](completeJobCommand)
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), queryRepository.retrieveBy(completeJobCommand.id).get))
+    val queue = QueueId(queueIdParam)
+    val completeJobRequest = jsonConverter.deserialize[CompleteJobRequest](request.body)
+    commandDispatcher.dispatch[CompleteJob](completeJobRequest.toCommand(queue))
+    Ok(halFormatter.halFrom(QueueId(queueIdParam), queryRepository.retrieveBy(completeJobRequest.id).get))
   }
 
   private def statusMatch(func: Status => ActionResult) = {

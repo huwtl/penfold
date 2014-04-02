@@ -100,7 +100,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
     val expectedJob = JobRecord(AggregateId("3"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, payload)
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
-    post("/queues/abc/started", """{"id": "3", "queueId": "abc"}""") {
+    post("/queues/abc/started", """{"id": "3"}""") {
       status must beEqualTo(200)
     }
   }
@@ -109,7 +109,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
     val expectedJob = JobRecord(AggregateId("4"), created, Binding(List(BoundQueue(queueId))), Status.Started, triggerDate, payload)
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
-    post("/queues/abc/completed", """{"id": "4", "queueId": "abc"}""") {
+    post("/queues/abc/completed", """{"id": "4"}""") {
       status must beEqualTo(200)
     }
   }

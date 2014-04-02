@@ -7,6 +7,7 @@ import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.query.{PageRequest, QueryRepository}
 import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
+import org.huwtl.penfold.app.web.bean.JobCreationRequest
 
 class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDispatcher, jsonConverter: ObjectSerializer, halFormatter: HalJobFormatter) extends ScalatraServlet with FilterParamsProvider with ErrorHandling {
 
