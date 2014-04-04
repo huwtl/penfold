@@ -5,7 +5,7 @@ import org.huwtl.penfold.domain.model.AggregateId
 import com.redis.RedisClientPool
 import org.huwtl.penfold.app.support.json.EventSerializer
 import org.huwtl.penfold.domain.event.Event
-import org.huwtl.penfold.domain.exceptions.EventConflictException
+import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 import scala.util.{Success, Failure, Try}
 
 class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializer) extends EventStore {
@@ -41,7 +41,7 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
         Try(client.evalSHA(storeEventScript.get,
           keys = List(eventsKey, aggregateEventsKey(event.aggregateId)),
           args = List(serialized, event.aggregateVersion.number))) match {
-          case Failure(e) if e.getMessage.contains(conflictError) => throw new EventConflictException(s"event conflict ${event.aggregateId}")
+          case Failure(e) if e.getMessage.contains(conflictError) => throw new AggregateConflictException(s"aggregate conflict ${event.aggregateId}")
           case Success(value) =>
         }
     }

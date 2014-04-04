@@ -11,7 +11,9 @@ trait EventSourced {
 trait AggregateRoot extends EventSourced {
   def aggregateId : AggregateId
 
-  def version: Version
+  def version: AggregateVersion
+
+  def aggregateType: AggregateType
 
   def uncommittedEvents: List[Event]
 

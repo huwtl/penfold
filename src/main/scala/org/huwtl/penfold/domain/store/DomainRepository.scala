@@ -2,7 +2,6 @@ package org.huwtl.penfold.domain.store
 
 import org.huwtl.penfold.domain.model.{Job, AggregateId, AggregateRoot}
 import org.huwtl.penfold.query.NewEventsPublisher
-import org.huwtl.penfold.domain.event.Event
 
 class DomainRepository(eventStore: EventStore, eventPublisher: NewEventsPublisher) {
   def getById[T <: AggregateRoot](id: AggregateId): T = {

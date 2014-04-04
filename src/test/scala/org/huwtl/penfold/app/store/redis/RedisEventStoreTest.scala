@@ -13,7 +13,7 @@ import org.huwtl.penfold.domain.event.JobTriggered
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.event.JobCreated
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.domain.exceptions.EventConflictException
+import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 
 class RedisEventStoreTest extends Specification with RedisSpecification {
 
@@ -28,8 +28,8 @@ class RedisEventStoreTest extends Specification with RedisSpecification {
     val redisEventStore = new RedisEventStore(redisPool, serializer)
   }
 
-  "store events in event store" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
+  "store events" in new context {
+    val jobCreatedEvent = JobCreated(aggregateRootId, AggregateVersion.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
     val jobTriggeredEvent = JobTriggered(aggregateRootId, jobCreatedEvent.aggregateVersion.next, created, List(queueId))
 
     redisEventStore.add(jobCreatedEvent)
@@ -39,10 +39,10 @@ class RedisEventStoreTest extends Specification with RedisSpecification {
   }
 
   "prevent concurrent modifications to aggregate" in new context {
-    val jobCreatedEvent = JobCreated(aggregateRootId, Version.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
+    val jobCreatedEvent = JobCreated(aggregateRootId, AggregateVersion.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
     val jobTriggeredEvent = JobTriggered(aggregateRootId, jobCreatedEvent.aggregateVersion, created, List(queueId))
     redisEventStore.add(jobCreatedEvent)
 
-    redisEventStore.add(jobTriggeredEvent) must throwA[EventConflictException]
+    redisEventStore.add(jobTriggeredEvent) must throwA[AggregateConflictException]
   }
 }

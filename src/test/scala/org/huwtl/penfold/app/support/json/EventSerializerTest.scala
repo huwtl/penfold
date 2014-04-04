@@ -21,11 +21,11 @@ class EventSerializerTest extends Specification with DataTables {
   val dateTime = new DateTime(2014, 2, 3, 12, 47, 54)
   val queue1 = QueueId("q1")
   val queue2 = QueueId("q2")
-  val jobCreatedEvent = JobCreated(AggregateId("a1"), Version.init, dateTime, Binding(List(BoundQueue(queue1))), new DateTime(2014, 2, 3, 14, 30, 1), Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
-  val jobTriggeredEvent = JobTriggered(AggregateId("a1"), Version.init, dateTime, List(queue1, queue2))
-  val jobStartedEvent = JobStarted(AggregateId("a1"), Version.init, dateTime, queue1)
-  val jobCancelledEvent = JobCancelled(AggregateId("a1"), Version.init, dateTime, List(queue1, queue2))
-  val jobCompletedEvent = JobCompleted(AggregateId("a1"), Version.init, dateTime, queue1)
+  val jobCreatedEvent = JobCreated(AggregateId("a1"), AggregateVersion.init, dateTime, Binding(List(BoundQueue(queue1))), new DateTime(2014, 2, 3, 14, 30, 1), Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+  val jobTriggeredEvent = JobTriggered(AggregateId("a1"), AggregateVersion.init, dateTime, List(queue1, queue2))
+  val jobStartedEvent = JobStarted(AggregateId("a1"), AggregateVersion.init, dateTime, queue1)
+  val jobCancelledEvent = JobCancelled(AggregateId("a1"), AggregateVersion.init, dateTime, List(queue1, queue2))
+  val jobCompletedEvent = JobCompleted(AggregateId("a1"), AggregateVersion.init, dateTime, queue1)
   val serializer = new EventSerializer
 
   "deserialise job event" in {

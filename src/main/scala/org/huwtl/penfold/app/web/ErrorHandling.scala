@@ -1,10 +1,11 @@
 package org.huwtl.penfold.app.web
 
 import org.scalatra._
-import org.huwtl.penfold.domain.exceptions.EventConflictException
+import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 import org.scalatra.ActionResult
 import org.slf4j.LoggerFactory
 import org.json4s.MappingException
+import com.fasterxml.jackson.core.JsonParseException
 
 trait ErrorHandling extends ScalatraServlet {
   private val logger =  LoggerFactory.getLogger(getClass)
@@ -15,7 +16,8 @@ trait ErrorHandling extends ScalatraServlet {
     case e: IllegalArgumentException => errorResponse(BadRequest(s"Bad request: ${e.getMessage}"), e)
     case e: IllegalStateException => errorResponse(BadRequest(s"Bad request: ${e.getMessage}"), e)
     case e: MappingException => errorResponse(BadRequest(s"Bad request: ${e.getMessage}"), e)
-    case e: EventConflictException => {
+    case e: JsonParseException => errorResponse(BadRequest(s"Bad request: ${e.getMessage}"), e)
+    case e: AggregateConflictException => {
       logger.info("Conflict:", e)
       errorResponse(Conflict(s"Conflict: ${e.getMessage}"))
     }

@@ -9,6 +9,7 @@ class ObjectSerializer {
     new PayloadJsonSerializer +
     new DateTimeJsonSerializer +
     new StatusJsonSerializer +
+    new AggregateTypeJsonSerializer +
     new IdJsonSerializer +
     new VersionJsonSerializer +
     new QueueIdJsonSerializer

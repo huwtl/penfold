@@ -6,12 +6,11 @@ import org.huwtl.penfold.app.web._
 import java.net.URI
 import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalJobFormatter}
 import java.util.concurrent.Executors._
-import java.util.concurrent.TimeUnit._
 import org.huwtl.penfold.command._
-import org.huwtl.penfold.domain.store.DomainRepository
+import org.huwtl.penfold.domain.store.{EventStore, DomainRepository}
 import com.redis.RedisClientPool
 import org.huwtl.penfold.app.support.json.{JsonPathExtractor, ObjectSerializer, EventSerializer}
-import org.huwtl.penfold.query.{NewEventsPublisher, NewEventsNotifier, NewEventsProvider}
+import org.huwtl.penfold.query.{EventStoreQueryService, NewEventsPublisher, NewEventsNotifier, NewEventsProvider}
 import org.huwtl.penfold.app.query.redis._
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
@@ -26,22 +25,19 @@ import org.huwtl.penfold.command.StartJob
 import org.huwtl.penfold.command.CreateJob
 import org.huwtl.penfold.command.CancelJob
 import org.slf4j.LoggerFactory
-import org.huwtl.penfold.app.store.redis.RedisEventStore
+import org.huwtl.penfold.app.store.redis.{RedisEventStoreQueryService, RedisEventStore}
 import org.huwtl.penfold.app.support.UUIDFactory
+import com.mchange.v2.c3p0.ComboPooledDataSource
+import com.googlecode.flyway.core.Flyway
+import scala.slick.driver.JdbcDriver.backend.Database
+import org.huwtl.penfold.app.store.jdbc.{JdbcEventStoreQueryService, JdbcEventStore}
 
 class Bootstrap extends LifeCycle {
-  private val logger =  LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   override def init(context: ServletContext) {
 
     val config = ConfigFactory.load().as[ServerConfiguration]("penfold")
-
-    val domainRedisClientPool = new RedisClientPool(
-      config.domainRedisConnectionPool.host,
-      config.domainRedisConnectionPool.port,
-      config.domainRedisConnectionPool.poolSize,
-      config.domainRedisConnectionPool.database,
-      config.domainRedisConnectionPool.password)
 
     val queryRedisClientPool = new RedisClientPool(
       config.queryRedisConnectionPool.host,
@@ -59,9 +55,24 @@ class Bootstrap extends LifeCycle {
 
     val aggregateIdFactory = new UUIDFactory
 
-    val eventStore = new RedisEventStore(domainRedisClientPool, eventSerializer)
+    val domainStoreConfig: (EventStore, EventStoreQueryService) = config.domainConnectionPool match {
+      case Left(jdbcPool) => {
+        val domainJdbcPool = configureJdbcConnectionPool(jdbcPool)
+        val eventStore = new JdbcEventStore(domainJdbcPool, eventSerializer)
+        val eventQueryService = new JdbcEventStoreQueryService(domainJdbcPool, eventSerializer)
+        (eventStore, eventQueryService)
+      }
+      case Right(redisPool) => {
+        val domainRedisPool = configureRedisConnectionPool(redisPool)
+        val eventStore = new RedisEventStore(domainRedisPool, eventSerializer)
+        val eventQueryService = new RedisEventStoreQueryService(domainRedisPool, eventSerializer)
+        (eventStore, eventQueryService)
+      }
+    }
 
-    val eventQueryService = new RedisEventStoreQueryService(domainRedisClientPool, eventSerializer)
+    val eventStore = domainStoreConfig._1
+
+    val eventQueryService = domainStoreConfig._2
 
     val queryStoreEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryRedisClientPool, redisKeyFactory.eventTrackerKey("query")), eventQueryService)
 
@@ -113,6 +124,33 @@ class Bootstrap extends LifeCycle {
           case e: Exception => logger.error("error checking for jobs to check", e)
         }
       }
-    }, 0, config.triggeredJobCheckFrequency.length, config.triggeredJobCheckFrequency.unit)
+    }, 0, config.triggeredCheckFrequency.length, config.triggeredCheckFrequency.unit)
+  }
+
+  private def configureRedisConnectionPool(poolConfig: RedisConnectionPool) = {
+    new RedisClientPool(
+      poolConfig.host,
+      poolConfig.port,
+      poolConfig.poolSize,
+      poolConfig.database,
+      poolConfig.password)
+  }
+
+  private def configureJdbcConnectionPool(poolConfig: JdbcConnectionPool) = {
+    val dataSource = new ComboPooledDataSource
+
+    dataSource.setDriverClass(poolConfig.driver)
+    dataSource.setJdbcUrl(poolConfig.url)
+    dataSource.setUser(poolConfig.username)
+    dataSource.setPassword(poolConfig.password)
+    dataSource.setMaxPoolSize(poolConfig.poolSize)
+    dataSource.setPreferredTestQuery("select 1")
+    dataSource.setIdleConnectionTestPeriod(60)
+
+    val flyway = new Flyway
+    flyway.setDataSource(dataSource)
+    flyway.migrate()
+
+    Database.forDataSource(dataSource)
   }
 }

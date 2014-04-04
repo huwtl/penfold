@@ -8,11 +8,11 @@ import org.huwtl.penfold.domain.model.Status._
 
 object Job extends AggregateFactory {
   def create(aggregateId: AggregateId, binding: Binding, payload: Payload) = {
-    applyJobCreated(JobCreated(aggregateId, Version.init, now, binding, now, payload))
+    applyJobCreated(JobCreated(aggregateId, AggregateVersion.init, now, binding, now, payload))
   }
 
   def create(aggregateId: AggregateId, binding: Binding, triggerDate: DateTime, payload: Payload) = {
-    applyJobCreated(JobCreated(aggregateId, Version.init, now, binding, triggerDate, payload))
+    applyJobCreated(JobCreated(aggregateId, AggregateVersion.init, now, binding, triggerDate, payload))
   }
 
   def applyEvent = {
@@ -34,12 +34,14 @@ object Job extends AggregateFactory {
 
 case class Job(uncommittedEvents: List[Event],
                         aggregateId: AggregateId,
-                        version: Version,
+                        version: AggregateVersion,
                         created: DateTime,
                         binding: Binding,
                         status: Status,
                         triggerDate: DateTime,
                         payload: Payload) extends AggregateRoot {
+
+  override def aggregateType = AggregateType.Job
 
   def trigger(): Job = {
     require(status == Waiting, s"Can only queue a waiting job but was $status")

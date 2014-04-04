@@ -1,7 +1,8 @@
 {
-    "jsonClass" : "JobCancelled",
+    "type" : "JobCancelled",
     "aggregateId" : "a1",
     "aggregateVersion" : 1,
     "created" : "2014-02-03 12:47:54",
-    "queues": ["q1", "q2"]
+    "queues": ["q1", "q2"],
+    "aggregateType" : "Job"
 }

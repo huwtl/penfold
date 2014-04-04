@@ -1,4 +1,4 @@
-package org.huwtl.penfold.app.query.redis
+package org.huwtl.penfold.app.store.redis
 
 import org.huwtl.penfold.app.support.json.EventSerializer
 import com.redis.RedisClientPool
