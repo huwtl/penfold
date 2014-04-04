@@ -8,14 +8,14 @@ import org.huwtl.penfold.support.RedisSpecification
 import org.huwtl.penfold.query.{EventSequenceId, EventRecord}
 import org.joda.time.DateTime
 
-class RedisEventStoreQueryServiceTest extends RedisSpecification {
+class RedisDomainEventsQueryServiceTest extends RedisSpecification {
 
   class context extends Scope {
     val created = new DateTime(2014, 3, 1, 12, 0, 0, 0)
     val eventSerializer = new EventSerializer
     val redisClientPool = newRedisClientPool()
     val redisEventStore = new RedisEventStore(redisClientPool, eventSerializer)
-    val queryService = new RedisEventStoreQueryService(redisClientPool, eventSerializer)
+    val queryService = new RedisDomainEventsQueryService(redisClientPool, eventSerializer)
   }
 
   "retrieve nothing for last id when domain event store is empty" in new context {

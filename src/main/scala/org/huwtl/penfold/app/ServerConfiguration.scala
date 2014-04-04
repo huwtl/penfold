@@ -11,6 +11,7 @@ case class ServerConfiguration(publicUrl: String,
                                queryRedisConnectionPool: RedisConnectionPool,
                                queryIndexes: List[Index] = Nil,
                                triggeredCheckFrequency: FiniteDuration = FiniteDuration(30L, TimeUnit.SECONDS)) {
+
   require(domainJdbcConnectionPool.isDefined || domainRedisConnectionPool.isDefined, "No domain connection pool specified")
 
   def domainConnectionPool: Either[JdbcConnectionPool, RedisConnectionPool] = {

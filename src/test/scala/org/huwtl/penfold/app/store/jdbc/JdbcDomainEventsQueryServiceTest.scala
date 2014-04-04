@@ -9,13 +9,13 @@ import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId}
 import org.huwtl.penfold.query.{EventRecord, EventSequenceId}
 import org.joda.time.DateTime
 
-class JdbcEventStoreQueryServiceTest extends Specification with JdbcSpecification {
+class JdbcDomainEventsQueryServiceTest extends Specification with JdbcSpecification {
 
   class context extends Scope {
     val created = new DateTime(2014, 3, 1, 12, 0, 0, 0)
     val database = newDatabase()
     val store = new JdbcEventStore(database, new EventSerializer)
-    val queryService = new JdbcEventStoreQueryService(database, new EventSerializer)
+    val queryService = new JdbcDomainEventsQueryService(database, new EventSerializer)
   }
 
   "retrieve nothing for last id when domain event store is empty" in new context {

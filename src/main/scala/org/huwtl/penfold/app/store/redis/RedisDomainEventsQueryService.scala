@@ -2,9 +2,9 @@ package org.huwtl.penfold.app.store.redis
 
 import org.huwtl.penfold.app.support.json.EventSerializer
 import com.redis.RedisClientPool
-import org.huwtl.penfold.query.{EventSequenceId, EventRecord, EventStoreQueryService}
+import org.huwtl.penfold.query.{EventSequenceId, EventRecord, DomainEventsQueryService}
 
-class RedisEventStoreQueryService(redisClientPool: RedisClientPool, serializer: EventSerializer) extends EventStoreQueryService {
+class RedisDomainEventsQueryService(redisClientPool: RedisClientPool, serializer: EventSerializer) extends DomainEventsQueryService {
   private val eventStore = "events"
 
   override def retrieveIdOfLast = {

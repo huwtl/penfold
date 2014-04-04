@@ -10,7 +10,7 @@ import org.huwtl.penfold.command._
 import org.huwtl.penfold.domain.store.{EventStore, DomainRepository}
 import com.redis.RedisClientPool
 import org.huwtl.penfold.app.support.json.{JsonPathExtractor, ObjectSerializer, EventSerializer}
-import org.huwtl.penfold.query.{EventStoreQueryService, NewEventsPublisher, NewEventsNotifier, NewEventsProvider}
+import org.huwtl.penfold.query.{DomainEventsQueryService, EventNotifiers, EventNotifier, NewEventsProvider}
 import org.huwtl.penfold.app.query.redis._
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
@@ -25,12 +25,12 @@ import org.huwtl.penfold.command.StartJob
 import org.huwtl.penfold.command.CreateJob
 import org.huwtl.penfold.command.CancelJob
 import org.slf4j.LoggerFactory
-import org.huwtl.penfold.app.store.redis.{RedisEventStoreQueryService, RedisEventStore}
+import org.huwtl.penfold.app.store.redis.{RedisDomainEventsQueryService, RedisEventStore}
 import org.huwtl.penfold.app.support.UUIDFactory
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.googlecode.flyway.core.Flyway
 import scala.slick.driver.JdbcDriver.backend.Database
-import org.huwtl.penfold.app.store.jdbc.{JdbcEventStoreQueryService, JdbcEventStore}
+import org.huwtl.penfold.app.store.jdbc.{JdbcDomainEventsQueryService, JdbcEventStore}
 
 class Bootstrap extends LifeCycle {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -55,17 +55,17 @@ class Bootstrap extends LifeCycle {
 
     val aggregateIdFactory = new UUIDFactory
 
-    val domainStoreConfig: (EventStore, EventStoreQueryService) = config.domainConnectionPool match {
+    val domainStoreConfig: (EventStore, DomainEventsQueryService) = config.domainConnectionPool match {
       case Left(jdbcPool) => {
         val domainJdbcPool = configureJdbcConnectionPool(jdbcPool)
         val eventStore = new JdbcEventStore(domainJdbcPool, eventSerializer)
-        val eventQueryService = new JdbcEventStoreQueryService(domainJdbcPool, eventSerializer)
+        val eventQueryService = new JdbcDomainEventsQueryService(domainJdbcPool, eventSerializer)
         (eventStore, eventQueryService)
       }
       case Right(redisPool) => {
         val domainRedisPool = configureRedisConnectionPool(redisPool)
         val eventStore = new RedisEventStore(domainRedisPool, eventSerializer)
-        val eventQueryService = new RedisEventStoreQueryService(domainRedisPool, eventSerializer)
+        val eventQueryService = new RedisDomainEventsQueryService(domainRedisPool, eventSerializer)
         (eventStore, eventQueryService)
       }
     }
@@ -76,17 +76,17 @@ class Bootstrap extends LifeCycle {
 
     val queryStoreEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryRedisClientPool, redisKeyFactory.eventTrackerKey("query")), eventQueryService)
 
-    val queryStoreUpdater = new NewEventsNotifier(queryStoreEventProvider, new RedisQueryStoreUpdater(queryRedisClientPool, objectSerializer, redisKeyFactory))
+    val queryStoreUpdater = new EventNotifier(queryStoreEventProvider, new RedisQueryStoreUpdater(queryRedisClientPool, objectSerializer, redisKeyFactory))
 
     val indexUpdaters = indexes.all.map {
       index =>
         val searchEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryRedisClientPool, redisKeyFactory.indexEventTrackerKey(index)), eventQueryService)
-        new NewEventsNotifier(searchEventProvider, new RedisIndexUpdater(index, queryRedisClientPool, objectSerializer, redisKeyFactory))
+        new EventNotifier(searchEventProvider, new RedisIndexUpdater(index, queryRedisClientPool, objectSerializer, redisKeyFactory))
     }
 
     val eventNotifiers = queryStoreUpdater :: indexUpdaters
 
-    val domainRepository = new DomainRepository(eventStore, new NewEventsPublisher(eventNotifiers))
+    val domainRepository = new DomainRepository(eventStore, new EventNotifiers(eventNotifiers))
 
     val commandDispatcher = new CommandDispatcher(Map[Class[_ <: Command], CommandHandler[_ <: Command]](//
       classOf[CreateJob] -> new CreateJobHandler(domainRepository, aggregateIdFactory), //
@@ -121,7 +121,7 @@ class Bootstrap extends LifeCycle {
           }
         }
         catch {
-          case e: Exception => logger.error("error checking for jobs to check", e)
+          case e: Exception => logger.error("error triggering jobs", e)
         }
       }
     }, 0, config.triggeredCheckFrequency.length, config.triggeredCheckFrequency.unit)
