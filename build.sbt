@@ -12,7 +12,7 @@ seq(webSettings :_*)
 
 conflictWarning in ThisBuild := ConflictWarning.disable
 
-parallelExecution in Test := false
+parallelExecution in ThisBuild := false
 
 libraryDependencies ++= Seq(
   "org.scalatra" % "scalatra_2.10" % "2.2.2",
@@ -40,3 +40,8 @@ resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/reposi
 
 resolvers += "clojars.org" at "http://clojars.org/repo/"
 
+resolvers += Classpaths.sbtPluginReleases
+
+ScoverageSbtPlugin.instrumentSettings
+
+CoverallsPlugin.singleProject
