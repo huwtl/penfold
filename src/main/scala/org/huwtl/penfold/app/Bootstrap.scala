@@ -10,7 +10,7 @@ import org.huwtl.penfold.command._
 import org.huwtl.penfold.domain.store.{EventStore, DomainRepository}
 import com.redis.RedisClientPool
 import org.huwtl.penfold.app.support.json.{JsonPathExtractor, ObjectSerializer, EventSerializer}
-import org.huwtl.penfold.query.{DomainEventsQueryService, EventNotifiers, EventNotifier, NewEventsProvider}
+import org.huwtl.penfold.query.{DomainEventQueryService, EventNotifiers, EventNotifier, NewEventsProvider}
 import org.huwtl.penfold.app.query.redis._
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
@@ -25,12 +25,12 @@ import org.huwtl.penfold.command.StartJob
 import org.huwtl.penfold.command.CreateJob
 import org.huwtl.penfold.command.CancelJob
 import org.slf4j.LoggerFactory
-import org.huwtl.penfold.app.store.redis.{RedisDomainEventsQueryService, RedisEventStore}
+import org.huwtl.penfold.app.store.redis.{RedisDomainEventQueryService, RedisEventStore}
 import org.huwtl.penfold.app.support.UUIDFactory
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.googlecode.flyway.core.Flyway
 import scala.slick.driver.JdbcDriver.backend.Database
-import org.huwtl.penfold.app.store.jdbc.{JdbcDomainEventsQueryService, JdbcEventStore}
+import org.huwtl.penfold.app.store.jdbc.{JdbcDomainEventQueryService, JdbcEventStore}
 
 class Bootstrap extends LifeCycle {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -55,38 +55,38 @@ class Bootstrap extends LifeCycle {
 
     val aggregateIdFactory = new UUIDFactory
 
-    val domainStoreConfig: (EventStore, DomainEventsQueryService) = config.domainConnectionPool match {
+    val domainStoreConfig: (EventStore, DomainEventQueryService) = config.domainConnectionPool match {
       case Left(jdbcPool) => {
         val domainJdbcPool = configureJdbcConnectionPool(jdbcPool)
         val eventStore = new JdbcEventStore(domainJdbcPool, eventSerializer)
-        val eventQueryService = new JdbcDomainEventsQueryService(domainJdbcPool, eventSerializer)
+        val eventQueryService = new JdbcDomainEventQueryService(domainJdbcPool, eventSerializer)
         (eventStore, eventQueryService)
       }
       case Right(redisPool) => {
         val domainRedisPool = configureRedisConnectionPool(redisPool)
         val eventStore = new RedisEventStore(domainRedisPool, eventSerializer)
-        val eventQueryService = new RedisDomainEventsQueryService(domainRedisPool, eventSerializer)
+        val eventQueryService = new RedisDomainEventQueryService(domainRedisPool, eventSerializer)
         (eventStore, eventQueryService)
       }
     }
 
-    val eventStore = domainStoreConfig._1
+    val domainEventStore = domainStoreConfig._1
 
-    val eventQueryService = domainStoreConfig._2
+    val domainEventQueryService = domainStoreConfig._2
 
-    val queryStoreEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryRedisClientPool, redisKeyFactory.eventTrackerKey("query")), eventQueryService)
+    val queryStoreEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryRedisClientPool, redisKeyFactory.eventTrackerKey("query")), domainEventQueryService)
 
     val queryStoreUpdater = new EventNotifier(queryStoreEventProvider, new RedisQueryStoreUpdater(queryRedisClientPool, objectSerializer, redisKeyFactory))
 
     val indexUpdaters = indexes.all.map {
       index =>
-        val searchEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryRedisClientPool, redisKeyFactory.indexEventTrackerKey(index)), eventQueryService)
+        val searchEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryRedisClientPool, redisKeyFactory.indexEventTrackerKey(index)), domainEventQueryService)
         new EventNotifier(searchEventProvider, new RedisIndexUpdater(index, queryRedisClientPool, objectSerializer, redisKeyFactory))
     }
 
     val eventNotifiers = queryStoreUpdater :: indexUpdaters
 
-    val domainRepository = new DomainRepository(eventStore, new EventNotifiers(eventNotifiers))
+    val domainRepository = new DomainRepository(domainEventStore, new EventNotifiers(eventNotifiers))
 
     val commandDispatcher = new CommandDispatcher(Map[Class[_ <: Command], CommandHandler[_ <: Command]](//
       classOf[CreateJob] -> new CreateJobHandler(domainRepository, aggregateIdFactory), //

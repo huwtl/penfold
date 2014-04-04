@@ -6,7 +6,7 @@ class CommandDispatcher(handlers: Map[Class[_ <: Command], CommandHandler[_ <: C
   def dispatch[T <: Command](command: T): AggregateId = {
     val applicableHandler = handlers.get(command.getClass).asInstanceOf[Option[CommandHandler[Command]]]
 
-    require(applicableHandler.isDefined, "Command type not supported")
+    require(applicableHandler.isDefined, s"Command $command not supported")
 
     applicableHandler.get.handle(command)
   }

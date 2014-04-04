@@ -21,6 +21,11 @@ class JobTest extends Specification {
     typesOf(createdJob.uncommittedEvents) must beEqualTo(List(classOf[JobCreated]))
   }
 
+  "trigger new future job if trigger date in past" in {
+    val createdJob = Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), DateTime.now().minusDays(1), Payload(Map()))
+    typesOf(createdJob.uncommittedEvents) must beEqualTo(List(classOf[JobTriggered], classOf[JobCreated]))
+  }
+
   "trigger future job" in {
     val readyJob = Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), DateTime.now().plusHours(1), Payload(Map())).trigger()
     typesOf(readyJob.uncommittedEvents) must beEqualTo(List(classOf[JobTriggered], classOf[JobCreated]))

@@ -15,7 +15,7 @@ class NewEventsProviderTest extends Specification with Mockito with DataTables {
 
     val nextExpectedEventIdProvider = mock[NextExpectedEventIdProvider]
 
-    val eventStoreQueryRepository = mock[DomainEventsQueryService]
+    val eventStoreQueryRepository = mock[DomainEventQueryService]
     eventStoreQueryRepository.retrieveBy(event1.id) returns Some(event1)
     eventStoreQueryRepository.retrieveBy(event2.id) returns Some(event2)
 

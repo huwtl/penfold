@@ -1,6 +1,6 @@
 package org.huwtl.penfold.app.store.jdbc
 
-import org.huwtl.penfold.query.{EventRecord, EventSequenceId, DomainEventsQueryService}
+import org.huwtl.penfold.query.{EventRecord, EventSequenceId, DomainEventQueryService}
 
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -8,7 +8,7 @@ import scala.slick.jdbc.{GetResult, StaticQuery => Q}
 import Q.interpolation
 import org.huwtl.penfold.app.support.json.EventSerializer
 
-class JdbcDomainEventsQueryService(database: Database, serializer: EventSerializer) extends DomainEventsQueryService {
+class JdbcDomainEventQueryService(database: Database, serializer: EventSerializer) extends DomainEventQueryService {
   implicit val getEventFromRow = GetResult(row => EventRecord(EventSequenceId(row.nextLong()), serializer.deserialize(row.nextString())))
 
   implicit val getEventIdFromRow = GetResult(row => EventSequenceId(row.nextLong()))
