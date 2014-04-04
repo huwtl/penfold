@@ -1,6 +1,6 @@
 package org.huwtl.penfold.app.query.redis
 
-import com.redis.RedisClientPool
+import com.redis.{RedisClient, RedisClientPool}
 import org.huwtl.penfold.domain.model._
 import org.joda.time.format.DateTimeFormat
 import org.huwtl.penfold.app.support.json.ObjectSerializer
@@ -94,7 +94,7 @@ class RedisQueryRepository(redisClientPool: RedisClientPool, indexes: Indexes, o
   }
 
   private def retrievePage(indexKey: String, pageRequest: PageRequest): PageResult = {
-    val aggregateIdsWithOverflow = redisClientPool.withClient(_.zrange(indexKey, pageRequest.start, pageRequest.end).getOrElse(Nil))
+    val aggregateIdsWithOverflow = redisClientPool.withClient(_.zrange(indexKey, pageRequest.start, pageRequest.end, RedisClient.DESC).getOrElse(Nil))
     val aggregateIdsWithoutOverflow = aggregateIdsWithOverflow.take(pageRequest.pageSize)
 
     val previousPageExists = !pageRequest.isFirstPage

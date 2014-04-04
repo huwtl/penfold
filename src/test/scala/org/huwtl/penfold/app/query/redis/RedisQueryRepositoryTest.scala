@@ -61,14 +61,14 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
     createJobEvent(AggregateId("a5"), EventSequenceId(5), queryRepositoryUpdater, queueIndexUpdater)
 
     "pageRequest"        | "expected"                         | "prevPage" | "nextPage" |
-    PageRequest(0, 10)   ! List("a1", "a2", "a3", "a4", "a5") ! false      ! false      |
-    PageRequest(0, 1)    ! List("a1")                         ! false      ! true       |
-    PageRequest(2, 2)    ! List("a5")                         ! true       ! false      |
+    PageRequest(0, 10)   ! List("a5", "a4", "a3", "a2", "a1") ! false      ! false      |
+    PageRequest(0, 1)    ! List("a5")                         ! false      ! true       |
+    PageRequest(2, 2)    ! List("a1")                         ! true       ! false      |
     PageRequest(3, 2)    ! List()                             ! true       ! false      |
     PageRequest(9, 2)    ! List()                             ! true       ! false      |
     PageRequest(0, 0)    ! List()                             ! false      ! true       |
-    PageRequest(1, 1)    ! List("a2")                         ! true       ! true       |
-    PageRequest(1, 2)    ! List("a3", "a4")                   ! true       ! true       |> {
+    PageRequest(1, 1)    ! List("a4")                         ! true       ! true       |
+    PageRequest(1, 2)    ! List("a3", "a2")                   ! true       ! true       |> {
       (pageRequest, expected, prevPage, nextPage) =>
         val pageResult = queryRepository.retrieveByQueue(queueId, status, pageRequest)
         pageResult.jobs.map(_.id) must beEqualTo(expected.map(AggregateId))
