@@ -41,7 +41,7 @@ class JdbcEventStoreTest extends Specification with DataTables with JdbcSpecific
   }
 
   private def createdEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {
-    JobCreated(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), Binding(List(BoundQueue(QueueId("q1")))), new DateTime(2014, 4, 3, 13, 0, 0, 0), Payload(Map()))
+    JobCreated(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), Binding(List(BoundQueue(QueueId("q1")))), new DateTime(2014, 4, 3, 13, 0, 0, 0), Payload.empty)
   }
 
   private def triggeredEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {

@@ -25,7 +25,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
 
   val queueId = QueueId("abc")
 
-  val payload = Payload(Map())
+  val payload = Payload.empty
 
   val created = new DateTime(2014, 2, 14, 12, 0, 0, 0)
 

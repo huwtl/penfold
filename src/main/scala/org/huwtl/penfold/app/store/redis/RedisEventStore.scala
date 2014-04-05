@@ -34,7 +34,7 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
     """.stripMargin
   ))
 
-  override def add(event: Event) = {
+  override def add(event: Event) {
     val serialized = eventSerializer.serialize(event)
     redisPool.withClient {
       client =>

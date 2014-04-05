@@ -23,7 +23,7 @@ class JdbcEventStore(database: Database, eventSerializer: EventSerializer) exten
           ${event.aggregateId.value},
           ${event.aggregateVersion.number},
           ${event.aggregateType.name},
-          ${new Timestamp(event.created.getMillis).toString()},
+          ${new Timestamp(event.created.getMillis).toString},
           ${eventSerializer.serialize(event)}
         )
       """.execute

@@ -21,7 +21,7 @@ class CreateJobHandlerTest extends Specification with Mockito {
   "create job" in new context {
     val handler = new CreateJobHandler(domainRepository, aggregateIdFactory)
 
-    val aggregateId = handler.handle(new CreateJob(Binding(Nil), Payload(Map())))
+    val aggregateId = handler.handle(new CreateJob(Binding(Nil), Payload.empty))
 
     there was one(domainRepository).add(any[Job])
     aggregateId must beEqualTo(expectedAggregateId)

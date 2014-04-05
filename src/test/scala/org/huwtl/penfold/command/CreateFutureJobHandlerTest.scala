@@ -22,7 +22,7 @@ class CreateFutureJobHandlerTest extends Specification with Mockito {
   "create future job" in new context {
     val handler = new CreateFutureJobHandler(domainRepository, aggregateIdFactory)
 
-    val aggregateId = handler.handle(new CreateFutureJob(Binding(Nil), DateTime.now, Payload(Map())))
+    val aggregateId = handler.handle(new CreateFutureJob(Binding(Nil), DateTime.now, Payload.empty))
 
     there was one(domainRepository).add(any[Job])
     aggregateId must beEqualTo(expectedAggregateId)

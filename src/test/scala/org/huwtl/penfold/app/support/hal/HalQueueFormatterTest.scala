@@ -70,6 +70,6 @@ class HalQueueFormatterTest extends Specification {
   }
 
   def job(id: String, binding: Binding = Binding(List(BoundQueue(queueId)))) = {
-    JobRecord(AggregateId(id), createdDate, binding, status, triggerDate, Payload(Map()))
+    JobRecord(AggregateId(id), createdDate, binding, status, triggerDate, Payload.empty)
   }
 }
