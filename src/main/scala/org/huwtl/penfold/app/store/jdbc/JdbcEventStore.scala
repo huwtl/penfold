@@ -14,7 +14,7 @@ import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 class JdbcEventStore(database: Database, eventSerializer: EventSerializer) extends EventStore {
   implicit val getEventFromRow = GetResult(row => eventSerializer.deserialize(row.nextString()))
 
-  override def add(event: Event) {
+  override def add(event: Event) = {
     database.withDynSession {
       try {
         sqlu"""
@@ -26,7 +26,8 @@ class JdbcEventStore(database: Database, eventSerializer: EventSerializer) exten
           ${new Timestamp(event.created.getMillis).toString},
           ${eventSerializer.serialize(event)}
         )
-      """.execute
+        """.execute
+        event
       }
       catch {
         case e: SQLIntegrityConstraintViolationException => throw new AggregateConflictException(s"aggregate conflict ${event.aggregateId}")

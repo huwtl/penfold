@@ -9,28 +9,33 @@ import org.huwtl.penfold.domain.model.Binding
 import org.huwtl.penfold.domain.model.Payload
 import org.huwtl.penfold.domain.event.{JobTriggered, JobCreated}
 import org.joda.time.DateTime
+import org.specs2.specification.Scope
 
 class DomainRepositoryTest extends Specification with Mockito {
-  val aggregateId = AggregateId("a1")
+  class context extends Scope {
+    val aggregateId = AggregateId("a1")
 
-  val binding = Binding(List(BoundQueue(QueueId("q1"))))
+    val binding = Binding(List(BoundQueue(QueueId("q1"))))
 
-  val timestamp = DateTime.now
+    val timestamp = DateTime.now
 
-  val eventStore = mock[EventStore]
+    val createdJob = Job.create(aggregateId, binding, Payload.empty)
 
-  val notifiers = mock[EventNotifiers]
+    val eventStore = mock[EventStore]
 
-  val repo = new DomainRepository(eventStore, notifiers)
+    val notifiers = mock[EventNotifiers]
 
-  "append new aggregate root events to event store" in {
+    val repo = new DomainRepository(eventStore, notifiers)
+  }
+
+  "append new aggregate root events to event store" in new context {
     val job = repo.add(createdJob)
 
     job.uncommittedEvents must beEmpty
     there was one(notifiers).notifyAllOfEvents()
   }
 
-  "load aggregate by id" in {
+  "load aggregate by id" in new context {
     eventStore.retrieveBy(aggregateId) returns List(
       JobCreated(aggregateId, AggregateVersion.init, timestamp, binding, timestamp, Payload.empty),
       JobTriggered(aggregateId, AggregateVersion.init.next, timestamp, List(QueueId("q1")))
@@ -40,6 +45,4 @@ class DomainRepositoryTest extends Specification with Mockito {
 
     job.status must beEqualTo(Status.Ready)
   }
-
-  private def createdJob = Job.create(aggregateId, binding, Payload.empty)
 }

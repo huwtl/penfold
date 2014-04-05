@@ -6,5 +6,5 @@ import org.huwtl.penfold.domain.event.Event
 trait EventStore {
   def retrieveBy(id: AggregateId): List[Event]
 
-  def add(event: Event): Unit
+  def add(event: Event): Event
 }

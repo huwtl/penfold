@@ -34,7 +34,7 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
     """.stripMargin
   ))
 
-  override def add(event: Event) {
+  override def add(event: Event) = {
     val serialized = eventSerializer.serialize(event)
     redisPool.withClient {
       client =>
@@ -42,7 +42,7 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
           keys = List(eventsKey, aggregateEventsKey(event.aggregateId)),
           args = List(serialized, event.aggregateVersion.number))) match {
           case Failure(e) if e.getMessage.contains(conflictError) => throw new AggregateConflictException(s"aggregate conflict ${event.aggregateId}")
-          case Success(value) =>
+          case Success(value) => event
         }
     }
   }
