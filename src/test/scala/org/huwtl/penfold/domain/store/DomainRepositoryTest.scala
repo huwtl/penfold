@@ -45,4 +45,11 @@ class DomainRepositoryTest extends Specification with Mockito {
 
     job.status must beEqualTo(Status.Ready)
   }
+
+  "throw exception when no aggregate found with id" in new context {
+    val unknownAggregateId = AggregateId("unknown")
+    eventStore.retrieveBy(unknownAggregateId) returns Nil
+
+    repo.getById[Job](AggregateId("unknown")) must throwA[IllegalArgumentException]
+  }
 }

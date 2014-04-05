@@ -10,7 +10,7 @@ object AggregateType {
   }
 
   def from(str: String): Option[AggregateType] = {
-    str.toLowerCase match {
+    str match {
       case Job.name => Some(Job)
       case _ => None
     }
