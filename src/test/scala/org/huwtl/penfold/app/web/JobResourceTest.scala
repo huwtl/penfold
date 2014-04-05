@@ -69,7 +69,7 @@ class JobResourceTest extends MutableScalatraSpec with Mockito {
     commandDispatcher.dispatch(CreateJob(binding, expectedJob.payload)) returns expectedJob.id
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
-    post("/jobs", textFromFile("fixtures/job.json")) {
+    post("/jobs", textFromFile("fixtures/web/job.json")) {
       status must beEqualTo(201)
     }
   }

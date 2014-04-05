@@ -1,7 +1,0 @@
-{
-    "stuff": "something",
-
-    "nested": {
-        "inner": true
-    }
-}
