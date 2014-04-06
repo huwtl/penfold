@@ -9,7 +9,12 @@ import net.ceedubs.ficus.FicusConfig._
 
 object Main {
   def main(args: Array[String]) {
+    new Main().init().join()
+  }
+}
 
+class Main() {
+  def init() = {
     sys.props.getOrElseUpdate("config.file", "/usr/local/config/penfold/penfold.conf")
 
     val config = ConfigFactory.load().as[ServerConfiguration]("penfold")
@@ -24,6 +29,6 @@ object Main {
     server.setHandler(context)
 
     server.start()
-    server.join()
+    server
   }
 }

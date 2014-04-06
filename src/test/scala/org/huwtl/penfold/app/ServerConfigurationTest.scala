@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit._
 
 class ServerConfigurationTest extends Specification {
 
-  val publicUrl = "http://localhost:8080"
+  val publicUrl = "http://localhost:9762"
 
-  val httpPort = 8080
+  val httpPort = 9762
 
   val jdbcUrl = "jdbc:hsqldb:mem:penfold;sql.syntax_mys=true"
 
@@ -21,8 +21,8 @@ class ServerConfigurationTest extends Specification {
     Index("index2", List(IndexField("field1", "payload / inner / field1"), IndexField("field2", "payload / field2"))))
 
   "load fully populated config file with redis domain store" in {
-    val expectedConfig = ServerConfiguration(publicUrl, httpPort, None, Some(RedisConnectionPool("localhost", 6379, 0, Some("secret"), 10)),
-      RedisConnectionPool("localhost", 6379, 1, Some("secret"), 100), queryIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
+    val expectedConfig = ServerConfiguration(publicUrl, httpPort, None, Some(RedisConnectionPool("localhost", 6380, 0, Some("secret"), 10)),
+      RedisConnectionPool("localhost", 6380, 1, Some("secret"), 100), queryIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
 
     val config = loadConfig("fullWithRedisDomainPool")
 
@@ -32,8 +32,8 @@ class ServerConfigurationTest extends Specification {
   }
 
   "load minimally populated config file with redis domain store" in {
-    val expectedConfig = ServerConfiguration(publicUrl, httpPort, None, Some(RedisConnectionPool("localhost", 6379, 0, None)),
-      RedisConnectionPool("localhost", 6379, 1, None))
+    val expectedConfig = ServerConfiguration(publicUrl, httpPort, None, Some(RedisConnectionPool("localhost", 6380, 0, None)),
+      RedisConnectionPool("localhost", 6380, 1, None))
 
     val config = loadConfig("minimalWithRedisDomainPool")
 
@@ -44,7 +44,7 @@ class ServerConfigurationTest extends Specification {
 
   "load minimally populated config file with jdbc domain store" in {
     val expectedConfig = ServerConfiguration(publicUrl, httpPort, Some(JdbcConnectionPool(jdbcUrl, "user", "", "org.hsqldb.jdbcDriver")),
-      None, RedisConnectionPool("localhost", 6379, 1, None))
+      None, RedisConnectionPool("localhost", 6380, 1, None))
 
     val config = loadConfig("minimalWithJdbcDomainPool")
 
@@ -55,7 +55,7 @@ class ServerConfigurationTest extends Specification {
 
   "load fully populated config file with jdbc domain store" in {
     val expectedConfig = ServerConfiguration(publicUrl, httpPort, Some(JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10)),
-      None, RedisConnectionPool("localhost", 6379, 1, Some("secret"), 100), queryIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
+      None, RedisConnectionPool("localhost", 6380, 1, Some("secret"), 100), queryIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
 
     val config = loadConfig("fullWithJdbcDomainPool")
 
@@ -65,7 +65,7 @@ class ServerConfigurationTest extends Specification {
   }
 
   "error when no domain store" in {
-    ServerConfiguration(publicUrl, httpPort, None, None, RedisConnectionPool("localhost", 6379, 1, None)) must throwA[IllegalArgumentException]
+    ServerConfiguration(publicUrl, httpPort, None, None, RedisConnectionPool("localhost", 6380, 1, None)) must throwA[IllegalArgumentException]
 
   }
 

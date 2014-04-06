@@ -4,6 +4,6 @@ import org.scalatra._
 
 class PingResource extends ScalatraServlet with ErrorHandling {
   get("/") {
-    Ok("pong")
+    Ok("hello")
   }
 }

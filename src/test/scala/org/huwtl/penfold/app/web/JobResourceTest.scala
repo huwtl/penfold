@@ -74,6 +74,18 @@ class JobResourceTest extends MutableScalatraSpec with Mockito {
     }
   }
 
+  "return 400 when posting invalid formatted json" in {
+    post("/jobs", "{") {
+      status must beEqualTo(400)
+    }
+  }
+
+  "return 400 when posting unexpected job json" in {
+    post("/jobs", "{}") {
+      status must beEqualTo(400)
+    }
+  }
+
   def jsonFromFile(filePath: String) = {
     parse(textFromFile(filePath))
   }
