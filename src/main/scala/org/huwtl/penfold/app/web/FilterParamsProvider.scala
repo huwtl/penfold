@@ -1,7 +1,7 @@
 package org.huwtl.penfold.app.web
 
 import org.scalatra.Params
-import org.huwtl.penfold.query.{Filters, Filter}
+import org.huwtl.penfold.readstore.{Filters, Filter}
 
 trait FilterParamsProvider {
   def parseFilters(params: Params) = {

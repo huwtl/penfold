@@ -4,7 +4,7 @@ import org.specs2.mutable.Specification
 
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
-import org.huwtl.penfold.app.query.redis.{Index, IndexField}
+import org.huwtl.penfold.app.readstore.redis.{Index, IndexField}
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
 
@@ -24,7 +24,7 @@ class ServerConfigurationTest extends Specification {
 
   "load fully populated config file with redis domain store" in {
     val expectedConfig = ServerConfiguration(publicUrl, httpPort, Some(authCredentials), None, Some(RedisConnectionPool("localhost", 6380, 0, Some("secret"), 10)),
-      RedisConnectionPool("localhost", 6380, 1, Some("secret"), 100), queryIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
+      RedisConnectionPool("localhost", 6380, 1, Some("secret"), 100), readStoreIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
 
     val config = loadConfig("fullWithRedisDomainPool")
 
@@ -57,7 +57,7 @@ class ServerConfigurationTest extends Specification {
 
   "load fully populated config file with jdbc domain store" in {
     val expectedConfig = ServerConfiguration(publicUrl, httpPort, Some(authCredentials), Some(JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10)),
-      None, RedisConnectionPool("localhost", 6380, 1, Some("secret"), 100), queryIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
+      None, RedisConnectionPool("localhost", 6380, 1, Some("secret"), 100), readStoreIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
 
     val config = loadConfig("fullWithJdbcDomainPool")
 

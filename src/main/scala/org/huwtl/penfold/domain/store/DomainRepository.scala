@@ -1,7 +1,7 @@
 package org.huwtl.penfold.domain.store
 
 import org.huwtl.penfold.domain.model.{Job, AggregateId, AggregateRoot}
-import org.huwtl.penfold.query.EventNotifiers
+import org.huwtl.penfold.readstore.EventNotifiers
 
 class DomainRepository(eventStore: EventStore, notifiers: EventNotifiers) {
   def getById[T <: AggregateRoot](id: AggregateId): T = {

@@ -4,14 +4,14 @@ import org.scalatra._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import org.huwtl.penfold.app.support.hal.HalQueueFormatter
 import org.huwtl.penfold.domain.model.{Status, AggregateId, QueueId}
-import org.huwtl.penfold.query.{PageRequest, QueryRepository}
+import org.huwtl.penfold.readstore.{PageRequest, ReadStore}
 import org.huwtl.penfold.command.{CompleteJob, CommandDispatcher, StartJob}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.app.web.bean.{CompleteJobRequest, StartJobRequest}
 import org.huwtl.penfold.app.support.auth.BasicAuthenticationSupport
 import org.huwtl.penfold.app.AuthenticationCredentials
 
-class QueueResource(queryRepository: QueryRepository,
+class QueueResource(readStore: ReadStore,
                     commandDispatcher: CommandDispatcher,
                     jsonConverter: ObjectSerializer,
                     halFormatter: HalQueueFormatter,
@@ -29,7 +29,7 @@ class QueueResource(queryRepository: QueryRepository,
         val queue = QueueId(params("queue"))
         val page = PageRequest(params.getOrElse("page", "0").toInt, pageSize)
         val filters = parseFilters(params)
-        Ok(halFormatter.halFrom(queue, status, queryRepository.retrieveByQueue(queue, status, page, filters), filters))
+        Ok(halFormatter.halFrom(queue, status, readStore.retrieveByQueue(queue, status, page, filters), filters))
       }
     }
   }
@@ -37,7 +37,7 @@ class QueueResource(queryRepository: QueryRepository,
   get("/:queue/:status/:id") {
     statusMatch {
       status => {
-        queryRepository.retrieveBy(AggregateId(params("id"))) match {
+        readStore.retrieveBy(AggregateId(params("id"))) match {
           case Some(job) => Ok(halFormatter.halFrom(QueueId(queueIdParam), job))
           case _ => errorResponse(NotFound(s"$status job not found"))
         }
@@ -49,14 +49,14 @@ class QueueResource(queryRepository: QueryRepository,
     val queue = QueueId(queueIdParam)
     val startJobRequest = jsonConverter.deserialize[StartJobRequest](request.body)
     commandDispatcher.dispatch[StartJob](startJobRequest.toCommand(queue))
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), queryRepository.retrieveBy(startJobRequest.id).get))
+    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(startJobRequest.id).get))
   }
 
   post("/:queue/completed") {
     val queue = QueueId(queueIdParam)
     val completeJobRequest = jsonConverter.deserialize[CompleteJobRequest](request.body)
     commandDispatcher.dispatch[CompleteJob](completeJobRequest.toCommand(queue))
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), queryRepository.retrieveBy(completeJobRequest.id).get))
+    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(completeJobRequest.id).get))
   }
 
   override protected def validCredentials: Option[AuthenticationCredentials] = authenticationCredentials

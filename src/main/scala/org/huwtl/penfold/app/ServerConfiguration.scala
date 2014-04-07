@@ -2,15 +2,15 @@ package org.huwtl.penfold.app
 
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
-import org.huwtl.penfold.app.query.redis.Index
+import org.huwtl.penfold.app.readstore.redis.Index
 
 case class ServerConfiguration(publicUrl: String,
                                httpPort: Int,
                                authentication: Option[AuthenticationCredentials],
                                domainJdbcConnectionPool: Option[JdbcConnectionPool],
                                domainRedisConnectionPool: Option[RedisConnectionPool],
-                               queryRedisConnectionPool: RedisConnectionPool,
-                               queryIndexes: List[Index] = Nil,
+                               readStoreRedisConnectionPool: RedisConnectionPool,
+                               readStoreIndexes: List[Index] = Nil,
                                triggeredCheckFrequency: FiniteDuration = FiniteDuration(30L, TimeUnit.SECONDS)) {
 
   require(domainJdbcConnectionPool.isDefined || domainRedisConnectionPool.isDefined, "No domain connection pool specified")

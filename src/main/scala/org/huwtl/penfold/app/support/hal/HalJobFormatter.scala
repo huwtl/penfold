@@ -4,7 +4,7 @@ import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import org.joda.time.format.DateTimeFormat
 import java.net.URI
 import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
-import org.huwtl.penfold.query.{Filters, PageResult, JobRecord}
+import org.huwtl.penfold.readstore.{Filters, PageResult, JobRecord}
 import org.huwtl.penfold.domain.model.Status._
 import com.theoryinpractise.halbuilder.api.Representation
 import org.huwtl.penfold.app.support.JavaMapUtil

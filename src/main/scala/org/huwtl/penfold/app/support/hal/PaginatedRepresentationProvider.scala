@@ -1,6 +1,6 @@
 package org.huwtl.penfold.app.support.hal
 
-import org.huwtl.penfold.query.{PageResult, Filters}
+import org.huwtl.penfold.readstore.{PageResult, Filters}
 import com.theoryinpractise.halbuilder.api.RepresentationFactory
 import org.scalatra.util.RicherString
 

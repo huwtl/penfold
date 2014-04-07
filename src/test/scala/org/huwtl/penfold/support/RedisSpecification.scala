@@ -5,7 +5,7 @@ import org.specs2.mutable.Specification
 import redis.embedded.RedisServer
 import com.redis.RedisClientPool
 import org.huwtl.penfold.app.support.json.JsonPathExtractor
-import org.huwtl.penfold.app.query.redis.RedisKeyFactory
+import org.huwtl.penfold.app.readstore.redis.RedisKeyFactory
 
 trait RedisSpecification extends Specification {
 

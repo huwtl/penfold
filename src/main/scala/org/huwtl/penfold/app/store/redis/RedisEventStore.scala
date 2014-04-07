@@ -13,6 +13,8 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
 
   val conflictError = "CONFLICT"
 
+  private val connectionSuccess = true
+
   lazy val storeEventScript = redisPool.withClient(_.scriptLoad(
     s"""
       | local eventsKey = KEYS[1]
@@ -33,6 +35,18 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
       | return 'OK'
     """.stripMargin
   ))
+
+  override def checkConnectivity = {
+    try {
+      redisPool.withClient(_.toString())
+      Left(connectionSuccess)
+    }
+    catch {
+      case e: Exception => {
+        Right(e)
+      }
+    }
+  }
 
   override def add(event: Event) = {
     val serialized = eventSerializer.serialize(event)

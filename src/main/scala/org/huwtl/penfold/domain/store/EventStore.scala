@@ -4,6 +4,8 @@ import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.event.Event
 
 trait EventStore {
+  def checkConnectivity: Either[Boolean, Exception]
+
   def retrieveBy(id: AggregateId): List[Event]
 
   def add(event: Event): Event

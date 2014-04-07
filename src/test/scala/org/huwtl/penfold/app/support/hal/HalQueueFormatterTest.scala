@@ -6,14 +6,14 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.specs2.mutable.Specification
 import org.huwtl.penfold.domain.model._
-import org.huwtl.penfold.query._
+import org.huwtl.penfold.readstore._
 import org.joda.time.DateTime
 import org.huwtl.penfold.domain.model.Payload
-import org.huwtl.penfold.query.Filter
+import org.huwtl.penfold.readstore.Filter
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.query.JobRecord
-import org.huwtl.penfold.query.PageResult
+import org.huwtl.penfold.readstore.JobRecord
+import org.huwtl.penfold.readstore.PageResult
 
 class HalQueueFormatterTest extends Specification {
 

@@ -16,7 +16,8 @@ import org.specs2.specification.Scope
 class JdbcEventStoreTest extends Specification with DataTables with JdbcSpecification {
 
   class context extends Scope {
-    val store = new JdbcEventStore(newDatabase(), new EventSerializer)
+    val database = newDatabase()
+    val store = new JdbcEventStore(database, new EventSerializer)
   }
 
   "store events" in new context {
@@ -38,6 +39,10 @@ class JdbcEventStoreTest extends Specification with DataTables with JdbcSpecific
     val event = createdEvent(AggregateId("a1"), AggregateVersion(1))
     store.add(event)
     store.add(event) must throwA[AggregateConflictException]
+  }
+
+  "check connectivity to store" in new context {
+    store.checkConnectivity.left.getOrElse(false) must beTrue
   }
 
   private def createdEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {

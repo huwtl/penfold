@@ -1,6 +1,6 @@
 package org.huwtl.penfold.app.store.jdbc
 
-import org.huwtl.penfold.query.{EventRecord, EventSequenceId, DomainEventQueryService}
+import org.huwtl.penfold.readstore.{EventRecord, EventSequenceId, DomainEventQueryService}
 
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession

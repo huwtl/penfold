@@ -2,7 +2,7 @@ package org.huwtl.penfold.domain.store
 
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
-import org.huwtl.penfold.query.EventNotifiers
+import org.huwtl.penfold.readstore.EventNotifiers
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.Binding

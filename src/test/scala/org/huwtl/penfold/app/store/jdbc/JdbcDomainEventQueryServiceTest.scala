@@ -6,7 +6,7 @@ import org.specs2.specification.Scope
 import org.huwtl.penfold.app.support.json.EventSerializer
 import org.huwtl.penfold.domain.event.JobTriggered
 import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId}
-import org.huwtl.penfold.query.{EventRecord, EventSequenceId}
+import org.huwtl.penfold.readstore.{EventRecord, EventSequenceId}
 import org.joda.time.DateTime
 
 class JdbcDomainEventQueryServiceTest extends Specification with JdbcSpecification {

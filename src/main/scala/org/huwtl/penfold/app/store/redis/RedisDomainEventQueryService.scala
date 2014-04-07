@@ -2,7 +2,7 @@ package org.huwtl.penfold.app.store.redis
 
 import org.huwtl.penfold.app.support.json.EventSerializer
 import com.redis.RedisClientPool
-import org.huwtl.penfold.query.{EventSequenceId, EventRecord, DomainEventQueryService}
+import org.huwtl.penfold.readstore.{EventSequenceId, EventRecord, DomainEventQueryService}
 
 class RedisDomainEventQueryService(redisClientPool: RedisClientPool, serializer: EventSerializer) extends DomainEventQueryService {
   private val eventStore = "events"

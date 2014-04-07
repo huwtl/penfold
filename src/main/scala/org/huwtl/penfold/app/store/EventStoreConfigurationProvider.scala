@@ -1,7 +1,7 @@
 package org.huwtl.penfold.app.store
 
 import org.huwtl.penfold.domain.store.EventStore
-import org.huwtl.penfold.query.DomainEventQueryService
+import org.huwtl.penfold.readstore.DomainEventQueryService
 import org.huwtl.penfold.app.store.jdbc.{JdbcDomainEventQueryService, JdbcEventStore, JdbcConnectionPoolFactory, JdbcDatabaseInitialiser}
 import org.huwtl.penfold.app.store.redis.{RedisDomainEventQueryService, RedisEventStore, RedisConnectionPoolFactory}
 import org.huwtl.penfold.app.{RedisConnectionPool, JdbcConnectionPool}

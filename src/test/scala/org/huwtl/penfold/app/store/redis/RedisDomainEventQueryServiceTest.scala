@@ -5,7 +5,7 @@ import org.huwtl.penfold.app.support.json.EventSerializer
 import org.huwtl.penfold.domain.event.JobTriggered
 import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId}
 import org.huwtl.penfold.support.RedisSpecification
-import org.huwtl.penfold.query.{EventSequenceId, EventRecord}
+import org.huwtl.penfold.readstore.{EventSequenceId, EventRecord}
 import org.joda.time.DateTime
 
 class RedisDomainEventQueryServiceTest extends RedisSpecification {

@@ -8,8 +8,8 @@ import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalJobFormatter}
 import org.huwtl.penfold.command._
 import org.huwtl.penfold.domain.store.DomainRepository
 import org.huwtl.penfold.app.support.json.{JsonPathExtractor, ObjectSerializer, EventSerializer}
-import org.huwtl.penfold.query.{EventNotifiers, EventNotifier, NewEventsProvider}
-import org.huwtl.penfold.app.query.redis._
+import org.huwtl.penfold.readstore.{EventNotifiers, EventNotifier, NewEventsProvider}
+import org.huwtl.penfold.app.readstore.redis._
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import org.huwtl.penfold.command.CreateFutureJobHandler
@@ -26,6 +26,8 @@ import org.huwtl.penfold.app.store.redis.RedisConnectionPoolFactory
 import org.huwtl.penfold.app.support.UUIDFactory
 import org.huwtl.penfold.app.schedule.JobTriggerScheduler
 import org.huwtl.penfold.app.store.EventStoreConfigurationProvider
+import com.codahale.metrics.health.HealthCheckRegistry
+import org.huwtl.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
 
 class Bootstrap extends LifeCycle {
   override def init(context: ServletContext) {
@@ -41,21 +43,21 @@ class Bootstrap extends LifeCycle {
 
     val eventStoreConfig = new EventStoreConfigurationProvider(eventSerializer, config.domainConnectionPool).get()
 
-    val queryStoreConnectionPool = new RedisConnectionPoolFactory().create(config.queryRedisConnectionPool)
+    val readStoreConnectionPool = new RedisConnectionPoolFactory().create(config.readStoreRedisConnectionPool)
 
-    val queryStoreEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryStoreConnectionPool, redisKeyFactory.eventTrackerKey("query")), eventStoreConfig.domainEventQueryService)
+    val readStoreEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(readStoreConnectionPool, redisKeyFactory.eventTrackerKey("readstore")), eventStoreConfig.domainEventQueryService)
 
-    val queryStoreUpdater = new EventNotifier(queryStoreEventProvider, new RedisQueryStoreUpdater(queryStoreConnectionPool, objectSerializer, redisKeyFactory))
+    val readStoreUpdater = new EventNotifier(readStoreEventProvider, new RedisReadStoreUpdater(readStoreConnectionPool, objectSerializer, redisKeyFactory))
 
-    val indexes = Indexes(config.queryIndexes, redisKeyFactory)
+    val indexes = Indexes(config.readStoreIndexes, redisKeyFactory)
 
     val indexUpdaters = indexes.all.map {
       index =>
-        val searchEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(queryStoreConnectionPool, redisKeyFactory.indexEventTrackerKey(index)), eventStoreConfig.domainEventQueryService)
-        new EventNotifier(searchEventProvider, new RedisIndexUpdater(index, queryStoreConnectionPool, objectSerializer, redisKeyFactory))
+        val searchEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(readStoreConnectionPool, redisKeyFactory.indexEventTrackerKey(index)), eventStoreConfig.domainEventQueryService)
+        new EventNotifier(searchEventProvider, new RedisIndexUpdater(index, readStoreConnectionPool, objectSerializer, redisKeyFactory))
     }
 
-    val eventNotifiers = queryStoreUpdater :: indexUpdaters
+    val eventNotifiers = readStoreUpdater :: indexUpdaters
 
     val domainRepository = new DomainRepository(eventStoreConfig.domainEventStore, new EventNotifiers(eventNotifiers))
 
@@ -68,7 +70,7 @@ class Bootstrap extends LifeCycle {
       classOf[CancelJob] -> new CancelJobHandler(domainRepository) //
     ))
 
-    val queryRepository = new RedisQueryRepository(queryStoreConnectionPool, indexes, objectSerializer, redisKeyFactory)
+    val readStore = new RedisReadStore(readStoreConnectionPool, indexes, objectSerializer, redisKeyFactory)
 
     val baseUrl = URI.create(config.publicUrl)
 
@@ -80,10 +82,15 @@ class Bootstrap extends LifeCycle {
 
     val queueFormatter = new HalQueueFormatter(baseQueueLink, jobFormatter)
 
-    context mount(new PingResource, "/ping")
-    context mount(new JobResource(queryRepository, commandDispatcher, objectSerializer, jobFormatter, config.authentication), "/jobs/*")
-    context mount(new QueueResource(queryRepository, commandDispatcher, objectSerializer, queueFormatter, config.authentication), "/queues/*")
+    val healthCheckRegistry: HealthCheckRegistry = new HealthCheckRegistry
+    healthCheckRegistry.register("Event store connectivity", new EventStoreConnectivityHealthcheck(eventStoreConfig.domainEventStore))
+    healthCheckRegistry.register("Read store connectivity", new ReadStoreConnectivityHealthcheck(readStore))
 
-    new JobTriggerScheduler(queryRepository, commandDispatcher, config.triggeredCheckFrequency).start()
+    context mount(new PingResource, "/ping")
+    context mount(new HealthCheckResource(healthCheckRegistry, objectSerializer), "/healthcheck")
+    context mount(new JobResource(readStore, commandDispatcher, objectSerializer, jobFormatter, config.authentication), "/jobs/*")
+    context mount(new QueueResource(readStore, commandDispatcher, objectSerializer, queueFormatter, config.authentication), "/queues/*")
+
+    new JobTriggerScheduler(readStore, commandDispatcher, config.triggeredCheckFrequency).start()
   }
 }

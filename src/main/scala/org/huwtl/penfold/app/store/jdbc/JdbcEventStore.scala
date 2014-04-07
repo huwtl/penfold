@@ -14,6 +14,20 @@ import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 class JdbcEventStore(database: Database, eventSerializer: EventSerializer) extends EventStore {
   implicit val getEventFromRow = GetResult(row => eventSerializer.deserialize(row.nextString()))
 
+  private val connectionSuccess = true
+
+  override def checkConnectivity = {
+    try {
+      database.withDynSession {
+        sql"""SELECT 1""".as[String].first
+      }
+      Left(connectionSuccess)
+    }
+    catch {
+      case e: Exception => Right(e)
+    }
+  }
+
   override def add(event: Event) = {
     database.withDynSession {
       try {
