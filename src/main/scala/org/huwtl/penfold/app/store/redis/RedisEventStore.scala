@@ -38,7 +38,7 @@ class RedisEventStore(redisPool: RedisClientPool, eventSerializer: EventSerializ
 
   override def checkConnectivity = {
     try {
-      redisPool.withClient(_.toString())
+      redisPool.withClient(_.get("1"))
       Left(connectionSuccess)
     }
     catch {
