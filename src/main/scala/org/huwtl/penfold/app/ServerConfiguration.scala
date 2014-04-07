@@ -6,6 +6,7 @@ import org.huwtl.penfold.app.query.redis.Index
 
 case class ServerConfiguration(publicUrl: String,
                                httpPort: Int,
+                               authentication: Option[AuthenticationCredentials],
                                domainJdbcConnectionPool: Option[JdbcConnectionPool],
                                domainRedisConnectionPool: Option[RedisConnectionPool],
                                queryRedisConnectionPool: RedisConnectionPool,
@@ -21,6 +22,8 @@ case class ServerConfiguration(publicUrl: String,
     }
   }
 }
+
+case class AuthenticationCredentials(username: String, password: String)
 
 case class RedisConnectionPool(host: String, port: Int, database: Int, password: Option[String], poolSize: Int = 8)
 

@@ -8,8 +8,14 @@ import org.huwtl.penfold.query.{PageRequest, QueryRepository}
 import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.app.web.bean.JobCreationRequest
+import org.huwtl.penfold.app.support.auth.BasicAuthenticationSupport
+import org.huwtl.penfold.app.AuthenticationCredentials
 
-class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDispatcher, jsonConverter: ObjectSerializer, halFormatter: HalJobFormatter) extends ScalatraServlet with FilterParamsProvider with ErrorHandling {
+class JobResource(queryRepository: QueryRepository,
+                  commandDispatcher: CommandDispatcher,
+                  jsonConverter: ObjectSerializer,
+                  halFormatter: HalJobFormatter,
+                  authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with ErrorHandling with BasicAuthenticationSupport {
 
   private val pageSize = 10
 
@@ -35,4 +41,6 @@ class JobResource(queryRepository: QueryRepository, commandDispatcher: CommandDi
     val aggregateId = commandDispatcher.dispatch(createJobRequest.toCommand)
     Created(halFormatter.halFrom(queryRepository.retrieveBy(aggregateId).get))
   }
+
+  override protected def validCredentials: Option[AuthenticationCredentials] = authenticationCredentials
 }

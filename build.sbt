@@ -25,6 +25,7 @@ libraryDependencies ++= Seq(
   "org.json4s" %% "json4s-jackson" % "3.2.4",
   "net.debasishg" % "redisclient_2.10" % "2.12",
   "net.ceedubs" % "ficus_2.10" % "1.0.0",
+  "org.scalatra" %% "scalatra-auth" % "2.2.2",
   "com.typesafe.slick" % "slick_2.10" % "2.0.1",
   "c3p0" % "c3p0" % "0.9.1.2",
   "mysql" % "mysql-connector-java" % "5.1.30",

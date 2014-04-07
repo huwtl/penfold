@@ -19,8 +19,9 @@ import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.query.JobRecord
 import scala.Some
 import org.huwtl.penfold.query.PageResult
+import org.huwtl.penfold.app.AuthenticationCredentials
 
-class JobResourceTest extends MutableScalatraSpec with Mockito {
+class JobResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification {
   sequential
 
   val created = new DateTime(2014, 2, 14, 12, 0, 0, 0)
@@ -31,17 +32,19 @@ class JobResourceTest extends MutableScalatraSpec with Mockito {
 
   val binding = Binding(List(BoundQueue(queueId)))
 
+  val validCredentials = AuthenticationCredentials("user", "secret")
+
   val queryRepository = mock[QueryRepository]
 
   val commandDispatcher = mock[CommandDispatcher]
 
-  addServlet(new JobResource(queryRepository, commandDispatcher, new ObjectSerializer, new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues"))), "/jobs/*")
+  addServlet(new JobResource(queryRepository, commandDispatcher, new ObjectSerializer, new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues")), Some(validCredentials)), "/jobs/*")
 
   "return 200 with hal+json formatted job response" in {
     val expectedJob = JobRecord(AggregateId("1"), created, binding, Status.Waiting, triggerDate, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
-    get("/jobs/1") {
+    get("/jobs/1", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingJob.json"))
     }
@@ -52,14 +55,14 @@ class JobResourceTest extends MutableScalatraSpec with Mockito {
     val filters = Filters(List(Filter("data", "value")))
     queryRepository.retrieveBy(filters, PageRequest(0, 10)) returns PageResult(0, List(expectedJob), previousExists = false, nextExists = false)
 
-    get("/jobs?_data=value") {
+    get("/jobs?_data=value", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredJobs.json"))
     }
   }
 
   "return 404 when job does not exist" in {
-    get("/jobs/notExists") {
+    get("/jobs/notExists", headers = validAuthHeader) {
       status must beEqualTo(404)
     }
   }
@@ -69,21 +72,30 @@ class JobResourceTest extends MutableScalatraSpec with Mockito {
     commandDispatcher.dispatch(CreateJob(binding, expectedJob.payload)) returns expectedJob.id
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
-    post("/jobs", textFromFile("fixtures/web/job.json")) {
+    post("/jobs", textFromFile("fixtures/web/job.json"), headers = validAuthHeader) {
       status must beEqualTo(201)
     }
   }
 
   "return 400 when posting invalid formatted json" in {
-    post("/jobs", "{") {
+    post("/jobs", "{", headers = validAuthHeader) {
       status must beEqualTo(400)
     }
   }
 
   "return 400 when posting unexpected job json" in {
-    post("/jobs", "{}") {
+    post("/jobs", "{}", headers = validAuthHeader) {
       status must beEqualTo(400)
     }
+  }
+
+  "return 401 when invalid auth credentials" in {
+    val url = "/jobs"
+    get(url) {status must beEqualTo(401)}
+    get(url, headers = authHeader(validCredentials.username, null)) {status must beEqualTo(401)}
+    get(url, headers = authHeader(validCredentials.username, "invalid")) {status must beEqualTo(401)}
+    get(url, headers = authHeader("wrong", validCredentials.password)) {status must beEqualTo(401)}
+    get(url, headers = authHeader(validCredentials.username, validCredentials.password + "2")) {status must beEqualTo(401)}
   }
 
   def jsonFromFile(filePath: String) = {
@@ -93,4 +105,6 @@ class JobResourceTest extends MutableScalatraSpec with Mockito {
   def textFromFile(filePath: String) = {
     fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString
   }
+
+  def validAuthHeader = authHeader(validCredentials.username, validCredentials.password)
 }

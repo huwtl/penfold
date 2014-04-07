@@ -8,11 +8,14 @@ import org.huwtl.penfold.query.{PageRequest, QueryRepository}
 import org.huwtl.penfold.command.{CompleteJob, CommandDispatcher, StartJob}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.app.web.bean.{CompleteJobRequest, StartJobRequest}
+import org.huwtl.penfold.app.support.auth.BasicAuthenticationSupport
+import org.huwtl.penfold.app.AuthenticationCredentials
 
 class QueueResource(queryRepository: QueryRepository,
                     commandDispatcher: CommandDispatcher,
                     jsonConverter: ObjectSerializer,
-                    halFormatter: HalQueueFormatter) extends ScalatraServlet with FilterParamsProvider with ErrorHandling {
+                    halFormatter: HalQueueFormatter,
+                    authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with ErrorHandling with BasicAuthenticationSupport {
 
   private val pageSize = 10
 
@@ -55,6 +58,8 @@ class QueueResource(queryRepository: QueryRepository,
     commandDispatcher.dispatch[CompleteJob](completeJobRequest.toCommand(queue))
     Ok(halFormatter.halFrom(QueueId(queueIdParam), queryRepository.retrieveBy(completeJobRequest.id).get))
   }
+
+  override protected def validCredentials: Option[AuthenticationCredentials] = authenticationCredentials
 
   private def statusMatch(func: Status => ActionResult) = {
     val statusValue = params("status")

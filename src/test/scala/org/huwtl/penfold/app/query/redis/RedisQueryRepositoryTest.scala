@@ -81,13 +81,13 @@ class RedisQueryRepositoryTest extends RedisSpecification with DataTables {
     val readyToTriggerJobCreatedEvent = JobCreated(aggregateRootId, AggregateVersion.init, created, Binding(List(BoundQueue(queueId))), DateTime.now().minusHours(1), payload)
     val notReadyToTriggerJobCreatedEvent = JobCreated(aggregateRootId, AggregateVersion.init, created, Binding(List(BoundQueue(queueId))), DateTime.now().plusHours(1), payload)
 
-    queryRepository.retrieveJobsToQueue must beEmpty
+    queryRepository.retrieveJobsToTrigger must beEmpty
     queryRepositoryUpdater.handle(EventRecord(EventSequenceId(1), notReadyToTriggerJobCreatedEvent))
     statusIndexUpdater.handle(EventRecord(EventSequenceId(1), notReadyToTriggerJobCreatedEvent))
-    queryRepository.retrieveJobsToQueue must beEmpty
+    queryRepository.retrieveJobsToTrigger must beEmpty
     queryRepositoryUpdater.handle(EventRecord(EventSequenceId(2), readyToTriggerJobCreatedEvent))
     statusIndexUpdater.handle(EventRecord(EventSequenceId(2), readyToTriggerJobCreatedEvent))
-    queryRepository.retrieveJobsToQueue.size must beEqualTo(1)
+    queryRepository.retrieveJobsToTrigger.size must beEqualTo(1)
   }
 
   private def createJobEvent(aggregateId: AggregateId, eventId: EventSequenceId, queryRepositoryUpdater: RedisQueryStoreUpdater, indexUpdater: RedisIndexUpdater) = {

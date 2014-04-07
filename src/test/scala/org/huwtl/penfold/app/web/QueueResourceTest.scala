@@ -19,8 +19,9 @@ import scala.Some
 import org.huwtl.penfold.query.PageRequest
 import org.huwtl.penfold.query.JobRecord
 import org.huwtl.penfold.query.PageResult
+import org.huwtl.penfold.app.AuthenticationCredentials
 
-class QueueResourceTest extends MutableScalatraSpec with Mockito {
+class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification {
   sequential
 
   val queueId = QueueId("abc")
@@ -33,18 +34,20 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
 
   val pageSize = 10
 
+  val validCredentials = AuthenticationCredentials("user", "secret")
+
   val queryRepository = mock[QueryRepository]
 
   val commandDispatcher = mock[CommandDispatcher]
 
-  addServlet(new QueueResource(queryRepository, commandDispatcher, new ObjectSerializer, new HalQueueFormatter(new URI("http://host/queues"), new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues")))), "/queues/*")
+  addServlet(new QueueResource(queryRepository, commandDispatcher, new ObjectSerializer, new HalQueueFormatter(new URI("http://host/queues"), new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues"))), Some(validCredentials)), "/queues/*")
 
   "return 200 with hal+json formatted queue response" in {
     val expectedJob1 = JobRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, payload)
     val expectedJob2 = JobRecord(AggregateId("2"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, payload)
     queryRepository.retrieveByQueue(queueId, Status.Ready, PageRequest(0, pageSize), Filters.empty) returns PageResult(0, List(expectedJob2, expectedJob1), previousExists = false, nextExists = false)
 
-    get("/queues/abc/ready") {
+    get("/queues/abc/ready", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueue.json"))
     }
@@ -56,7 +59,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
     val filters = Filters(List(Filter("data", "value")))
     queryRepository.retrieveByQueue(queueId, Status.Ready, PageRequest(0, pageSize), filters) returns PageResult(0, List(expectedJob2, expectedJob1), previousExists = false, nextExists = false)
 
-    get("/queues/abc/ready?_data=value") {
+    get("/queues/abc/ready?_data=value", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueue.json"))
     }
@@ -67,14 +70,14 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
     val expectedJob2 = JobRecord(AggregateId("2"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, payload)
     queryRepository.retrieveByQueue(queueId, Status.Ready, PageRequest(1, pageSize), Filters.empty) returns PageResult(1, List(expectedJob2, expectedJob1), previousExists = true, nextExists = true)
 
-    get("/queues/abc/ready?page=1") {
+    get("/queues/abc/ready?page=1", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueWithPaginationLinks.json"))
     }
   }
 
   "return 400 when queue status not recognised" in {
-    get("/queues/abc/unrecognised") {
+    get("/queues/abc/unrecognised", headers = validAuthHeader) {
       status must beEqualTo(400)
     }
   }
@@ -83,14 +86,14 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
     val expectedJob = JobRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, payload)
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
-    get(s"/queues/abc/ready/${expectedJob.id.value}") {
+    get(s"/queues/abc/ready/${expectedJob.id.value}", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueEntry.json"))
     }
   }
 
   "return 404 when queue entry not found" in {
-    get("/queues/abc/ready/5") {
+    get("/queues/abc/ready/5", headers = validAuthHeader) {
       queryRepository.retrieveBy(AggregateId("5")) returns None
       status must beEqualTo(404)
     }
@@ -100,7 +103,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
     val expectedJob = JobRecord(AggregateId("3"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, payload)
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
-    post("/queues/abc/started", """{"id": "3"}""") {
+    post("/queues/abc/started", """{"id": "3"}""", headers = validAuthHeader) {
       status must beEqualTo(200)
     }
   }
@@ -109,9 +112,13 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
     val expectedJob = JobRecord(AggregateId("4"), created, Binding(List(BoundQueue(queueId))), Status.Started, triggerDate, payload)
     queryRepository.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
-    post("/queues/abc/completed", """{"id": "4"}""") {
+    post("/queues/abc/completed", """{"id": "4"}""", headers = validAuthHeader) {
       status must beEqualTo(200)
     }
+  }
+
+  "return 401 when invalid auth credentials" in {
+    get("/queues", headers = authHeader(validCredentials.username, "invalid")) {status must beEqualTo(401)}
   }
 
   def jsonFromFile(filePath: String) = {
@@ -121,4 +128,6 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito {
   def textFromFile(filePath: String) = {
     fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString
   }
+
+  def validAuthHeader = authHeader(validCredentials.username, validCredentials.password)
 }

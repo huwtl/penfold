@@ -14,7 +14,7 @@ class JobTriggerScheduler(queryRepository: QueryRepository, commandDispatcher: C
     newSingleThreadScheduledExecutor.scheduleAtFixedRate(new Runnable() {
       def run() {
         try {
-          queryRepository.retrieveJobsToQueue.foreach(triggerJob)
+          queryRepository.retrieveJobsToTrigger.foreach(triggerJob)
         }
         catch {
           case e: Exception => logger.error("error during scheduled job trigger check", e)

@@ -13,20 +13,20 @@ trait QueryRepository {
 
   def retrieveByStatus(status: Status, pageRequest: PageRequest, filters: Filters = Filters.empty): PageResult
 
-  def retrieveJobsToQueue: Stream[JobRecordReference] = {
+  def retrieveJobsToTrigger: Stream[JobRecordReference] = {
     val pageSize = 50
 
-    def allPagesOfJobsToQueue(pageRequest: PageRequest): Stream[List[JobRecordReference]] = {
+    def allPagesOfJobsToTrigger(pageRequest: PageRequest): Stream[List[JobRecordReference]] = {
       val page = retrieveNextPageOfJobsToTrigger(pageRequest)
-      if (page.isEmpty) Stream.empty else page #:: allPagesOfJobsToQueue(pageRequest.nextPage)
+      if (page.isEmpty) Stream.empty else page #:: allPagesOfJobsToTrigger(pageRequest.nextPage)
     }
 
-    val allJobsToQueue = for {
-      pageOfJobsToQueue <- allPagesOfJobsToQueue(new PageRequest(0, pageSize))
-      jobToQueue <- pageOfJobsToQueue
-    } yield jobToQueue
+    val allJobsToTrigger = for {
+      pageOfJobsToTrigger <- allPagesOfJobsToTrigger(new PageRequest(0, pageSize))
+      jobToTrigger <- pageOfJobsToTrigger
+    } yield jobToTrigger
 
-    allJobsToQueue
+    allJobsToTrigger
   }
 
   protected def retrieveNextPageOfJobsToTrigger(pageRequest: PageRequest): List[JobRecordReference]
