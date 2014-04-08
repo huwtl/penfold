@@ -12,7 +12,7 @@ seq(webSettings :_*)
 
 conflictWarning in ThisBuild := ConflictWarning.disable
 
-parallelExecution in ThisBuild := false
+parallelExecution in Global := false
 
 libraryDependencies ++= Seq(
   "org.scalatra" % "scalatra_2.10" % "2.2.2",
