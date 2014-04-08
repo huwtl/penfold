@@ -3,18 +3,22 @@ package org.huwtl.penfold.app.schedule
 import java.util.concurrent.Executors._
 import org.huwtl.penfold.command.{CommandDispatcher, TriggerJob}
 import org.huwtl.penfold.readstore.{JobRecordReference, ReadStore}
-import org.slf4j.LoggerFactory
 import scala.concurrent.duration.FiniteDuration
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
+import grizzled.slf4j.Logger
 
 class JobTriggerScheduler(readStore: ReadStore, commandDispatcher: CommandDispatcher, frequency: FiniteDuration) {
-  private val logger = LoggerFactory.getLogger(getClass)
+  private lazy val logger = Logger(getClass)
 
   def start() = {
     newSingleThreadScheduledExecutor.scheduleAtFixedRate(new Runnable() {
       def run() {
         try {
+          logger.debug("job trigger check started")
+
           readStore.retrieveJobsToTrigger.foreach(triggerJob)
+
+          logger.debug("job trigger check completed")
         }
         catch {
           case e: Exception => logger.error("error during scheduled job trigger check", e)

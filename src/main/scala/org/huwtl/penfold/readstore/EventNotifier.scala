@@ -1,9 +1,9 @@
 package org.huwtl.penfold.readstore
 
-import org.slf4j.LoggerFactory
+import grizzled.slf4j.Logger
 
 class EventNotifier(newEventsProvider: NewEventsProvider, eventListener: EventListener) {
-  private val logger = LoggerFactory.getLogger(getClass)
+  private lazy val logger = Logger(getClass)
 
   def notifyListener() {
     try {

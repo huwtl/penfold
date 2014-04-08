@@ -23,6 +23,7 @@ libraryDependencies ++= Seq(
   "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided",
   "com.theoryinpractise" % "halbuilder-core" % "2.0.2",
   "org.json4s" %% "json4s-jackson" % "3.2.4",
+  "com.typesafe" % "scalalogging-slf4j_2.10" % "1.1.0",
   "net.debasishg" % "redisclient_2.10" % "2.12",
   "net.ceedubs" % "ficus_2.10" % "1.0.0",
   "org.scalatra" %% "scalatra-auth" % "2.2.2",

@@ -46,7 +46,7 @@ case class Job(uncommittedEvents: List[Event],
   override def aggregateType = AggregateType.Job
 
   def trigger(): Job = {
-    require(status == Waiting, s"Can only queue a waiting job but was $status")
+    require(status == Waiting, s"Can only trigger a waiting job but was $status")
     applyJobTriggered(JobTriggered(aggregateId, version.next, now, binding.queues.map(_.id)))
   }
 

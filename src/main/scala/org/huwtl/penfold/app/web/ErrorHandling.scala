@@ -3,13 +3,13 @@ package org.huwtl.penfold.app.web
 import org.scalatra._
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 import org.scalatra.ActionResult
-import org.slf4j.LoggerFactory
 import org.json4s.MappingException
 import com.fasterxml.jackson.core.JsonParseException
+import grizzled.slf4j.Logger
 
 trait ErrorHandling extends ScalatraServlet {
-  private val logger =  LoggerFactory.getLogger(getClass)
-  
+  private lazy val logger = Logger(getClass)
+
   private val errorContentType = "text/plain"
 
   error {
@@ -28,7 +28,7 @@ trait ErrorHandling extends ScalatraServlet {
     logger.error("Error:", e)
     errorResponse(errorResp)
   }
-  
+
   def errorResponse(errorResp: ActionResult): ActionResult = {
     contentType = errorContentType
     errorResp
