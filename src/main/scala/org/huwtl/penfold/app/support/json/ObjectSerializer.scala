@@ -15,7 +15,7 @@ class ObjectSerializer {
     new QueueIdJsonSerializer
 
   def serialize[T](event: T) = {
-    pretty(decompose(event))
+    compact(decompose(event))
   }
 
   def deserialize[T](json: String)(implicit manifest: Manifest[T]) = {
