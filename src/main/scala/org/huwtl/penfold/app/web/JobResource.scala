@@ -15,9 +15,8 @@ class JobResource(readStore: ReadStore,
                   commandDispatcher: CommandDispatcher,
                   jsonConverter: ObjectSerializer,
                   halFormatter: HalJobFormatter,
+                  pageSize: Int,
                   authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport {
-
-  private val pageSize = 5
 
   before() {
     contentType = HAL_JSON

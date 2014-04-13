@@ -43,7 +43,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
   val commandDispatcher = mock[CommandDispatcher]
 
-  addServlet(new QueueResource(readStore, commandDispatcher, new ObjectSerializer, new HalQueueFormatter(new URI("http://host/queues"), new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues"))), Some(validCredentials)), "/queues/*")
+  addServlet(new QueueResource(readStore, commandDispatcher, new ObjectSerializer, new HalQueueFormatter(new URI("http://host/queues"), new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues"))), pageSize, Some(validCredentials)), "/queues/*")
 
   "return 200 with hal+json formatted queue response" in {
     val expectedJob1 = JobRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)

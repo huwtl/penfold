@@ -40,7 +40,7 @@ class JobResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpeci
 
   val commandDispatcher = mock[CommandDispatcher]
 
-  addServlet(new JobResource(readStore, commandDispatcher, new ObjectSerializer, new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues")), Some(validCredentials)), "/jobs/*")
+  addServlet(new JobResource(readStore, commandDispatcher, new ObjectSerializer, new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues")), pageSize, Some(validCredentials)), "/jobs/*")
 
   "return 200 with hal+json formatted job response" in {
     val expectedJob = JobRecord(AggregateId("1"), created, binding, Status.Waiting, triggerDate,triggerDate.getMillis , Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))

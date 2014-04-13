@@ -86,8 +86,8 @@ class Bootstrap extends LifeCycle {
 
     context mount(new PingResource, "/ping")
     context mount(new HealthCheckResource(healthCheckRegistry, objectSerializer), "/healthcheck")
-    context mount(new JobResource(readStore, commandDispatcher, objectSerializer, jobFormatter, config.authentication), "/jobs/*")
-    context mount(new QueueResource(readStore, commandDispatcher, objectSerializer, queueFormatter, config.authentication), "/queues/*")
+    context mount(new JobResource(readStore, commandDispatcher, objectSerializer, jobFormatter, config.pageSize, config.authentication), "/jobs/*")
+    context mount(new QueueResource(readStore, commandDispatcher, objectSerializer, queueFormatter, config.pageSize, config.authentication), "/queues/*")
 
     new JobTriggerScheduler(readStore, commandDispatcher, config.triggeredCheckFrequency).start()
   }

@@ -34,7 +34,7 @@ class ServerConfigurationTest extends Specification {
   "load fully populated config file" in {
     val expectedConfig = ServerConfiguration(publicUrl, httpPort, Some(authCredentials), JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
       MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 27017), MongoDatabaseServer("127.0.0.2", 27018))),
-      readStoreIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
+      readStoreIndexes = indexes, pageSize = 25, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
 
     val config = loadConfig("full")
 

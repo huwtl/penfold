@@ -10,6 +10,7 @@ case class ServerConfiguration(publicUrl: String,
                                domainJdbcConnectionPool: JdbcConnectionPool,
                                readStoreMongoDatabaseServers: MongoDatabaseServers,
                                readStoreIndexes: List[Index] = Nil,
+                               pageSize: Int = 10,
                                triggeredCheckFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
 
 case class AuthenticationCredentials(username: String, password: String)
