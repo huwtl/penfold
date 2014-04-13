@@ -31,7 +31,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val mongoClient = MongoClient("localhost", embedConnectionPort())
-    val database = mongoClient("wflowtest")
+    val database = mongoClient("penfoldtest")
     val dateTimeSource = mock[DateTimeSource]
     val readStoreUpdater = new MongoReadStoreUpdater(database, new MongoEventTracker("tracker", database), new ObjectSerializer)
     val readStore = new MongoReadStore(database, new ObjectSerializer, dateTimeSource)

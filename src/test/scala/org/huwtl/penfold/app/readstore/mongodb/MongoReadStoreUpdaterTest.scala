@@ -30,7 +30,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     val jobStartedEvent = JobStarted(aggregateId, AggregateVersion(2), created, queueId)
 
     val mongoClient = MongoClient("localhost", embedConnectionPort())
-    val database = mongoClient("wflowtest")
+    val database = mongoClient("penfoldtest")
     val readStore = new MongoReadStore(database, new ObjectSerializer, new DateTimeSource)
     val readStoreUpdater = new MongoReadStoreUpdater(database, new MongoEventTracker("tracking", database), new ObjectSerializer)
   }
