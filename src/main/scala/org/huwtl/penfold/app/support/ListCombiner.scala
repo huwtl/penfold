@@ -12,4 +12,11 @@ object ListCombiner {
       }
     }
   }
+
+  def combineNamed[T](namedLists: List[(String, List[T])]): List[List[(String, T)]] = {
+    val names = namedLists.map(_._1)
+    val lists = namedLists.map(_._2)
+    val combined = combine[T](lists)
+    combined.map(combination => names.zip(combination))
+  }
 }

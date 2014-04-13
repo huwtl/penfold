@@ -1,4 +1,4 @@
-package org.huwtl.penfold.app.readstore.redis
+package org.huwtl.penfold.readstore
 
 import org.huwtl.penfold.domain.model._
 

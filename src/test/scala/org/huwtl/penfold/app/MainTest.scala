@@ -4,7 +4,7 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.{Step, Fragments}
 
 class MainTest extends Specification {
-  sys.props.put("config.file", getClass.getClassLoader.getResource("fixtures/config/fullWithRedisDomainPool.conf").getPath)
+  sys.props.put("config.file", getClass.getClassLoader.getResource("fixtures/config/full.conf").getPath)
 
   val server = new Main().init()
 

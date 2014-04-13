@@ -14,6 +14,7 @@ import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.JobRecord
 import org.huwtl.penfold.readstore.PageResult
+import org.huwtl.penfold.readstore.NavigationDirection.{Reverse, Forward}
 
 class HalQueueFormatterTest extends Specification {
 
@@ -23,6 +24,8 @@ class HalQueueFormatterTest extends Specification {
 
   val filters = Filters(List(Filter("data", "value")))
 
+  val pageRequest = PageRequest(10, Some(LastKnownPageDetails(AggregateId("3"), triggerDate.getMillis, Reverse)))
+
   val queueId = QueueId("abc")
 
   val status = Status.Ready
@@ -30,31 +33,31 @@ class HalQueueFormatterTest extends Specification {
   val queueFormatter = new HalQueueFormatter(new URI("http://host/queues"), new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues")))
 
   "format queue as hal+json" in {
-    val hal = queueFormatter.halFrom(queueId, status, PageResult(0, List(job("2"), job("1")), previousExists = false, nextExists = false))
+    val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(job("2"), job("1")), previousExists = false, nextExists = false))
 
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueue.json"))
   }
 
   "format queue as hal+json with pagination links" in {
-    val hal = queueFormatter.halFrom(queueId, status, PageResult(1, List(job("2"), job("1")), previousExists = true, nextExists = true))
+    val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(job("2"), job("1")), previousExists = true, nextExists = true))
 
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueWithPaginationLinks.json"))
   }
 
   "format filtered queue as hal+json" in {
-    val hal = queueFormatter.halFrom(queueId, status, PageResult(1, List(job("2"), job("1", Binding(List(BoundQueue(queueId), BoundQueue(QueueId("def")))))), previousExists = false, nextExists = false), filters)
+    val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(job("2"), job("1", Binding(List(BoundQueue(queueId), BoundQueue(QueueId("def")))))), previousExists = false, nextExists = false), filters)
 
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueue.json"))
   }
 
   "format filtered queue as hal+json with encoded filter value" in {
     val filters = Filters(List(Filter("data", "zzz%^&*ee$")))
-    val hal = queueFormatter.halFrom(queueId, status, PageResult(1, List(job("2"), job("1")), previousExists = false, nextExists = false), filters)
+    val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(job("2"), job("1")), previousExists = false, nextExists = false), filters)
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueueWithEncodedFilterValue.json"))
   }
 
   "format filtered queue as hal+json with pagination links" in {
-    val hal = queueFormatter.halFrom(queueId, status, PageResult(1, List(job("2"), job("1")), previousExists = true, nextExists = true), filters)
+    val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(job("2"), job("1")), previousExists = true, nextExists = true), filters)
 
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueueWithPaginationLinks.json"))
   }
@@ -70,6 +73,6 @@ class HalQueueFormatterTest extends Specification {
   }
 
   def job(id: String, binding: Binding = Binding(List(BoundQueue(queueId)))) = {
-    JobRecord(AggregateId(id), createdDate, binding, status, triggerDate, Payload.empty)
+    JobRecord(AggregateId(id), createdDate, binding, status, triggerDate, triggerDate.getMillis, Payload.empty)
   }
 }

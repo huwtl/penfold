@@ -3,9 +3,8 @@ package org.huwtl.penfold.app.support.hal
 import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import java.net.URI
 import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
-import org.huwtl.penfold.readstore.{Filters, PageResult, JobRecord}
+import org.huwtl.penfold.readstore.{PageRequest, Filters, PageResult, JobRecord}
 import org.huwtl.penfold.domain.model.{QueueId, Status}
-import org.huwtl.penfold.domain.model.Status.{Completed, Started, Ready}
 
 class HalQueueFormatter(baseQueueLink: URI, halJobFormatter: HalJobFormatter) extends PaginatedRepresentationProvider {
   private val representationFactory = new DefaultRepresentationFactory
@@ -14,12 +13,12 @@ class HalQueueFormatter(baseQueueLink: URI, halJobFormatter: HalJobFormatter) ex
     createHalQueueEntry(queueId, job).toString(HAL_JSON)
   }
 
-  def halFrom(queueId: QueueId, status: Status, pageOfJobs: PageResult, filters: Filters = Filters.empty) = {
+  def halFrom(queueId: QueueId, status: Status, pageRequest: PageRequest, pageOfJobs: PageResult, filters: Filters = Filters.empty) = {
     val baseSelfLink = s"${baseQueueLink.toString}/${queueId.value}/${status.name}"
 
-    val root = getRepresentation(pageOfJobs, filters, baseSelfLink, representationFactory)
+    val root = getRepresentation(pageRequest, pageOfJobs, filters, baseSelfLink, representationFactory)
 
-    pageOfJobs.jobs.foreach(job => {
+    pageOfJobs.entries.foreach(job => {
       root.withRepresentation("queue", createHalQueueEntry(queueId, job))
     })
 

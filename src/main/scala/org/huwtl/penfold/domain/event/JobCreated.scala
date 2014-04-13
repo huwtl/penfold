@@ -10,4 +10,4 @@ case class JobCreated(aggregateId: AggregateId,
                       created: DateTime,
                       binding: Binding,
                       triggerDate: DateTime,
-                      payload: Payload) extends JobEvent
+                      payload: Payload) extends JobCreatedEvent

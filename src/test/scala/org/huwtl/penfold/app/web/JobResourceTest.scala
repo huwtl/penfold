@@ -32,6 +32,8 @@ class JobResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpeci
 
   val binding = Binding(List(BoundQueue(queueId)))
 
+  val pageSize = 5
+
   val validCredentials = AuthenticationCredentials("user", "secret")
 
   val  readStore = mock[ReadStore]
@@ -41,7 +43,7 @@ class JobResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpeci
   addServlet(new JobResource(readStore, commandDispatcher, new ObjectSerializer, new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues")), Some(validCredentials)), "/jobs/*")
 
   "return 200 with hal+json formatted job response" in {
-    val expectedJob = JobRecord(AggregateId("1"), created, binding, Status.Waiting, triggerDate, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    val expectedJob = JobRecord(AggregateId("1"), created, binding, Status.Waiting, triggerDate,triggerDate.getMillis , Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
     readStore.retrieveBy(expectedJob.id) returns Some(expectedJob)
 
     get("/jobs/1", headers = validAuthHeader) {
@@ -51,9 +53,9 @@ class JobResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpeci
   }
 
   "return 200 with hal+json formatted filtered jobs response" in {
-    val expectedJob = JobRecord(AggregateId("1"), created, binding, Status.Waiting, triggerDate, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    val expectedJob = JobRecord(AggregateId("1"), created, binding, Status.Waiting, triggerDate, triggerDate.getMillis, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
     val filters = Filters(List(Filter("data", "value")))
-    readStore.retrieveBy(filters, PageRequest(0, 10)) returns PageResult(0, List(expectedJob), previousExists = false, nextExists = false)
+    readStore.retrieveBy(filters, PageRequest(pageSize)) returns PageResult(List(expectedJob), previousExists = false, nextExists = false)
 
     get("/jobs?_data=value", headers = validAuthHeader) {
       status must beEqualTo(200)
@@ -68,7 +70,7 @@ class JobResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpeci
   }
 
   "return 201 when posting new job" in {
-    val expectedJob = JobRecord(AggregateId("2"), created, binding, Status.Waiting, triggerDate, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+    val expectedJob = JobRecord(AggregateId("2"), created, binding, Status.Waiting, triggerDate, triggerDate.getMillis, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
     commandDispatcher.dispatch(CreateJob(binding, expectedJob.payload)) returns expectedJob.id
     readStore.retrieveBy(expectedJob.id) returns Some(expectedJob)
 

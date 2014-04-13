@@ -4,7 +4,7 @@ import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import org.joda.time.format.DateTimeFormat
 import java.net.URI
 import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
-import org.huwtl.penfold.readstore.{Filters, PageResult, JobRecord}
+import org.huwtl.penfold.readstore.{PageRequest, Filters, PageResult, JobRecord}
 import org.huwtl.penfold.domain.model.Status._
 import com.theoryinpractise.halbuilder.api.Representation
 import org.huwtl.penfold.app.support.JavaMapUtil
@@ -46,12 +46,12 @@ class HalJobFormatter(baseJobLink: URI, baseQueueLink: URI) extends PaginatedRep
     halRepresentationFrom(job).toString(HAL_JSON)
   }
 
-  def halFrom(pageOfJobs: PageResult, filters: Filters = Filters.empty) = {
+  def halFrom(pageRequest: PageRequest, pageOfJobs: PageResult, filters: Filters = Filters.empty) = {
     val baseSelfLink = s"${baseJobLink.toString}"
 
-    val root = getRepresentation(pageOfJobs, filters, baseSelfLink, representationFactory)
+    val root = getRepresentation(pageRequest, pageOfJobs, filters, baseSelfLink, representationFactory)
 
-    pageOfJobs.jobs.foreach(job => {
+    pageOfJobs.entries.foreach(job => {
       root.withRepresentation("jobs", halRepresentationFrom(job))
     })
 

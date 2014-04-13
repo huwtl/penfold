@@ -4,7 +4,7 @@ import org.scalatra._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import org.huwtl.penfold.app.support.hal.HalJobFormatter
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.readstore.{PageRequest, ReadStore}
+import org.huwtl.penfold.readstore.ReadStore
 import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.app.web.bean.JobCreationRequest
@@ -15,9 +15,9 @@ class JobResource(readStore: ReadStore,
                   commandDispatcher: CommandDispatcher,
                   jsonConverter: ObjectSerializer,
                   halFormatter: HalJobFormatter,
-                  authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with ErrorHandling with BasicAuthenticationSupport {
+                  authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport {
 
-  private val pageSize = 10
+  private val pageSize = 5
 
   before() {
     contentType = HAL_JSON
@@ -32,8 +32,8 @@ class JobResource(readStore: ReadStore,
 
   get("/") {
     val filters = parseFilters(params)
-    val page = PageRequest(params.getOrElse("page", "0").toInt, pageSize)
-    Ok(halFormatter.halFrom(readStore.retrieveBy(filters, page), filters))
+    val page = parsePageRequestParams(params, pageSize)
+    Ok(halFormatter.halFrom(page, readStore.retrieveBy(filters, page), filters))
   }
 
   post("/") {

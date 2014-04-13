@@ -4,9 +4,9 @@ import org.specs2.mutable.Specification
 
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
-import org.huwtl.penfold.app.readstore.redis.{Index, IndexField}
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
+import org.huwtl.penfold.app.readstore.mongodb.{IndexField, Index}
 
 class ServerConfigurationTest extends Specification {
 
@@ -19,55 +19,26 @@ class ServerConfigurationTest extends Specification {
   val jdbcUrl = "jdbc:hsqldb:mem:penfold;sql.syntax_mys=true"
 
   val indexes = List(
-    Index("index1", List(IndexField("field1", "payload / inner / field1"))),
-    Index("index2", List(IndexField("field1", "payload / inner / field1"), IndexField("field2", "payload / field2"))))
+    Index(List(IndexField("field1"))),
+    Index(List(IndexField("field1"), IndexField("field2"))))
 
-  "load fully populated config file with redis domain store" in {
-    val expectedConfig = ServerConfiguration(publicUrl, httpPort, Some(authCredentials), None, Some(RedisConnectionPool("localhost", 6380, 0, Some("secret"), 10)),
-      RedisConnectionPool("localhost", 6380, 1, Some("secret"), 100), readStoreIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
+  "load minimally populated config file" in {
+    val expectedConfig = ServerConfiguration(publicUrl, httpPort, None, JdbcConnectionPool(jdbcUrl, "user", "", "org.hsqldb.jdbcDriver"),
+      MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 27017))))
 
-    val config = loadConfig("fullWithRedisDomainPool")
-
-    config must beEqualTo(expectedConfig)
-    config.domainConnectionPool.right.get must beEqualTo(expectedConfig.domainRedisConnectionPool.get)
-    config.domainConnectionPool.isLeft must beFalse
-  }
-
-  "load minimally populated config file with redis domain store" in {
-    val expectedConfig = ServerConfiguration(publicUrl, httpPort, None, None, Some(RedisConnectionPool("localhost", 6380, 0, None)),
-      RedisConnectionPool("localhost", 6380, 1, None))
-
-    val config = loadConfig("minimalWithRedisDomainPool")
+    val config = loadConfig("minimal")
 
     config must beEqualTo(expectedConfig)
-    config.domainConnectionPool.right.get must beEqualTo(expectedConfig.domainRedisConnectionPool.get)
-    config.domainConnectionPool.isLeft must beFalse
   }
 
-  "load minimally populated config file with jdbc domain store" in {
-    val expectedConfig = ServerConfiguration(publicUrl, httpPort, None, Some(JdbcConnectionPool(jdbcUrl, "user", "", "org.hsqldb.jdbcDriver")),
-      None, RedisConnectionPool("localhost", 6380, 1, None))
+  "load fully populated config file" in {
+    val expectedConfig = ServerConfiguration(publicUrl, httpPort, Some(authCredentials), JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
+      MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 27017), MongoDatabaseServer("127.0.0.2", 27018))),
+      readStoreIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
 
-    val config = loadConfig("minimalWithJdbcDomainPool")
+    val config = loadConfig("full")
 
     config must beEqualTo(expectedConfig)
-    config.domainConnectionPool.left.get must beEqualTo(expectedConfig.domainJdbcConnectionPool.get)
-    config.domainConnectionPool.isRight must beFalse
-  }
-
-  "load fully populated config file with jdbc domain store" in {
-    val expectedConfig = ServerConfiguration(publicUrl, httpPort, Some(authCredentials), Some(JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10)),
-      None, RedisConnectionPool("localhost", 6380, 1, Some("secret"), 100), readStoreIndexes = indexes, triggeredCheckFrequency = FiniteDuration(1L, MINUTES))
-
-    val config = loadConfig("fullWithJdbcDomainPool")
-
-    config must beEqualTo(expectedConfig)
-    config.domainConnectionPool.left.get must beEqualTo(expectedConfig.domainJdbcConnectionPool.get)
-    config.domainConnectionPool.isRight must beFalse
-  }
-
-  "error when no domain store" in {
-    ServerConfiguration(publicUrl, httpPort, None, None, None, RedisConnectionPool("localhost", 6380, 1, None)) must throwA[IllegalArgumentException]
   }
 
   private def loadConfig(fileName: String) = ConfigFactory.load(s"fixtures/config/$fileName").as[ServerConfiguration]("penfold")

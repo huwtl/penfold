@@ -4,7 +4,7 @@ import org.scalatra._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import org.huwtl.penfold.app.support.hal.HalQueueFormatter
 import org.huwtl.penfold.domain.model.{Status, AggregateId, QueueId}
-import org.huwtl.penfold.readstore.{PageRequest, ReadStore}
+import org.huwtl.penfold.readstore.ReadStore
 import org.huwtl.penfold.command.{CompleteJob, CommandDispatcher, StartJob}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.app.web.bean.{CompleteJobRequest, StartJobRequest}
@@ -15,9 +15,9 @@ class QueueResource(readStore: ReadStore,
                     commandDispatcher: CommandDispatcher,
                     jsonConverter: ObjectSerializer,
                     halFormatter: HalQueueFormatter,
-                    authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with ErrorHandling with BasicAuthenticationSupport {
+                    authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport {
 
-  private val pageSize = 10
+  val pageSize = 5
 
   before() {
     contentType = HAL_JSON
@@ -27,9 +27,9 @@ class QueueResource(readStore: ReadStore,
     statusMatch {
       status => {
         val queue = QueueId(params("queue"))
-        val page = PageRequest(params.getOrElse("page", "0").toInt, pageSize)
+        val page = parsePageRequestParams(params, pageSize)
         val filters = parseFilters(params)
-        Ok(halFormatter.halFrom(queue, status, readStore.retrieveByQueue(queue, status, page, filters), filters))
+        Ok(halFormatter.halFrom(queue, status, page, readStore.retrieveByQueue(queue, status, page, filters), filters))
       }
     }
   }

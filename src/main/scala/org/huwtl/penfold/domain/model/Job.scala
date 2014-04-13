@@ -9,20 +9,32 @@ import org.huwtl.penfold.domain.model.Status._
 object Job extends AggregateFactory {
   def create(aggregateId: AggregateId, binding: Binding, payload: Payload) = {
     val currentDateTime = now
-    applyJobCreated(JobCreated(aggregateId, AggregateVersion.init, currentDateTime, binding, currentDateTime, payload)).trigger()
+    applyJobCreated(JobCreated(aggregateId, AggregateVersion.init, currentDateTime, binding, currentDateTime, payload))
   }
 
   def create(aggregateId: AggregateId, binding: Binding, triggerDate: DateTime, payload: Payload) = {
-    val createdJob = applyJobCreated(JobCreated(aggregateId, AggregateVersion.init, now, binding, triggerDate, payload))
+    val createdJob = applyFutureJobCreated(FutureJobCreated(aggregateId, AggregateVersion.init, now, binding, triggerDate, payload))
     if (createdJob.triggerDate.isAfterNow) createdJob else createdJob.trigger()
   }
 
   def applyEvent = {
     case event: JobCreated => applyJobCreated(event)
+    case event: FutureJobCreated => applyFutureJobCreated(event)
     case event => unhandled(event)
   }
 
   private def applyJobCreated(event: JobCreated) = Job(
+    event :: Nil,
+    event.aggregateId,
+    event.aggregateVersion,
+    event.created,
+    event.binding,
+    Ready,
+    event.triggerDate,
+    event.payload
+  )
+
+  private def applyFutureJobCreated(event: FutureJobCreated) = Job(
     event :: Nil,
     event.aggregateId,
     event.aggregateVersion,

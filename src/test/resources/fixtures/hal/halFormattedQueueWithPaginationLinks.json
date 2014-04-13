@@ -1,8 +1,8 @@
 {
     "_links": {
-        "self": {"href": "http://host/queues/abc/ready?page=1"},
-        "previous": {"href": "http://host/queues/abc/ready?page=0"},
-        "next": {"href": "http://host/queues/abc/ready?page=2"}
+        "self": {"href": "http://host/queues/abc/ready?lastId=3&lastScore=1393336800000&direction=0"},
+        "previous": {"href": "http://host/queues/abc/ready?lastId=2&lastScore=1393336800000&direction=0"},
+        "next": {"href": "http://host/queues/abc/ready?lastId=1&lastScore=1393336800000&direction=1"}
     },
     "_embedded": {
         "queue": [

@@ -9,10 +9,9 @@ class FiltersTest extends Specification {
   }
 
   "retrieve filter by key" in {
-    val filters = Filters(List(Filter("a", "1"), Filter("B", "2")))
+    val filters = Filters(List(Filter("a", "1"), Filter("b", "2")))
     filters.get("a") must beEqualTo(Some(Filter("a", "1")))
-    filters.get("A") must beEqualTo(Some(Filter("a", "1")))
-    filters.get("b") must beEqualTo(Some(Filter("B", "2")))
+    filters.get("b") must beEqualTo(Some(Filter("b", "2")))
     filters.get("c") must beNone
   }
 }

@@ -1,30 +1,51 @@
 package org.huwtl.penfold.app.support.hal
 
-import org.huwtl.penfold.readstore.{PageResult, Filters}
+import org.huwtl.penfold.readstore.{PageRequest, NavigationDirection, PageResult, Filters}
 import com.theoryinpractise.halbuilder.api.RepresentationFactory
 import org.scalatra.util.RicherString
+import org.huwtl.penfold.readstore.NavigationDirection.{Reverse, Forward}
+import org.huwtl.penfold.domain.model.AggregateId
 
 trait PaginatedRepresentationProvider {
 
-  def getRepresentation(pageOfJobs: PageResult, filters: Filters, baseSelfLink: String, representationFactory: RepresentationFactory) = {
+  def getRepresentation(pageRequest: PageRequest, pageResult: PageResult, filters: Filters, baseSelfLink: String, representationFactory: RepresentationFactory) = {
     val filterParams = filterParameters(filters)
 
-    val queryString = s"${paramQueryString(if (pageOfJobs.previousExists) pageParam(pageOfJobs.pageNumber) :: filterParams else filterParams)}"
+    val queryString = s"${paramQueryString(if (pageResult.previousExists) selfPageParams(pageRequest) ::: filterParams else filterParams)}"
 
     val root = representationFactory.newRepresentation(s"$baseSelfLink${queryString}")
 
-    if (pageOfJobs.previousExists) {
-      root.withLink("previous", s"${baseSelfLink}${paramQueryString(pageParam(pageOfJobs.previousPageNumber) :: filterParams)}")
+    if (pageResult.previousExists) {
+      root.withLink("previous", s"${baseSelfLink}${
+        paramQueryString(
+          pageParams(pageResult.entries.head.id, pageResult.entries.head.triggerDate.getMillis, Reverse) ::: filterParams
+        )
+      }")
     }
 
-    if (pageOfJobs.nextExists) {
-      root.withLink("next", s"${baseSelfLink}${paramQueryString(pageParam(pageOfJobs.nextPageNumber) :: filterParams)}")
+    if (pageResult.nextExists) {
+      root.withLink("next", s"${baseSelfLink}${
+        paramQueryString(
+          pageParams(pageResult.entries.last.id, pageResult.entries.last.triggerDate.getMillis, Forward) ::: filterParams)
+      }")
     }
 
     root
   }
 
-  private def pageParam(pageNumber: Int) = s"page=${pageNumber}"
+  private def selfPageParams(pageRequest: PageRequest) = {
+    pageRequest.lastKnownPageDetails match {
+      case Some(lastKnownPageDetails) => {
+        pageParams(lastKnownPageDetails.id, lastKnownPageDetails.score, lastKnownPageDetails.direction)
+      }
+      case None => Nil
+    }
+  }
+
+  private def pageParams(lastId: AggregateId, lastScore: Long, direction: NavigationDirection) = {
+    val directionValue = if (direction == Forward) 1 else 0
+    List(s"lastId=${lastId.value}", s"lastScore=${lastScore}", s"direction=${directionValue}")
+  }
 
   private def paramQueryString(paramStrings: List[String]) = paramStrings match {
     case Nil => ""

@@ -10,4 +10,5 @@ case class JobRecord(id: AggregateId,
                      binding: Binding,
                      status: Status,
                      triggerDate: DateTime,
+                     sort: Long,
                      payload: Payload)

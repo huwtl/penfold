@@ -24,19 +24,19 @@ libraryDependencies ++= Seq(
   "com.theoryinpractise" % "halbuilder-core" % "2.0.2",
   "org.json4s" %% "json4s-jackson" % "3.2.4",
   "com.typesafe" % "scalalogging-slf4j_2.10" % "1.1.0",
-  "net.debasishg" % "redisclient_2.10" % "2.12",
   "net.ceedubs" % "ficus_2.10" % "1.0.0",
   "org.scalatra" %% "scalatra-auth" % "2.2.2",
   "com.typesafe.slick" % "slick_2.10" % "2.0.1",
   "c3p0" % "c3p0" % "0.9.1.2",
   "mysql" % "mysql-connector-java" % "5.1.30",
+  "org.mongodb" %% "casbah" % "2.7.0",
   "com.googlecode.flyway" % "flyway-core" % "2.3.1",
   "org.hsqldb" % "hsqldb" % "2.3.2",
   "com.codahale.metrics" % "metrics-healthchecks" % "3.0.2",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "org.specs2" % "specs2_2.10" % "2.1.1" % "test",
   "org.scalatra" %% "scalatra-specs2" % "2.2.2" % "test",
-  "redis.embedded" % "embedded-redis" % "0.2" % "test"
+  "com.github.athieriot" %% "specs2-embedmongo" % "0.6.0" % "test"
 )
 
 resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"

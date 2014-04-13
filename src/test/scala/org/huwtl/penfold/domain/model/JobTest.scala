@@ -13,32 +13,33 @@ class JobTest extends Specification {
 
   "create new job" in {
     val createdJob = Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), Payload.empty)
-    typesOf(createdJob.uncommittedEvents) must beEqualTo(List(classOf[JobTriggered], classOf[JobCreated]))
+    typesOf(createdJob.uncommittedEvents) must beEqualTo(List(classOf[JobCreated]))
   }
 
   "create new future job" in {
     val createdJob = Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), DateTime.now().plusHours(1), Payload.empty)
-    typesOf(createdJob.uncommittedEvents) must beEqualTo(List(classOf[JobCreated]))
+    typesOf(createdJob.uncommittedEvents) must beEqualTo(List(classOf[FutureJobCreated]))
   }
 
   "trigger new future job if trigger date in past" in {
     val createdJob = Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), DateTime.now().minusDays(1), Payload.empty)
-    typesOf(createdJob.uncommittedEvents) must beEqualTo(List(classOf[JobTriggered], classOf[JobCreated]))
+    typesOf(createdJob.uncommittedEvents) must beEqualTo(List(classOf[JobTriggered], classOf[FutureJobCreated]))
   }
 
   "trigger future job" in {
     val readyJob = Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), DateTime.now().plusHours(1), Payload.empty).trigger()
-    typesOf(readyJob.uncommittedEvents) must beEqualTo(List(classOf[JobTriggered], classOf[JobCreated]))
+    typesOf(readyJob.uncommittedEvents) must beEqualTo(List(classOf[JobTriggered], classOf[FutureJobCreated]))
   }
 
   "ensure only waiting jobs can be triggered" in {
-    Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), Payload.empty).trigger().trigger() must throwA[RuntimeException]
+    Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), Payload.empty).trigger() must throwA[RuntimeException]
+    Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), DateTime.now().plusHours(1), Payload.empty).trigger().trigger() must throwA[RuntimeException]
     Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), Payload.empty).start(queue).trigger() must throwA[RuntimeException]
   }
 
   "start job" in {
     val startedJob = Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), Payload.empty).start(queue)
-    typesOf(startedJob.uncommittedEvents) must beEqualTo(List(classOf[JobStarted], classOf[JobTriggered], classOf[JobCreated]))
+    typesOf(startedJob.uncommittedEvents) must beEqualTo(List(classOf[JobStarted], classOf[JobCreated]))
   }
 
   "ensure only ready jobs can be started" in {
@@ -48,12 +49,12 @@ class JobTest extends Specification {
 
   "cancel job" in {
     val startedJob = Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), Payload.empty).cancel(queue)
-    typesOf(startedJob.uncommittedEvents) must beEqualTo(List(classOf[JobCancelled], classOf[JobTriggered], classOf[JobCreated]))
+    typesOf(startedJob.uncommittedEvents) must beEqualTo(List(classOf[JobCancelled], classOf[JobCreated]))
   }
 
   "complete job" in {
     val startedJob = Job.create(AggregateId("1"), Binding(List(BoundQueue(queue))), Payload.empty).start(queue).complete(queue)
-    typesOf(startedJob.uncommittedEvents) must beEqualTo(List(classOf[JobCompleted], classOf[JobStarted], classOf[JobTriggered], classOf[JobCreated]))
+    typesOf(startedJob.uncommittedEvents) must beEqualTo(List(classOf[JobCompleted], classOf[JobStarted], classOf[JobCreated]))
   }
 
   "ensure only started jobs can be completed" in {

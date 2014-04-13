@@ -13,23 +13,5 @@ trait ReadStore {
   
   def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, filters: Filters = Filters.empty): PageResult
 
-  def retrieveByStatus(status: Status, pageRequest: PageRequest, filters: Filters = Filters.empty): PageResult
-
-  def retrieveJobsToTrigger: Stream[JobRecordReference] = {
-    val pageSize = 50
-
-    def allPagesOfJobsToTrigger(pageRequest: PageRequest): Stream[List[JobRecordReference]] = {
-      val page = retrieveNextPageOfJobsToTrigger(pageRequest)
-      if (page.isEmpty) Stream.empty else page #:: allPagesOfJobsToTrigger(pageRequest.nextPage)
-    }
-
-    val allJobsToTrigger = for {
-      pageOfJobsToTrigger <- allPagesOfJobsToTrigger(new PageRequest(0, pageSize))
-      jobToTrigger <- pageOfJobsToTrigger
-    } yield jobToTrigger
-
-    allJobsToTrigger
-  }
-
-  protected def retrieveNextPageOfJobsToTrigger(pageRequest: PageRequest): List[JobRecordReference]
+  def retrieveJobsToTrigger: Iterator[JobRecordReference]
 }

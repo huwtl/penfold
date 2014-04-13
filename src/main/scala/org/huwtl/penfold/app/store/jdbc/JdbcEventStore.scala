@@ -10,6 +10,7 @@ import org.huwtl.penfold.domain.event.Event
 import org.huwtl.penfold.domain.store.EventStore
 import java.sql.{SQLIntegrityConstraintViolationException, Timestamp}
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
+import scala.util.{Failure, Success, Try}
 
 class JdbcEventStore(database: Database, eventSerializer: EventSerializer) extends EventStore {
   implicit val getEventFromRow = GetResult(row => eventSerializer.deserialize(row.nextString()))
@@ -17,14 +18,10 @@ class JdbcEventStore(database: Database, eventSerializer: EventSerializer) exten
   private val connectionSuccess = true
 
   override def checkConnectivity = {
-    try {
-      database.withDynSession {
-        sql"""SELECT 1""".as[String].first
-      }
-      Left(connectionSuccess)
-    }
-    catch {
-      case e: Exception => Right(e)
+    Try(database.withDynSession(sql"""SELECT 1""".as[String].first)) match {
+      case Success(_) => Left(connectionSuccess)
+      case Failure(e: Exception) => Right(e)
+      case Failure(e) => throw e
     }
   }
 
@@ -42,8 +39,7 @@ class JdbcEventStore(database: Database, eventSerializer: EventSerializer) exten
         )
         """.execute
         event
-      }
-      catch {
+      } catch {
         case e: SQLIntegrityConstraintViolationException => throw new AggregateConflictException(s"aggregate conflict ${event.aggregateId}")
       }
     }

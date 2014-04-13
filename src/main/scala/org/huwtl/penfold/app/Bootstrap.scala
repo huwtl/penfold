@@ -7,59 +7,57 @@ import java.net.URI
 import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalJobFormatter}
 import org.huwtl.penfold.command._
 import org.huwtl.penfold.domain.store.DomainRepository
-import org.huwtl.penfold.app.support.json.{JsonPathExtractor, ObjectSerializer, EventSerializer}
+import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
 import org.huwtl.penfold.readstore.{EventNotifiers, EventNotifier, NewEventsProvider}
-import org.huwtl.penfold.app.readstore.redis._
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
+import org.huwtl.penfold.app.support.{DateTimeSource, UUIDFactory}
+import org.huwtl.penfold.app.schedule.JobTriggerScheduler
+import com.codahale.metrics.health.HealthCheckRegistry
+import org.huwtl.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
+import org.huwtl.penfold.app.readstore.mongodb._
+import org.huwtl.penfold.app.store.jdbc._
 import org.huwtl.penfold.command.CreateFutureJobHandler
 import org.huwtl.penfold.command.StartJobHandler
 import org.huwtl.penfold.command.CreateJobHandler
 import org.huwtl.penfold.command.CancelJobHandler
 import org.huwtl.penfold.command.CompleteJob
+import org.huwtl.penfold.command.TriggerJob
+import org.huwtl.penfold.command.TriggerJobHandler
 import org.huwtl.penfold.command.CompleteJobHandler
 import org.huwtl.penfold.command.CreateFutureJob
 import org.huwtl.penfold.command.StartJob
 import org.huwtl.penfold.command.CreateJob
 import org.huwtl.penfold.command.CancelJob
-import org.huwtl.penfold.app.store.redis.RedisConnectionPoolFactory
-import org.huwtl.penfold.app.support.UUIDFactory
-import org.huwtl.penfold.app.schedule.JobTriggerScheduler
-import org.huwtl.penfold.app.store.EventStoreConfigurationProvider
-import com.codahale.metrics.health.HealthCheckRegistry
-import org.huwtl.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
+import com.mongodb.casbah.Imports._
 
 class Bootstrap extends LifeCycle {
   override def init(context: ServletContext) {
 
     val config = ConfigFactory.load().as[ServerConfiguration]("penfold")
 
-    val redisKeyFactory = new RedisKeyFactory(new JsonPathExtractor)
-
     val eventSerializer = new EventSerializer
     val objectSerializer = new ObjectSerializer
 
     val aggregateIdFactory = new UUIDFactory
 
-    val eventStoreConfig = new EventStoreConfigurationProvider(eventSerializer, config.domainConnectionPool).get()
+    val domainJdbcPool = new JdbcDatabaseInitialiser().init(new JdbcConnectionPoolFactory().create(config.domainJdbcConnectionPool))
+    val eventStore = new JdbcEventStore(domainJdbcPool, eventSerializer)
+    val eventQueryService = new JdbcDomainEventQueryService(domainJdbcPool, eventSerializer)
 
-    val readStoreConnectionPool = new RedisConnectionPoolFactory().create(config.readStoreRedisConnectionPool)
+    val readStoreServers = config.readStoreMongoDatabaseServers.servers.map(server => new ServerAddress(server.host, server.port))
+    val readStoreDatabase = MongoConnection(readStoreServers)(config.readStoreMongoDatabaseServers.databaseName)
+    val readStoreEventProvider = new NewEventsProvider(new MongoNextExpectedEventIdProvider("readStoreEventTracker", readStoreDatabase), eventQueryService)
+    val readStoreUpdater = new EventNotifier(readStoreEventProvider, new MongoReadStoreUpdater(readStoreDatabase, new MongoEventTracker("readStoreEventTracker", readStoreDatabase), objectSerializer))
 
-    val readStoreEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(readStoreConnectionPool, redisKeyFactory.eventTrackerKey("readstore")), eventStoreConfig.domainEventQueryService)
+    val indexes = Indexes(config.readStoreIndexes)
+    indexes.all.map(index =>
+      readStoreDatabase("jobs").ensureIndex(MongoDBObject(index.fields.map(f => f.key -> 1)), MongoDBObject("background" -> true))
+    )
 
-    val readStoreUpdater = new EventNotifier(readStoreEventProvider, new RedisReadStoreUpdater(readStoreConnectionPool, objectSerializer, redisKeyFactory))
+    val eventNotifiers = List(readStoreUpdater)
 
-    val indexes = Indexes(config.readStoreIndexes, redisKeyFactory)
-
-    val indexUpdaters = indexes.all.map {
-      index =>
-        val searchEventProvider = new NewEventsProvider(new RedisNextExpectedEventIdProvider(readStoreConnectionPool, redisKeyFactory.indexEventTrackerKey(index)), eventStoreConfig.domainEventQueryService)
-        new EventNotifier(searchEventProvider, new RedisIndexUpdater(index, readStoreConnectionPool, objectSerializer, redisKeyFactory))
-    }
-
-    val eventNotifiers = readStoreUpdater :: indexUpdaters
-
-    val domainRepository = new DomainRepository(eventStoreConfig.domainEventStore, new EventNotifiers(eventNotifiers))
+    val domainRepository = new DomainRepository(eventStore, new EventNotifiers(eventNotifiers))
 
     val commandDispatcher = new CommandDispatcher(Map[Class[_ <: Command], CommandHandler[_ <: Command]](//
       classOf[CreateJob] -> new CreateJobHandler(domainRepository, aggregateIdFactory), //
@@ -70,7 +68,7 @@ class Bootstrap extends LifeCycle {
       classOf[CancelJob] -> new CancelJobHandler(domainRepository) //
     ))
 
-    val readStore = new RedisReadStore(readStoreConnectionPool, indexes, objectSerializer, redisKeyFactory)
+    val readStore = new MongoReadStore(readStoreDatabase, objectSerializer, new DateTimeSource)
 
     val baseUrl = URI.create(config.publicUrl)
 
@@ -83,7 +81,7 @@ class Bootstrap extends LifeCycle {
     val queueFormatter = new HalQueueFormatter(baseQueueLink, jobFormatter)
 
     val healthCheckRegistry: HealthCheckRegistry = new HealthCheckRegistry
-    healthCheckRegistry.register("Event store connectivity", new EventStoreConnectivityHealthcheck(eventStoreConfig.domainEventStore))
+    healthCheckRegistry.register("Event store connectivity", new EventStoreConnectivityHealthcheck(eventStore))
     healthCheckRegistry.register("Read store connectivity", new ReadStoreConnectivityHealthcheck(readStore))
 
     context mount(new PingResource, "/ping")
