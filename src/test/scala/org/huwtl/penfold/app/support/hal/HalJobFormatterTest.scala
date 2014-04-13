@@ -9,8 +9,6 @@ import org.specs2.mutable.Specification
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.readstore._
 import org.huwtl.penfold.domain.model.Payload
-import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.BoundQueue
 import org.huwtl.penfold.readstore.Filter
 import org.huwtl.penfold.domain.model.QueueId
