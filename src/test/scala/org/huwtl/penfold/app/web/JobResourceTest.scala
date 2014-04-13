@@ -26,7 +26,7 @@ class JobResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpeci
 
   val created = new DateTime(2014, 2, 14, 12, 0, 0, 0)
 
-  val triggerDate = new DateTime(2014, 7, 10, 13, 5, 1, 0)
+  val triggerDate = new DateTime(2014, 2, 25, 14, 0, 0, 0)
 
   val queueId = QueueId("abc")
 

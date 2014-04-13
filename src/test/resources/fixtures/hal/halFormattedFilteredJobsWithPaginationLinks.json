@@ -1,8 +1,8 @@
 {
     "_links": {
-        "self": {"href": "http://host/jobs?lastId=1&lastScore=1404993901000&direction=1&_data=value"},
-        "previous": {"href": "http://host/jobs?lastId=1&lastScore=1404993901000&direction=0&_data=value"},
-        "next": {"href": "http://host/jobs?lastId=1&lastScore=1404993901000&direction=1&_data=value"}
+        "self": {"href": "http://host/jobs?lastId=1&lastScore=1393336800000&direction=1&_data=value"},
+        "previous": {"href": "http://host/jobs?lastId=1&lastScore=1393336800000&direction=0&_data=value"},
+        "next": {"href": "http://host/jobs?lastId=1&lastScore=1393336800000&direction=1&_data=value"}
     },
     "_embedded": {
         "jobs": {
@@ -18,7 +18,7 @@
                 }
             },
             "status": "waiting",
-            "triggerDate": "2014-07-10 13:05:01",
+            "triggerDate": "2014-02-25 14:00:00",
             "binding": {
                 "queues": [
                     {"id": "abc"}
