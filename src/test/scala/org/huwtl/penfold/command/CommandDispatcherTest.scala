@@ -6,26 +6,26 @@ import org.huwtl.penfold.domain.model.{QueueId, AggregateId}
 
 class CommandDispatcherTest extends Specification with Mockito {
 
-  val triggerJobCommand = TriggerJob(AggregateId("a1"))
-  val startJobCommand = StartJob(AggregateId("a1"), QueueId("q1"))
-  val completeJobCommand = CompleteJob(AggregateId("a1"), QueueId("q1"))
+  val triggerTaskCommand = TriggerTask(AggregateId("a1"))
+  val startTaskCommand = StartTask(AggregateId("a1"), QueueId("q1"))
+  val completeTaskCommand = CompleteTask(AggregateId("a1"), QueueId("q1"))
 
-  val triggerJobHandler = mock[TriggerJobHandler]
-  val startJobHandler = mock[StartJobHandler]
+  val triggerTaskHandler = mock[TriggerTaskHandler]
+  val startTaskHandler = mock[StartTaskHandler]
 
   val dispatch = new CommandDispatcher(Map[Class[_ <: Command], CommandHandler[_ <: Command]](//
-    classOf[TriggerJob] -> triggerJobHandler, //
-    classOf[StartJob] -> startJobHandler //
+    classOf[TriggerTask] -> triggerTaskHandler, //
+    classOf[StartTask] -> startTaskHandler //
   ))
 
   "dispatch command to correct handler" in  {
-    dispatch.dispatch[TriggerJob](triggerJobCommand)
+    dispatch.dispatch[TriggerTask](triggerTaskCommand)
 
-    there was one(triggerJobHandler).handle(triggerJobCommand)
-    there were noCallsTo(startJobHandler)
+    there was one(triggerTaskHandler).handle(triggerTaskCommand)
+    there were noCallsTo(startTaskHandler)
   }
 
   "throw exception when no suitable handler" in {
-    dispatch.dispatch[CompleteJob](completeJobCommand) must throwA[RuntimeException]
+    dispatch.dispatch[CompleteTask](completeTaskCommand) must throwA[RuntimeException]
   }
 }

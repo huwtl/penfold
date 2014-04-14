@@ -7,7 +7,7 @@ import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.Binding
 import org.huwtl.penfold.domain.model.Payload
-import org.huwtl.penfold.domain.event.{JobTriggered, JobCreated}
+import org.huwtl.penfold.domain.event.{TaskTriggered, TaskCreated}
 import org.joda.time.DateTime
 import org.specs2.specification.Scope
 
@@ -19,7 +19,7 @@ class DomainRepositoryTest extends Specification with Mockito {
 
     val timestamp = DateTime.now
 
-    val createdJob = Job.create(aggregateId, binding, Payload.empty)
+    val createdTask = Task.create(aggregateId, binding, Payload.empty)
 
     val eventStore = mock[EventStore]
 
@@ -29,27 +29,27 @@ class DomainRepositoryTest extends Specification with Mockito {
   }
 
   "append new aggregate root events to event store" in new context {
-    val job = repo.add(createdJob)
+    val task = repo.add(createdTask)
 
-    job.uncommittedEvents must beEmpty
+    task.uncommittedEvents must beEmpty
     there was one(notifiers).notifyAllOfEvents()
   }
 
   "load aggregate by id" in new context {
     eventStore.retrieveBy(aggregateId) returns List(
-      JobCreated(aggregateId, AggregateVersion.init, timestamp, binding, timestamp, Payload.empty),
-      JobTriggered(aggregateId, AggregateVersion.init.next, timestamp, List(QueueId("q1")))
+      TaskCreated(aggregateId, AggregateVersion.init, timestamp, binding, timestamp, Payload.empty),
+      TaskTriggered(aggregateId, AggregateVersion.init.next, timestamp, List(QueueId("q1")))
     )
 
-    val job = repo.getById[Job](aggregateId)
+    val task = repo.getById[Task](aggregateId)
 
-    job.status must beEqualTo(Status.Ready)
+    task.status must beEqualTo(Status.Ready)
   }
 
   "throw exception when no aggregate found with id" in new context {
     val unknownAggregateId = AggregateId("unknown")
     eventStore.retrieveBy(unknownAggregateId) returns Nil
 
-    repo.getById[Job](AggregateId("unknown")) must throwA[IllegalArgumentException]
+    repo.getById[Task](AggregateId("unknown")) must throwA[IllegalArgumentException]
   }
 }

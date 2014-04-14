@@ -1,6 +1,6 @@
 package org.huwtl.penfold.app.web
 
-import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalJobFormatter}
+import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import java.net.URI
 import org.json4s.jackson.JsonMethods._
 import scala.io.Source._
@@ -17,7 +17,7 @@ import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.model.AggregateId
 import scala.Some
 import org.huwtl.penfold.readstore.PageRequest
-import org.huwtl.penfold.readstore.JobRecord
+import org.huwtl.penfold.readstore.TaskRecord
 import org.huwtl.penfold.readstore.PageResult
 import org.huwtl.penfold.app.AuthenticationCredentials
 import org.huwtl.penfold.readstore.NavigationDirection.Reverse
@@ -43,12 +43,12 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
   val commandDispatcher = mock[CommandDispatcher]
 
-  addServlet(new QueueResource(readStore, commandDispatcher, new ObjectSerializer, new HalQueueFormatter(new URI("http://host/queues"), new HalJobFormatter(new URI("http://host/jobs"), new URI("http://host/queues"))), pageSize, Some(validCredentials)), "/queues/*")
+  addServlet(new QueueResource(readStore, commandDispatcher, new ObjectSerializer, new HalQueueFormatter(new URI("http://host/queues"), new HalTaskFormatter(new URI("http://host/tasks"), new URI("http://host/queues"))), pageSize, Some(validCredentials)), "/queues/*")
 
   "return 200 with hal+json formatted queue response" in {
-    val expectedJob1 = JobRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
-    val expectedJob2 = JobRecord(AggregateId("2"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
-    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize), Filters.empty) returns PageResult(List(expectedJob2, expectedJob1), previousExists = false, nextExists = false)
+    val expectedTask1 = TaskRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
+    val expectedTask2 = TaskRecord(AggregateId("2"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
+    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize), Filters.empty) returns PageResult(List(expectedTask2, expectedTask1), previousExists = false, nextExists = false)
 
     get("/queues/abc/ready", headers = validAuthHeader) {
       status must beEqualTo(200)
@@ -57,10 +57,10 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
   }
 
   "return 200 with hal+json formatted filtered queue response" in {
-    val expectedJob1 = JobRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId), BoundQueue(QueueId("def")))), Status.Ready, triggerDate, sort, payload)
-    val expectedJob2 = JobRecord(AggregateId("2"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
+    val expectedTask1 = TaskRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId), BoundQueue(QueueId("def")))), Status.Ready, triggerDate, sort, payload)
+    val expectedTask2 = TaskRecord(AggregateId("2"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
     val filters = Filters(List(Filter("data", "value")))
-    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize), filters) returns PageResult(List(expectedJob2, expectedJob1), previousExists = false, nextExists = false)
+    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize), filters) returns PageResult(List(expectedTask2, expectedTask1), previousExists = false, nextExists = false)
 
     get("/queues/abc/ready?_data=value", headers = validAuthHeader) {
       status must beEqualTo(200)
@@ -70,9 +70,9 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
   "return 200 with hal+json formatted queue response with pagination links" in {
     val lastKnownPageDetails = LastKnownPageDetails(AggregateId("3"), triggerDate.getMillis, Reverse)
-    val expectedJob1 = JobRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
-    val expectedJob2 = JobRecord(AggregateId("2"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
-    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize, Some(lastKnownPageDetails)), Filters.empty) returns PageResult(List(expectedJob2, expectedJob1), previousExists = true, nextExists = true)
+    val expectedTask1 = TaskRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
+    val expectedTask2 = TaskRecord(AggregateId("2"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
+    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize, Some(lastKnownPageDetails)), Filters.empty) returns PageResult(List(expectedTask2, expectedTask1), previousExists = true, nextExists = true)
 
     get(s"/queues/abc/ready?pageRef=${lastKnownPageDetails.id.value}~${lastKnownPageDetails.score}~0", headers = validAuthHeader) {
       status must beEqualTo(200)
@@ -87,10 +87,10 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
   }
 
   "return 200 with hal+json formatted queue entry response" in {
-    val expectedJob = JobRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
-    readStore.retrieveBy(expectedJob.id) returns Some(expectedJob)
+    val expectedTask = TaskRecord(AggregateId("1"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
+    readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    get(s"/queues/abc/ready/${expectedJob.id.value}", headers = validAuthHeader) {
+    get(s"/queues/abc/ready/${expectedTask.id.value}", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueEntry.json"))
     }
@@ -103,18 +103,18 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
     }
   }
 
-  "return 200 when posting job into started queue" in {
-    val expectedJob = JobRecord(AggregateId("3"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
-    readStore.retrieveBy(expectedJob.id) returns Some(expectedJob)
+  "return 200 when posting task into started queue" in {
+    val expectedTask = TaskRecord(AggregateId("3"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
+    readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
     post("/queues/abc/started", """{"id": "3"}""", headers = validAuthHeader) {
       status must beEqualTo(200)
     }
   }
 
-  "return 200 when posting job into completed queue" in {
-    val expectedJob = JobRecord(AggregateId("4"), created, Binding(List(BoundQueue(queueId))), Status.Started, triggerDate, sort, payload)
-    readStore.retrieveBy(expectedJob.id) returns Some(expectedJob)
+  "return 200 when posting task into completed queue" in {
+    val expectedTask = TaskRecord(AggregateId("4"), created, Binding(List(BoundQueue(queueId))), Status.Started, triggerDate, sort, payload)
+    readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
     post("/queues/abc/completed", """{"id": "4"}""", headers = validAuthHeader) {
       status must beEqualTo(200)

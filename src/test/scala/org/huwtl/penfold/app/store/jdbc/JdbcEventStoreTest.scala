@@ -5,7 +5,7 @@ import org.specs2.matcher.DataTables
 import org.huwtl.penfold.app.support.json.EventSerializer
 import org.huwtl.penfold.domain.model._
 import org.joda.time.DateTime
-import org.huwtl.penfold.domain.event.{Event, JobTriggered, JobCreated}
+import org.huwtl.penfold.domain.event.{Event, TaskTriggered, TaskCreated}
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.Binding
 import org.huwtl.penfold.domain.model.BoundQueue
@@ -46,10 +46,10 @@ class JdbcEventStoreTest extends Specification with DataTables with JdbcSpecific
   }
 
   private def createdEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {
-    JobCreated(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), Binding(List(BoundQueue(QueueId("q1")))), new DateTime(2014, 4, 3, 13, 0, 0, 0), Payload.empty)
+    TaskCreated(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), Binding(List(BoundQueue(QueueId("q1")))), new DateTime(2014, 4, 3, 13, 0, 0, 0), Payload.empty)
   }
 
   private def triggeredEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {
-    JobTriggered(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), List(QueueId("q2")))
+    TaskTriggered(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), List(QueueId("q2")))
   }
 }

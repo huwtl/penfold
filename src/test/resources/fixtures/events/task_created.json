@@ -1,0 +1,19 @@
+{
+    "type" : "TaskCreated",
+    "aggregateId" : "a1",
+    "aggregateVersion" : 1,
+    "created" : "2014-02-03 12:47:54",
+    "binding": {
+        "queues": [
+            {"id": "q1"}
+        ]
+    },
+    "triggerDate" : "2014-02-03 14:30:01",
+    "payload" : {
+        "stuff" : "something",
+        "nested" : {
+            "inner" : true
+        }
+    },
+    "aggregateType" : "Task"
+}

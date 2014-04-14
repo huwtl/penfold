@@ -1,0 +1,8 @@
+{
+    "type" : "TaskStarted",
+    "aggregateId" : "a1",
+    "aggregateVersion" : 1,
+    "created" : "2014-02-03 12:47:54",
+    "queue": "q1",
+    "aggregateType" : "Task"
+}

@@ -4,7 +4,7 @@ import org.specs2.mutable.Specification
 import org.huwtl.penfold.support.JdbcSpecification
 import org.specs2.specification.Scope
 import org.huwtl.penfold.app.support.json.EventSerializer
-import org.huwtl.penfold.domain.event.JobTriggered
+import org.huwtl.penfold.domain.event.TaskTriggered
 import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId}
 import org.huwtl.penfold.readstore.{EventRecord, EventSequenceId}
 import org.joda.time.DateTime
@@ -23,8 +23,8 @@ class JdbcDomainEventQueryServiceTest extends Specification with JdbcSpecificati
   }
 
   "retrieve id of last event added to domain event store" in new context {
-    val event1 = JobTriggered(AggregateId("a1"), AggregateVersion.init, created, List())
-    val event2 = JobTriggered(AggregateId("a2"), AggregateVersion.init, created, List())
+    val event1 = TaskTriggered(AggregateId("a1"), AggregateVersion.init, created, List())
+    val event2 = TaskTriggered(AggregateId("a2"), AggregateVersion.init, created, List())
     store.add(event1)
     store.add(event2)
 
@@ -32,8 +32,8 @@ class JdbcDomainEventQueryServiceTest extends Specification with JdbcSpecificati
   }
 
   "retrieve id of last event added to domain event store" in new context {
-    val event1 = JobTriggered(AggregateId("a1"), AggregateVersion.init, created, List())
-    val event2 = JobTriggered(AggregateId("a2"), AggregateVersion.init, created, List())
+    val event1 = TaskTriggered(AggregateId("a1"), AggregateVersion.init, created, List())
+    val event2 = TaskTriggered(AggregateId("a2"), AggregateVersion.init, created, List())
     store.add(event1)
     store.add(event2)
 
@@ -41,8 +41,8 @@ class JdbcDomainEventQueryServiceTest extends Specification with JdbcSpecificati
   }
 
   "retrieve event from domain event store" in new context {
-    val event1 = JobTriggered(AggregateId("a1"), AggregateVersion.init, created, List())
-    val event2 = JobTriggered(AggregateId("a2"), AggregateVersion.init, created, List())
+    val event1 = TaskTriggered(AggregateId("a1"), AggregateVersion.init, created, List())
+    val event2 = TaskTriggered(AggregateId("a2"), AggregateVersion.init, created, List())
     store.add(event1)
     store.add(event2)
 

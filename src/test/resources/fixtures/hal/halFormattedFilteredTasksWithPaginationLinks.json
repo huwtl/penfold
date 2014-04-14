@@ -1,0 +1,29 @@
+{
+    "_links": {
+        "self": {"href": "http://host/tasks?pageRef=1~1393336800000~1&_data=value"},
+        "previous": {"href": "http://host/tasks?pageRef=1~1393336800000~0&_data=value", "name": "1~1393336800000~0"},
+        "next": {"href": "http://host/tasks?pageRef=1~1393336800000~1&_data=value", "name": "1~1393336800000~1"}
+    },
+    "_embedded": {
+        "tasks": {
+            "_links": {
+                "self": {"href": "http://host/tasks/1"},
+                "queue": {"href": "http://host/queues/abc"}
+            },
+            "id": "1",
+            "payload": {
+                "data": "value",
+                "inner": {
+                    "bool": true
+                }
+            },
+            "status": "waiting",
+            "triggerDate": "2014-02-25 14:00:00",
+            "binding": {
+                "queues": [
+                    {"id": "abc"}
+                ]
+            }
+        }
+    }
+}

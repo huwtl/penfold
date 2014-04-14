@@ -6,35 +6,35 @@ import org.json4s.jackson.JsonMethods._
 import org.huwtl.penfold.domain.model._
 import org.joda.time.DateTime
 import org.huwtl.penfold.domain.event._
-import org.huwtl.penfold.domain.event.JobCompleted
+import org.huwtl.penfold.domain.event.TaskCompleted
 import org.huwtl.penfold.domain.model.Payload
 import org.huwtl.penfold.domain.model.BoundQueue
 import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.domain.event.JobCreated
+import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.Binding
-import org.huwtl.penfold.domain.event.JobTriggered
-import org.huwtl.penfold.domain.event.JobStarted
+import org.huwtl.penfold.domain.event.TaskTriggered
+import org.huwtl.penfold.domain.event.TaskStarted
 import org.specs2.matcher.DataTables
 
 class EventSerializerTest extends Specification with DataTables {
   val dateTime = new DateTime(2014, 2, 3, 12, 47, 54)
   val queue1 = QueueId("q1")
   val queue2 = QueueId("q2")
-  val jobCreatedEvent = JobCreated(AggregateId("a1"), AggregateVersion.init, dateTime, Binding(List(BoundQueue(queue1))), new DateTime(2014, 2, 3, 14, 30, 1), Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
-  val jobTriggeredEvent = JobTriggered(AggregateId("a1"), AggregateVersion.init, dateTime, List(queue1, queue2))
-  val jobStartedEvent = JobStarted(AggregateId("a1"), AggregateVersion.init, dateTime, queue1)
-  val jobCancelledEvent = JobCancelled(AggregateId("a1"), AggregateVersion.init, dateTime, List(queue1, queue2))
-  val jobCompletedEvent = JobCompleted(AggregateId("a1"), AggregateVersion.init, dateTime, queue1)
+  val taskCreatedEvent = TaskCreated(AggregateId("a1"), AggregateVersion.init, dateTime, Binding(List(BoundQueue(queue1))), new DateTime(2014, 2, 3, 14, 30, 1), Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+  val taskTriggeredEvent = TaskTriggered(AggregateId("a1"), AggregateVersion.init, dateTime, List(queue1, queue2))
+  val taskStartedEvent = TaskStarted(AggregateId("a1"), AggregateVersion.init, dateTime, queue1)
+  val taskCancelledEvent = TaskCancelled(AggregateId("a1"), AggregateVersion.init, dateTime, List(queue1, queue2))
+  val taskCompletedEvent = TaskCompleted(AggregateId("a1"), AggregateVersion.init, dateTime, queue1)
   val serializer = new EventSerializer
 
-  "deserialise job event" in {
+  "deserialise task event" in {
     "jsonPath"           || "expectedEvent"   |
-    "job_created.json"   !! jobCreatedEvent   |
-    "job_triggered.json" !! jobTriggeredEvent |
-    "job_started.json"   !! jobStartedEvent   |
-    "job_cancelled.json" !! jobCancelledEvent |
-    "job_completed.json" !! jobCompletedEvent |> {
+    "task_created.json"   !! taskCreatedEvent   |
+    "task_triggered.json" !! taskTriggeredEvent |
+    "task_started.json"   !! taskStartedEvent   |
+    "task_cancelled.json" !! taskCancelledEvent |
+    "task_completed.json" !! taskCompletedEvent |> {
       (jsonPath, expectedEvent) =>
         val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/$jsonPath")).mkString
         val actualEvent = serializer.deserialize(json)
@@ -42,13 +42,13 @@ class EventSerializerTest extends Specification with DataTables {
     }
   }
 
-  "serialise job event" in {
+  "serialise task event" in {
     "event"             || "expectedJsonPath"   |
-      jobCreatedEvent   !! "job_created.json"   |
-      jobTriggeredEvent !! "job_triggered.json" |
-      jobStartedEvent   !! "job_started.json"   |
-      jobCancelledEvent !! "job_cancelled.json" |
-      jobCompletedEvent !! "job_completed.json" |> {
+      taskCreatedEvent   !! "task_created.json"   |
+      taskTriggeredEvent !! "task_triggered.json" |
+      taskStartedEvent   !! "task_started.json"   |
+      taskCancelledEvent !! "task_cancelled.json" |
+      taskCompletedEvent !! "task_completed.json" |> {
       (event, expectedJsonPath) =>
         val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/${expectedJsonPath}")).mkString))
         val json = serializer.serialize(event)

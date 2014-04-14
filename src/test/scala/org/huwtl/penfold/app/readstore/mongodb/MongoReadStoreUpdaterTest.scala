@@ -1,12 +1,12 @@
 package org.huwtl.penfold.app.readstore.mongodb
 
 import com.github.athieriot.EmbedConnection
-import org.huwtl.penfold.domain.event.{JobStarted, JobTriggered, JobCreated}
+import org.huwtl.penfold.domain.event.{TaskStarted, TaskTriggered, TaskCreated}
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.BoundQueue
 import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.readstore.{JobRecord, EventSequenceId, EventRecord}
+import org.huwtl.penfold.readstore.{TaskRecord, EventSequenceId, EventRecord}
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import org.joda.time.DateTime
@@ -26,8 +26,8 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val serializer = new EventSerializer
-    val jobCreatedEvent = JobCreated(aggregateId, AggregateVersion(1), created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
-    val jobStartedEvent = JobStarted(aggregateId, AggregateVersion(2), created, queueId)
+    val taskCreatedEvent = TaskCreated(aggregateId, AggregateVersion(1), created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
+    val taskStartedEvent = TaskStarted(aggregateId, AggregateVersion(2), created, queueId)
 
     val mongoClient = MongoClient("localhost", embedConnectionPort())
     val database = mongoClient("penfoldtest")
@@ -35,22 +35,22 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     val readStoreUpdater = new MongoReadStoreUpdater(database, new MongoEventTracker("tracking", database), new ObjectSerializer)
   }
 
-  "create job" in new context {
-    readStoreUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
-    readStoreUpdater.handle(EventRecord(EventSequenceId(2), jobStartedEvent))
+  "create task" in new context {
+    readStoreUpdater.handle(EventRecord(EventSequenceId(1), taskCreatedEvent))
+    readStoreUpdater.handle(EventRecord(EventSequenceId(2), taskStartedEvent))
 
-    val job = readStore.retrieveBy(aggregateId)
+    val task = readStore.retrieveBy(aggregateId)
 
-    job must beEqualTo(Some(JobRecord(aggregateId, created, binding, Status.Started, triggerDate, created.getMillis, payload)))
+    task must beEqualTo(Some(TaskRecord(aggregateId, created, binding, Status.Started, triggerDate, created.getMillis, payload)))
   }
 
   "ignore duplicate events" in new context {
-    readStoreUpdater.handle(EventRecord(EventSequenceId(1), jobCreatedEvent))
-    readStoreUpdater.handle(EventRecord(EventSequenceId(2), jobStartedEvent))
-    readStoreUpdater.handle(EventRecord(EventSequenceId(2), jobCreatedEvent))
+    readStoreUpdater.handle(EventRecord(EventSequenceId(1), taskCreatedEvent))
+    readStoreUpdater.handle(EventRecord(EventSequenceId(2), taskStartedEvent))
+    readStoreUpdater.handle(EventRecord(EventSequenceId(2), taskCreatedEvent))
 
-    val job = readStore.retrieveBy(aggregateId)
+    val task = readStore.retrieveBy(aggregateId)
 
-    job must beEqualTo(Some(JobRecord(aggregateId, created, binding, Status.Started, triggerDate, created.getMillis, payload)))
+    task must beEqualTo(Some(TaskRecord(aggregateId, created, binding, Status.Started, triggerDate, created.getMillis, payload)))
   }
 }

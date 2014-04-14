@@ -5,13 +5,13 @@ sealed trait AggregateType {
 }
 
 object AggregateType {
-  case object Job extends AggregateType {
-    val name = "Job"
+  case object Task extends AggregateType {
+    val name = "Task"
   }
 
   def from(str: String): Option[AggregateType] = {
     str match {
-      case Job.name => Some(Job)
+      case Task.name => Some(Task)
       case _ => None
     }
   }

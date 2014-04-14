@@ -10,7 +10,7 @@ import org.huwtl.penfold.domain.model.BoundQueue
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.Binding
-import org.huwtl.penfold.readstore.JobRecord
+import org.huwtl.penfold.readstore.TaskRecord
 import org.huwtl.penfold.readstore.NavigationDirection.{Reverse, Forward}
 import org.huwtl.penfold.domain.model.Status.Waiting
 import org.joda.time.DateTime
@@ -21,7 +21,7 @@ import org.huwtl.penfold.app.support.DateTimeSource
 class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource) extends ReadStore {
   private val connectionSuccess = true
 
-  lazy private val jobsCollection = database("jobs")
+  lazy private val tasksCollection = database("tasks")
 
   override def checkConnectivity: Either[Boolean, Exception] = {
     Try(database.collectionNames()) match {
@@ -31,13 +31,13 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
     }
   }
 
-  override def retrieveJobsToTrigger: Iterator[JobRecordReference] = {
+  override def retrieveTasksToTrigger: Iterator[TaskRecordReference] = {
     val currentTime = dateTimeSource.now
 
     val query = MongoDBObject("status" -> Waiting.name) ++ ("sort" $lte currentTime.getMillis)
     val sort = MongoDBObject("sort" -> 1)
 
-    jobsCollection.find(query).sort(sort).map(doc => JobRecordReference(AggregateId(doc.as[String]("_id"))))
+    tasksCollection.find(query).sort(sort).map(doc => TaskRecordReference(AggregateId(doc.as[String]("_id"))))
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, filters: Filters) = {
@@ -53,11 +53,11 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
   }
 
   override def retrieveBy(id: AggregateId) = {
-    jobsCollection.findOne(MongoDBObject("_id" -> id.value)).map(convertDocumentToJob(_))
+    tasksCollection.findOne(MongoDBObject("_id" -> id.value)).map(convertDocumentToTask(_))
   }
 
-  private def convertDocumentToJob(document: MongoDBObject) = {
-    JobRecord(
+  private def convertDocumentToTask(document: MongoDBObject) = {
+    TaskRecord(
       AggregateId(document.as[String]("_id")),
       new DateTime(document.as[Date]("created")),
       Binding(List(BoundQueue(QueueId(document.as[String]("queue"))))),
@@ -70,7 +70,7 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
 
   private def retrievePage(criteria: MongoDBObject, pageRequest: PageRequest) = {
     def execPageQueryWithOverflow(criteria: MongoDBObject, sort: MongoDBObject, pageSize: Int) = {
-      jobsCollection.find(criteria).sort(sort).limit(pageSize + 1).map(convertDocumentToJob(_)).toList
+      tasksCollection.find(criteria).sort(sort).limit(pageSize + 1).map(convertDocumentToTask(_)).toList
     }
 
     def sortPageInDescOrder(results: PageResult) = {

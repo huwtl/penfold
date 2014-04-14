@@ -1,0 +1,13 @@
+package org.huwtl.penfold.command
+
+import org.huwtl.penfold.domain.model.Task
+import org.huwtl.penfold.domain.store.DomainRepository
+import org.huwtl.penfold.command.support.AggregateIdFactory
+
+case class CreateFutureTaskHandler(eventStore: DomainRepository, idFactory: AggregateIdFactory) extends CommandHandler[CreateFutureTask] {
+  override def handle(command: CreateFutureTask) = {
+    val task = Task.create(idFactory.create, command.binding, command.triggerDate, command.payload)
+    eventStore.add(task)
+    task.aggregateId
+  }
+}

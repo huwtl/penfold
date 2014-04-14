@@ -2,11 +2,11 @@
     "_links": {
         "self": {"href": "http://host/queues/abc/ready/1"}
     },
-    "jobId": "1",
+    "taskId": "1",
     "_embedded": {
-        "job": {
+        "task": {
             "_links": {
-                "self": {"href": "http://host/jobs/1"},
+                "self": {"href": "http://host/tasks/1"},
                 "queue": {"href": "http://host/queues/abc"},
                 "start": {"href": "http://host/queues/abc/started"}
             },

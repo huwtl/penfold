@@ -4,7 +4,7 @@ import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
 import org.huwtl.penfold.app.web._
 import java.net.URI
-import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalJobFormatter}
+import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import org.huwtl.penfold.command._
 import org.huwtl.penfold.domain.store.DomainRepository
 import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
@@ -12,23 +12,23 @@ import org.huwtl.penfold.readstore.{EventNotifiers, EventNotifier, NewEventsProv
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import org.huwtl.penfold.app.support.{DateTimeSource, UUIDFactory}
-import org.huwtl.penfold.app.schedule.JobTriggerScheduler
+import org.huwtl.penfold.app.schedule.TaskTriggerScheduler
 import com.codahale.metrics.health.HealthCheckRegistry
 import org.huwtl.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
 import org.huwtl.penfold.app.readstore.mongodb._
 import org.huwtl.penfold.app.store.jdbc._
-import org.huwtl.penfold.command.CreateFutureJobHandler
-import org.huwtl.penfold.command.StartJobHandler
-import org.huwtl.penfold.command.CreateJobHandler
-import org.huwtl.penfold.command.CancelJobHandler
-import org.huwtl.penfold.command.CompleteJob
-import org.huwtl.penfold.command.TriggerJob
-import org.huwtl.penfold.command.TriggerJobHandler
-import org.huwtl.penfold.command.CompleteJobHandler
-import org.huwtl.penfold.command.CreateFutureJob
-import org.huwtl.penfold.command.StartJob
-import org.huwtl.penfold.command.CreateJob
-import org.huwtl.penfold.command.CancelJob
+import org.huwtl.penfold.command.CreateFutureTaskHandler
+import org.huwtl.penfold.command.StartTaskHandler
+import org.huwtl.penfold.command.CreateTaskHandler
+import org.huwtl.penfold.command.CancelTaskHandler
+import org.huwtl.penfold.command.CompleteTask
+import org.huwtl.penfold.command.TriggerTask
+import org.huwtl.penfold.command.TriggerTaskHandler
+import org.huwtl.penfold.command.CompleteTaskHandler
+import org.huwtl.penfold.command.CreateFutureTask
+import org.huwtl.penfold.command.StartTask
+import org.huwtl.penfold.command.CreateTask
+import org.huwtl.penfold.command.CancelTask
 import com.mongodb.casbah.Imports._
 
 class Bootstrap extends LifeCycle {
@@ -52,7 +52,7 @@ class Bootstrap extends LifeCycle {
 
     val indexes = Indexes(config.readStoreIndexes)
     indexes.all.map(index =>
-      readStoreDatabase("jobs").ensureIndex(MongoDBObject(index.fields.map(f => f.key -> 1)), MongoDBObject("background" -> true))
+      readStoreDatabase("tasks").ensureIndex(MongoDBObject(index.fields.map(f => f.key -> 1)), MongoDBObject("background" -> true))
     )
 
     val eventNotifiers = List(readStoreUpdater)
@@ -60,25 +60,25 @@ class Bootstrap extends LifeCycle {
     val domainRepository = new DomainRepository(eventStore, new EventNotifiers(eventNotifiers))
 
     val commandDispatcher = new CommandDispatcher(Map[Class[_ <: Command], CommandHandler[_ <: Command]](//
-      classOf[CreateJob] -> new CreateJobHandler(domainRepository, aggregateIdFactory), //
-      classOf[CreateFutureJob] -> new CreateFutureJobHandler(domainRepository, aggregateIdFactory), //
-      classOf[TriggerJob] -> new TriggerJobHandler(domainRepository), //
-      classOf[StartJob] -> new StartJobHandler(domainRepository), //
-      classOf[CompleteJob] -> new CompleteJobHandler(domainRepository), //
-      classOf[CancelJob] -> new CancelJobHandler(domainRepository) //
+      classOf[CreateTask] -> new CreateTaskHandler(domainRepository, aggregateIdFactory), //
+      classOf[CreateFutureTask] -> new CreateFutureTaskHandler(domainRepository, aggregateIdFactory), //
+      classOf[TriggerTask] -> new TriggerTaskHandler(domainRepository), //
+      classOf[StartTask] -> new StartTaskHandler(domainRepository), //
+      classOf[CompleteTask] -> new CompleteTaskHandler(domainRepository), //
+      classOf[CancelTask] -> new CancelTaskHandler(domainRepository) //
     ))
 
     val readStore = new MongoReadStore(readStoreDatabase, objectSerializer, new DateTimeSource)
 
     val baseUrl = URI.create(config.publicUrl)
 
-    val baseJobLink = URI.create(s"${baseUrl.toString}/jobs")
+    val baseTaskLink = URI.create(s"${baseUrl.toString}/tasks")
 
     val baseQueueLink = URI.create(s"${baseUrl.toString}/queues")
 
-    val jobFormatter = new HalJobFormatter(baseJobLink, baseQueueLink)
+    val taskFormatter = new HalTaskFormatter(baseTaskLink, baseQueueLink)
 
-    val queueFormatter = new HalQueueFormatter(baseQueueLink, jobFormatter)
+    val queueFormatter = new HalQueueFormatter(baseQueueLink, taskFormatter)
 
     val healthCheckRegistry: HealthCheckRegistry = new HealthCheckRegistry
     healthCheckRegistry.register("Event store connectivity", new EventStoreConnectivityHealthcheck(eventStore))
@@ -86,9 +86,9 @@ class Bootstrap extends LifeCycle {
 
     context mount(new PingResource, "/ping")
     context mount(new HealthCheckResource(healthCheckRegistry, objectSerializer), "/healthcheck")
-    context mount(new JobResource(readStore, commandDispatcher, objectSerializer, jobFormatter, config.pageSize, config.authentication), "/jobs/*")
+    context mount(new TaskResource(readStore, commandDispatcher, objectSerializer, taskFormatter, config.pageSize, config.authentication), "/tasks/*")
     context mount(new QueueResource(readStore, commandDispatcher, objectSerializer, queueFormatter, config.pageSize, config.authentication), "/queues/*")
 
-    new JobTriggerScheduler(readStore, commandDispatcher, config.triggeredCheckFrequency).start()
+    new TaskTriggerScheduler(readStore, commandDispatcher, config.triggeredCheckFrequency).start()
   }
 }

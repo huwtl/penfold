@@ -5,9 +5,9 @@ import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import org.huwtl.penfold.app.support.hal.HalQueueFormatter
 import org.huwtl.penfold.domain.model.{Status, AggregateId, QueueId}
 import org.huwtl.penfold.readstore.ReadStore
-import org.huwtl.penfold.command.{CompleteJob, CommandDispatcher, StartJob}
+import org.huwtl.penfold.command.{CompleteTask, CommandDispatcher, StartTask}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
-import org.huwtl.penfold.app.web.bean.{CompleteJobRequest, StartJobRequest}
+import org.huwtl.penfold.app.web.bean.{CompleteTaskRequest, StartTaskRequest}
 import org.huwtl.penfold.app.support.auth.BasicAuthenticationSupport
 import org.huwtl.penfold.app.AuthenticationCredentials
 
@@ -37,8 +37,8 @@ class QueueResource(readStore: ReadStore,
     statusMatch {
       status => {
         readStore.retrieveBy(AggregateId(params("id"))) match {
-          case Some(job) => Ok(halFormatter.halFrom(QueueId(queueIdParam), job))
-          case _ => errorResponse(NotFound(s"$status job not found"))
+          case Some(task) => Ok(halFormatter.halFrom(QueueId(queueIdParam), task))
+          case _ => errorResponse(NotFound(s"$status task not found"))
         }
       }
     }
@@ -46,16 +46,16 @@ class QueueResource(readStore: ReadStore,
 
   post("/:queue/started") {
     val queue = QueueId(queueIdParam)
-    val startJobRequest = jsonConverter.deserialize[StartJobRequest](request.body)
-    commandDispatcher.dispatch[StartJob](startJobRequest.toCommand(queue))
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(startJobRequest.id).get))
+    val startTaskRequest = jsonConverter.deserialize[StartTaskRequest](request.body)
+    commandDispatcher.dispatch[StartTask](startTaskRequest.toCommand(queue))
+    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(startTaskRequest.id).get))
   }
 
   post("/:queue/completed") {
     val queue = QueueId(queueIdParam)
-    val completeJobRequest = jsonConverter.deserialize[CompleteJobRequest](request.body)
-    commandDispatcher.dispatch[CompleteJob](completeJobRequest.toCommand(queue))
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(completeJobRequest.id).get))
+    val completeTaskRequest = jsonConverter.deserialize[CompleteTaskRequest](request.body)
+    commandDispatcher.dispatch[CompleteTask](completeTaskRequest.toCommand(queue))
+    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(completeTaskRequest.id).get))
   }
 
   override protected def validCredentials: Option[AuthenticationCredentials] = authenticationCredentials

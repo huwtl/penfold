@@ -10,7 +10,7 @@ import org.huwtl.penfold.readstore.NavigationDirection._
 import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.readstore.EventRecord
 import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.domain.event.{JobCreatedEvent, FutureJobCreated, Event}
+import org.huwtl.penfold.domain.event.{TaskCreatedEvent, FutureTaskCreated, Event}
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.PageRequest
 import org.huwtl.penfold.domain.model.BoundQueue
@@ -43,12 +43,12 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     }
 
     def entry(aggregateId: String, triggerDate: DateTime) = {
-      FutureJobCreated(AggregateId(aggregateId), AggregateVersion.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
+      FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
     }
 
-    def forwardFrom(lastEvent: JobCreatedEvent) = Some(LastKnownPageDetails(lastEvent.aggregateId, lastEvent.triggerDate.getMillis, Forward))
+    def forwardFrom(lastEvent: TaskCreatedEvent) = Some(LastKnownPageDetails(lastEvent.aggregateId, lastEvent.triggerDate.getMillis, Forward))
 
-    def backFrom(lastEvent: JobCreatedEvent) = Some(LastKnownPageDetails(lastEvent.aggregateId, lastEvent.triggerDate.getMillis, Reverse))
+    def backFrom(lastEvent: TaskCreatedEvent) = Some(LastKnownPageDetails(lastEvent.aggregateId, lastEvent.triggerDate.getMillis, Reverse))
 
     def setupEntries() = {
       val entries = List(
@@ -70,21 +70,21 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     readStore.checkConnectivity.isRight must beTrue
   }
 
-  "retrieve waiting jobs to trigger" in new context {
+  "retrieve waiting tasks to trigger" in new context {
     dateTimeSource.now returns triggerDate
     setupEntries()
 
-    readStore.retrieveJobsToTrigger.toList.map(_.id.value) must beEqualTo(List("a", "b", "c", "d"))
+    readStore.retrieveTasksToTrigger.toList.map(_.id.value) must beEqualTo(List("a", "b", "c", "d"))
   }
 
-  "retrieve job by id" in new context {
+  "retrieve task by id" in new context {
     setupEntries()
 
     readStore.retrieveBy(AggregateId("a")).isDefined must beTrue
     readStore.retrieveBy(AggregateId("unknown")).isDefined must beFalse
   }
 
-  "retrieve all jobs with filter" in new context {
+  "retrieve all tasks with filter" in new context {
     setupEntries()
     val pageRequest = PageRequest(2)
 
@@ -97,7 +97,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
   }
 
   "pagination" should {
-    "retrieve jobs by next page" in new context {
+    "retrieve tasks by next page" in new context {
       val entries = setupEntries()
 
       "page"                                  | "expected"                         | "hasPrev" | "hasNext" |
@@ -119,7 +119,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       }
     }
 
-    "retrieve jobs by previous page" in new context {
+    "retrieve tasks by previous page" in new context {
       val entries = setupEntries()
 
       "page"                                 | "expected"                         | "hasPrev" | "hasNext" |
