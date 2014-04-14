@@ -8,6 +8,6 @@ import org.huwtl.penfold.domain.model.Payload
 case class TaskCreated(aggregateId: AggregateId,
                       aggregateVersion: AggregateVersion,
                       created: DateTime,
-                      binding: Binding,
+                      queueBinding: QueueBinding,
                       triggerDate: DateTime,
                       payload: Payload) extends TaskCreatedEvent

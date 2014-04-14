@@ -7,9 +7,5 @@
         }
     },
 
-    "binding": {
-        "queues": [
-            {"id": "abc"}
-        ]
-    }
+    "queueBinding": {"id": "abc"}
 }

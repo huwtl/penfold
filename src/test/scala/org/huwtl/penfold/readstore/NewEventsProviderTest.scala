@@ -10,8 +10,8 @@ import org.joda.time.DateTime
 
 class NewEventsProviderTest extends Specification with Mockito with DataTables {
   class context extends Scope {
-    val event1 = EventRecord(EventSequenceId(0), TaskTriggered(AggregateId("1"), AggregateVersion.init, DateTime.now, List()))
-    val event2 = EventRecord(EventSequenceId(1), TaskTriggered(AggregateId("2"), AggregateVersion.init, DateTime.now, List()))
+    val event1 = EventRecord(EventSequenceId(0), TaskTriggered(AggregateId("1"), AggregateVersion.init, DateTime.now))
+    val event2 = EventRecord(EventSequenceId(1), TaskTriggered(AggregateId("2"), AggregateVersion.init, DateTime.now))
 
     val nextExpectedEventIdProvider = mock[NextExpectedEventIdProvider]
 

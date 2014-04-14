@@ -45,7 +45,7 @@ class HalQueueFormatterTest extends Specification {
   }
 
   "format filtered queue as hal+json" in {
-    val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task("2"), task("1", Binding(List(BoundQueue(queueId), BoundQueue(QueueId("def")))))), previousExists = false, nextExists = false), filters)
+    val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task("2"), task("1", QueueBinding(queueId))), previousExists = false, nextExists = false), filters)
 
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueue.json"))
   }
@@ -72,7 +72,7 @@ class HalQueueFormatterTest extends Specification {
     parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString)
   }
 
-  def task(id: String, binding: Binding = Binding(List(BoundQueue(queueId)))) = {
+  def task(id: String, binding: QueueBinding = QueueBinding(queueId)) = {
     TaskRecord(AggregateId(id), createdDate, binding, status, triggerDate, triggerDate.getMillis, Payload.empty)
   }
 }

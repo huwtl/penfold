@@ -1,8 +1,8 @@
 {
     "_links": {
         "self": {"href": "http://host/tasks/1"},
-        "queue": {"href": "http://host/queues/{queueId}", "templated": true},
-        "start": {"href": "http://host/queues/{queueId}/started", "templated": true}
+        "queue": {"href": "http://host/queues/abc"},
+        "start": {"href": "http://host/queues/abc/started"}
     },
     "id": "1",
     "payload": {
@@ -13,10 +13,5 @@
     },
     "status": "ready",
     "triggerDate": "2014-02-25 14:00:00",
-    "binding": {
-        "queues": [
-            {"id": "abc"},
-            {"id": "def"}
-        ]
-    }
+    "queueBinding": {"id": "abc"}
 }

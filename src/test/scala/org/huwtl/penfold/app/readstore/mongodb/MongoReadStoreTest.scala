@@ -13,8 +13,7 @@ import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.event.{TaskCreatedEvent, FutureTaskCreated, Event}
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.PageRequest
-import org.huwtl.penfold.domain.model.BoundQueue
-import org.huwtl.penfold.domain.model.Binding
+import org.huwtl.penfold.domain.model.QueueBinding
 import org.specs2.matcher.DataTables
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import scala.util.Random
@@ -43,7 +42,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     }
 
     def entry(aggregateId: String, triggerDate: DateTime) = {
-      FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
+      FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, payload)
     }
 
     def forwardFrom(lastEvent: TaskCreatedEvent) = Some(LastKnownPageDetails(lastEvent.aggregateId, lastEvent.triggerDate.getMillis, Forward))

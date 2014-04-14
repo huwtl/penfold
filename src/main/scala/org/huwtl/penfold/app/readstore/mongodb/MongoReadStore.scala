@@ -6,10 +6,9 @@ import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.domain.model._
 import com.mongodb.util.JSON
 import org.huwtl.penfold.readstore.PageRequest
-import org.huwtl.penfold.domain.model.BoundQueue
+import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.domain.model.Binding
 import org.huwtl.penfold.readstore.TaskRecord
 import org.huwtl.penfold.readstore.NavigationDirection.{Reverse, Forward}
 import org.huwtl.penfold.domain.model.Status.Waiting
@@ -60,7 +59,7 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
     TaskRecord(
       AggregateId(document.as[String]("_id")),
       new DateTime(document.as[Date]("created")),
-      Binding(List(BoundQueue(QueueId(document.as[String]("queue"))))),
+      QueueBinding(QueueId(document.as[String]("queue"))),
       Status.from(document.as[String]("status")).get,
       new DateTime(document.as[Date]("triggerDate")),
       document.as[Long]("sort"),

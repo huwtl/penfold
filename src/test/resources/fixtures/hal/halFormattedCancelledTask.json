@@ -12,9 +12,5 @@
     },
     "status": "cancelled",
     "triggerDate": "2014-02-25 14:00:00",
-    "binding": {
-        "queues": [
-            {"id": "abc"}
-        ]
-    }
+    "queueBinding": {"id": "abc"}
 }

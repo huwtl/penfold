@@ -5,7 +5,6 @@ import org.specs2.mock.Mockito
 import org.huwtl.penfold.readstore.EventNotifiers
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.domain.model.Binding
 import org.huwtl.penfold.domain.model.Payload
 import org.huwtl.penfold.domain.event.{TaskTriggered, TaskCreated}
 import org.joda.time.DateTime
@@ -15,7 +14,7 @@ class DomainRepositoryTest extends Specification with Mockito {
   class context extends Scope {
     val aggregateId = AggregateId("a1")
 
-    val binding = Binding(List(BoundQueue(QueueId("q1"))))
+    val binding = QueueBinding(QueueId("q1"))
 
     val timestamp = DateTime.now
 
@@ -38,7 +37,7 @@ class DomainRepositoryTest extends Specification with Mockito {
   "load aggregate by id" in new context {
     eventStore.retrieveBy(aggregateId) returns List(
       TaskCreated(aggregateId, AggregateVersion.init, timestamp, binding, timestamp, Payload.empty),
-      TaskTriggered(aggregateId, AggregateVersion.init.next, timestamp, List(QueueId("q1")))
+      TaskTriggered(aggregateId, AggregateVersion.init.next, timestamp)
     )
 
     val task = repo.getById[Task](aggregateId)

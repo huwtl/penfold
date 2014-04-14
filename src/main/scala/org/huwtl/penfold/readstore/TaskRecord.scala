@@ -7,7 +7,7 @@ import org.huwtl.penfold.domain.model.Payload
 
 case class TaskRecord(id: AggregateId,
                      created: DateTime,
-                     binding: Binding,
+                     queueBinding: QueueBinding,
                      status: Status,
                      triggerDate: DateTime,
                      sort: Long,

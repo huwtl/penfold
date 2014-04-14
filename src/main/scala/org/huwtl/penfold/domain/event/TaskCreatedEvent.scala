@@ -9,7 +9,7 @@ trait TaskCreatedEvent extends TaskEvent {
   val aggregateId: AggregateId
   val aggregateVersion: AggregateVersion
   val created: DateTime
-  val binding: Binding
+  val queueBinding: QueueBinding
   val triggerDate: DateTime
   val payload: Payload
 }

@@ -9,11 +9,10 @@ import org.specs2.mutable.Specification
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.readstore._
 import org.huwtl.penfold.domain.model.Payload
-import org.huwtl.penfold.domain.model.BoundQueue
+import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.readstore.Filter
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.domain.model.Binding
 import org.huwtl.penfold.readstore.TaskRecord
 import scala.Some
 import org.huwtl.penfold.readstore.NavigationDirection.Forward
@@ -41,7 +40,7 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format ready task as hal+json" in {
-    hal(Status.Ready, Binding(List(BoundQueue(QueueId("abc")), BoundQueue(QueueId("def"))))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedReadyTask.json"))
+    hal(Status.Ready, QueueBinding(QueueId("abc"))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedReadyTask.json"))
   }
 
   "format started task as hal+json" in {
@@ -72,17 +71,17 @@ class HalTaskFormatterTest extends Specification {
   "format task as hal+json with complex payload" in {
     val complexPayload = Payload(
       Map("data" -> "value", "inner" -> Map("bool" -> true, "inner2" -> List(Map("a" -> "1", "b" -> 1), Map("a" -> "2", "b" -> 2)))))
-    val task = TaskRecord(id, created, Binding(List(BoundQueue(queueId))), Status.Waiting, triggerDate, triggerDate.getMillis, complexPayload)
+    val task = TaskRecord(id, created, QueueBinding(queueId), Status.Waiting, triggerDate, triggerDate.getMillis, complexPayload)
     hal(task) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedTaskWithComplexPayload.json"))
   }
 
   private def halTasks(filters: Filters, pageNumber: Int = 0, previousPage: Boolean = false, nextPage: Boolean = false) = {
     parse(taskFormatter.halFrom(pageRequest,
-      PageResult(List(TaskRecord(id, created, Binding(List(BoundQueue(queueId))), Status.Waiting, triggerDate, triggerDate.getMillis, payload)), previousExists = previousPage, nextExists = nextPage), filters
+      PageResult(List(TaskRecord(id, created, QueueBinding(queueId), Status.Waiting, triggerDate, triggerDate.getMillis, payload)), previousExists = previousPage, nextExists = nextPage), filters
     ))
   }
 
-  private def hal(status: Status, binding: Binding = Binding(List(BoundQueue(queueId)))) = {
+  private def hal(status: Status, binding: QueueBinding = QueueBinding(queueId)) = {
     parse(taskFormatter.halFrom(TaskRecord(id, created, binding, status, triggerDate, triggerDate.getMillis, payload)))
   }
 

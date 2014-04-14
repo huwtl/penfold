@@ -8,11 +8,10 @@ import org.joda.time.DateTime
 import org.huwtl.penfold.domain.event._
 import org.huwtl.penfold.domain.event.TaskCompleted
 import org.huwtl.penfold.domain.model.Payload
-import org.huwtl.penfold.domain.model.BoundQueue
+import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.domain.model.Binding
 import org.huwtl.penfold.domain.event.TaskTriggered
 import org.huwtl.penfold.domain.event.TaskStarted
 import org.specs2.matcher.DataTables
@@ -21,11 +20,11 @@ class EventSerializerTest extends Specification with DataTables {
   val dateTime = new DateTime(2014, 2, 3, 12, 47, 54)
   val queue1 = QueueId("q1")
   val queue2 = QueueId("q2")
-  val taskCreatedEvent = TaskCreated(AggregateId("a1"), AggregateVersion.init, dateTime, Binding(List(BoundQueue(queue1))), new DateTime(2014, 2, 3, 14, 30, 1), Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
-  val taskTriggeredEvent = TaskTriggered(AggregateId("a1"), AggregateVersion.init, dateTime, List(queue1, queue2))
-  val taskStartedEvent = TaskStarted(AggregateId("a1"), AggregateVersion.init, dateTime, queue1)
-  val taskCancelledEvent = TaskCancelled(AggregateId("a1"), AggregateVersion.init, dateTime, List(queue1, queue2))
-  val taskCompletedEvent = TaskCompleted(AggregateId("a1"), AggregateVersion.init, dateTime, queue1)
+  val taskCreatedEvent = TaskCreated(AggregateId("a1"), AggregateVersion.init, dateTime, QueueBinding(queue1), new DateTime(2014, 2, 3, 14, 30, 1), Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+  val taskTriggeredEvent = TaskTriggered(AggregateId("a1"), AggregateVersion.init, dateTime)
+  val taskStartedEvent = TaskStarted(AggregateId("a1"), AggregateVersion.init, dateTime)
+  val taskCancelledEvent = TaskCancelled(AggregateId("a1"), AggregateVersion.init, dateTime)
+  val taskCompletedEvent = TaskCompleted(AggregateId("a1"), AggregateVersion.init, dateTime)
   val serializer = new EventSerializer
 
   "deserialise task event" in {

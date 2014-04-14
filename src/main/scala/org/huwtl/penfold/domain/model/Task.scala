@@ -7,13 +7,13 @@ import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.model.Status._
 
 object Task extends AggregateFactory {
-  def create(aggregateId: AggregateId, binding: Binding, payload: Payload) = {
+  def create(aggregateId: AggregateId, queueBinding: QueueBinding, payload: Payload) = {
     val currentDateTime = now
-    applyTaskCreated(TaskCreated(aggregateId, AggregateVersion.init, currentDateTime, binding, currentDateTime, payload))
+    applyTaskCreated(TaskCreated(aggregateId, AggregateVersion.init, currentDateTime, queueBinding, currentDateTime, payload))
   }
 
-  def create(aggregateId: AggregateId, binding: Binding, triggerDate: DateTime, payload: Payload) = {
-    val createdTask = applyFutureTaskCreated(FutureTaskCreated(aggregateId, AggregateVersion.init, now, binding, triggerDate, payload))
+  def create(aggregateId: AggregateId, queueBinding: QueueBinding, triggerDate: DateTime, payload: Payload) = {
+    val createdTask = applyFutureTaskCreated(FutureTaskCreated(aggregateId, AggregateVersion.init, now, queueBinding, triggerDate, payload))
     if (createdTask.triggerDate.isAfterNow) createdTask else createdTask.trigger()
   }
 
@@ -28,7 +28,7 @@ object Task extends AggregateFactory {
     event.aggregateId,
     event.aggregateVersion,
     event.created,
-    event.binding,
+    event.queueBinding,
     Ready,
     event.triggerDate,
     event.payload
@@ -39,7 +39,7 @@ object Task extends AggregateFactory {
     event.aggregateId,
     event.aggregateVersion,
     event.created,
-    event.binding,
+    event.queueBinding,
     Waiting,
     event.triggerDate,
     event.payload
@@ -50,7 +50,7 @@ case class Task(uncommittedEvents: List[Event],
                         aggregateId: AggregateId,
                         version: AggregateVersion,
                         created: DateTime,
-                        binding: Binding,
+                        queueBinding: QueueBinding,
                         status: Status,
                         triggerDate: DateTime,
                         payload: Payload) extends AggregateRoot {
@@ -59,21 +59,21 @@ case class Task(uncommittedEvents: List[Event],
 
   def trigger(): Task = {
     require(status == Waiting, s"Can only trigger a waiting task but was $status")
-    applyTaskTriggered(TaskTriggered(aggregateId, version.next, now, binding.queues.map(_.id)))
+    applyTaskTriggered(TaskTriggered(aggregateId, version.next, now))
   }
 
   def start(queue: QueueId): Task = {
     require(status == Ready, s"Can only start a task that is ready but was $status")
-    applyTaskStarted(TaskStarted(aggregateId, version.next, now, queue))
+    applyTaskStarted(TaskStarted(aggregateId, version.next, now))
   }
 
   def cancel(queue: QueueId): Task = {
-    applyTaskCancelled(TaskCancelled(aggregateId, version.next, now, List(queue)))
+    applyTaskCancelled(TaskCancelled(aggregateId, version.next, now))
   }
 
   def complete(queue: QueueId): Task = {
     require(status == Started, s"Can only complete a started task but was $status")
-    applyTaskCompleted(TaskCompleted(aggregateId, version.next, now, queue))
+    applyTaskCompleted(TaskCompleted(aggregateId, version.next, now))
   }
 
   def markCommitted = copy(uncommittedEvents = Nil)

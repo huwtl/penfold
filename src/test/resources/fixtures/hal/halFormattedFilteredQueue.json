@@ -20,11 +20,7 @@
                         "payload": {},
                         "status": "ready",
                         "triggerDate": "2014-02-25 14:00:00",
-                        "binding": {
-                            "queues": [
-                                {"id": "abc"}
-                            ]
-                        }
+                        "queueBinding": {"id": "abc"}
                     }
                 }
             },
@@ -42,12 +38,7 @@
                         },
                         "id": "1",
                         "payload": {},
-                        "binding": {
-                            "queues": [
-                                {"id": "abc"},
-                                {"id": "def"}
-                            ]
-                        },
+                        "queueBinding": {"id": "abc"},
                         "status": "ready",
                         "triggerDate": "2014-02-25 14:00:00"
                     }

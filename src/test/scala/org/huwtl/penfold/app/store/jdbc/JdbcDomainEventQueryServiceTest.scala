@@ -23,8 +23,8 @@ class JdbcDomainEventQueryServiceTest extends Specification with JdbcSpecificati
   }
 
   "retrieve id of last event added to domain event store" in new context {
-    val event1 = TaskTriggered(AggregateId("a1"), AggregateVersion.init, created, List())
-    val event2 = TaskTriggered(AggregateId("a2"), AggregateVersion.init, created, List())
+    val event1 = TaskTriggered(AggregateId("a1"), AggregateVersion.init, created)
+    val event2 = TaskTriggered(AggregateId("a2"), AggregateVersion.init, created)
     store.add(event1)
     store.add(event2)
 
@@ -32,8 +32,8 @@ class JdbcDomainEventQueryServiceTest extends Specification with JdbcSpecificati
   }
 
   "retrieve id of last event added to domain event store" in new context {
-    val event1 = TaskTriggered(AggregateId("a1"), AggregateVersion.init, created, List())
-    val event2 = TaskTriggered(AggregateId("a2"), AggregateVersion.init, created, List())
+    val event1 = TaskTriggered(AggregateId("a1"), AggregateVersion.init, created)
+    val event2 = TaskTriggered(AggregateId("a2"), AggregateVersion.init, created)
     store.add(event1)
     store.add(event2)
 
@@ -41,8 +41,8 @@ class JdbcDomainEventQueryServiceTest extends Specification with JdbcSpecificati
   }
 
   "retrieve event from domain event store" in new context {
-    val event1 = TaskTriggered(AggregateId("a1"), AggregateVersion.init, created, List())
-    val event2 = TaskTriggered(AggregateId("a2"), AggregateVersion.init, created, List())
+    val event1 = TaskTriggered(AggregateId("a1"), AggregateVersion.init, created)
+    val event2 = TaskTriggered(AggregateId("a2"), AggregateVersion.init, created)
     store.add(event1)
     store.add(event2)
 

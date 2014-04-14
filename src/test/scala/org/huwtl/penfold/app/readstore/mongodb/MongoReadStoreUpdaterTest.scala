@@ -1,10 +1,10 @@
 package org.huwtl.penfold.app.readstore.mongodb
 
 import com.github.athieriot.EmbedConnection
-import org.huwtl.penfold.domain.event.{TaskStarted, TaskTriggered, TaskCreated}
+import org.huwtl.penfold.domain.event.{TaskStarted, TaskCreated}
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.domain.model.BoundQueue
+import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.readstore.{TaskRecord, EventSequenceId, EventRecord}
 import org.specs2.mutable.Specification
@@ -22,12 +22,12 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     val aggregateId = AggregateId(UUID.randomUUID().toString)
     val queueId = QueueId("q1")
     val payload = Payload(Map("field1" -> "123", "inner" -> Map("field2" -> 1)))
-    val binding = Binding(List(BoundQueue(queueId)))
+    val binding = QueueBinding(queueId)
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val serializer = new EventSerializer
-    val taskCreatedEvent = TaskCreated(aggregateId, AggregateVersion(1), created, Binding(List(BoundQueue(queueId))), triggerDate, payload)
-    val taskStartedEvent = TaskStarted(aggregateId, AggregateVersion(2), created, queueId)
+    val taskCreatedEvent = TaskCreated(aggregateId, AggregateVersion(1), created, QueueBinding(queueId), triggerDate, payload)
+    val taskStartedEvent = TaskStarted(aggregateId, AggregateVersion(2), created)
 
     val mongoClient = MongoClient("localhost", embedConnectionPort())
     val database = mongoClient("penfoldtest")

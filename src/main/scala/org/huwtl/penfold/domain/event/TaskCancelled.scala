@@ -5,5 +5,4 @@ import org.joda.time.DateTime
 
 case class TaskCancelled(aggregateId: AggregateId,
                         aggregateVersion: AggregateVersion,
-                        created: DateTime,
-                        queues: List[QueueId]) extends TaskEvent
+                        created: DateTime) extends TaskEvent

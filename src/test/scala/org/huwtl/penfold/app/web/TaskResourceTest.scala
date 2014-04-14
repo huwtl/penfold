@@ -30,7 +30,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
 
   val queueId = QueueId("abc")
 
-  val binding = Binding(List(BoundQueue(queueId)))
+  val binding = QueueBinding(queueId)
 
   val pageSize = 5
 

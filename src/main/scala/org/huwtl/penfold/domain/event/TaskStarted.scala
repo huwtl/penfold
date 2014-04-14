@@ -5,5 +5,4 @@ import org.joda.time.DateTime
 
 case class TaskStarted(aggregateId: AggregateId,
                       aggregateVersion: AggregateVersion,
-                      created: DateTime,
-                      queue: QueueId) extends TaskEvent
+                      created: DateTime) extends TaskEvent

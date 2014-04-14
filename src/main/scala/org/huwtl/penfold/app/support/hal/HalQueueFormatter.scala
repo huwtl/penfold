@@ -28,6 +28,6 @@ class HalQueueFormatter(baseQueueLink: URI, halTaskFormatter: HalTaskFormatter) 
   private def createHalQueueEntry(queueId: QueueId, task: TaskRecord) = {
     representationFactory.newRepresentation(s"${baseQueueLink.toString}/${queueId.value}/${task.status.name}/${task.id.value}")
       .withProperty("taskId", task.id.value)
-      .withRepresentation("task", halTaskFormatter.halRepresentationFrom(task, Some(queueId)))
+      .withRepresentation("task", halTaskFormatter.halRepresentationFrom(task))
   }
 }
