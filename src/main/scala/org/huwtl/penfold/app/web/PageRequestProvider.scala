@@ -7,15 +7,19 @@ import org.huwtl.penfold.readstore.NavigationDirection.{Reverse, Forward}
 
 trait PageRequestProvider {
   def parsePageRequestParams(params: Params, pageSize: Int) = {
-    val idFromLastViewedPage = params.get("lastId")
-    val scoreFromLastViewedPage = params.get("lastScore")
-    val navigationalDirection = params.get("direction")
+    val pageReference = params.get("pageRef")
 
-    if (scoreFromLastViewedPage.isDefined && scoreFromLastViewedPage.isDefined && navigationalDirection.isDefined) {
-      PageRequest(pageSize, Some(LastKnownPageDetails(
-        AggregateId(idFromLastViewedPage.get),
-        scoreFromLastViewedPage.get.toLong,
-        if (navigationalDirection.get == "1") Forward else Reverse)))
+    if (pageReference.isDefined) {
+      pageReference.get.split('~') match {
+        case Array(idFromLastViewedPage, scoreFromLastViewedPage, navigationalDirection) => {
+          PageRequest(pageSize, Some(LastKnownPageDetails(
+            AggregateId(idFromLastViewedPage),
+            scoreFromLastViewedPage.toLong,
+            if (navigationalDirection == "1") Forward else Reverse))
+          )
+        }
+        case _ => PageRequest(pageSize)
+      }
     }
     else {
       PageRequest(pageSize)

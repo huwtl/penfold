@@ -74,7 +74,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
     val expectedJob2 = JobRecord(AggregateId("2"), created, Binding(List(BoundQueue(queueId))), Status.Ready, triggerDate, sort, payload)
     readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize, Some(lastKnownPageDetails)), Filters.empty) returns PageResult(List(expectedJob2, expectedJob1), previousExists = true, nextExists = true)
 
-    get(s"/queues/abc/ready?lastId=${lastKnownPageDetails.id.value}&lastScore=${lastKnownPageDetails.score}&direction=0", headers = validAuthHeader) {
+    get(s"/queues/abc/ready?pageRef=${lastKnownPageDetails.id.value}~${lastKnownPageDetails.score}~0", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueWithPaginationLinks.json"))
     }

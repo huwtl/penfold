@@ -11,40 +11,37 @@ trait PaginatedRepresentationProvider {
   def getRepresentation(pageRequest: PageRequest, pageResult: PageResult, filters: Filters, baseSelfLink: String, representationFactory: RepresentationFactory) = {
     val filterParams = filterParameters(filters)
 
-    val queryString = s"${paramQueryString(if (pageResult.previousExists) selfPageParams(pageRequest) ::: filterParams else filterParams)}"
+    val queryString = s"${paramQueryString(if (pageResult.previousExists) selfPageParams(pageRequest) :: filterParams else filterParams)}"
 
     val root = representationFactory.newRepresentation(s"$baseSelfLink${queryString}")
 
     if (pageResult.previousExists) {
-      root.withLink("previous", s"${baseSelfLink}${
-        paramQueryString(
-          pageParams(pageResult.entries.head.id, pageResult.entries.head.triggerDate.getMillis, Reverse) ::: filterParams
-        )
-      }")
+      val pageRef = pageReference(pageResult.entries.head.id, pageResult.entries.head.triggerDate.getMillis, Reverse)
+      val pageParameter = pageParam(pageRef)
+      root.withLink("previous", s"${baseSelfLink}${paramQueryString(pageParameter :: filterParams)}", pageRef, null, null, null)
     }
 
     if (pageResult.nextExists) {
-      root.withLink("next", s"${baseSelfLink}${
-        paramQueryString(
-          pageParams(pageResult.entries.last.id, pageResult.entries.last.triggerDate.getMillis, Forward) ::: filterParams)
-      }")
+      val pageRef = pageReference(pageResult.entries.last.id, pageResult.entries.last.triggerDate.getMillis, Forward)
+      val pageParameter = pageParam(pageRef)
+      root.withLink("next", s"${baseSelfLink}${paramQueryString(pageParameter :: filterParams)}", pageRef, null, null, null)
     }
 
     root
   }
 
   private def selfPageParams(pageRequest: PageRequest) = {
-    pageRequest.lastKnownPageDetails match {
-      case Some(lastKnownPageDetails) => {
-        pageParams(lastKnownPageDetails.id, lastKnownPageDetails.score, lastKnownPageDetails.direction)
-      }
-      case None => Nil
-    }
+    val lastKnownPageDetails = pageRequest.lastKnownPageDetails.get
+    pageParam(pageReference(lastKnownPageDetails.id, lastKnownPageDetails.score, lastKnownPageDetails.direction))
   }
 
-  private def pageParams(lastId: AggregateId, lastScore: Long, direction: NavigationDirection) = {
+  private def pageReference(lastId: AggregateId, lastScore: Long, direction: NavigationDirection) = {
     val directionValue = if (direction == Forward) 1 else 0
-    List(s"lastId=${lastId.value}", s"lastScore=${lastScore}", s"direction=${directionValue}")
+    s"${lastId.value}~${lastScore}~${directionValue}"
+  }
+
+  private def pageParam(pageRef: String) = {
+    s"pageRef=${pageRef}"
   }
 
   private def paramQueryString(paramStrings: List[String]) = paramStrings match {
