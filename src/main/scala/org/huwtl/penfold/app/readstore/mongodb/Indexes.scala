@@ -16,7 +16,7 @@ case class Indexes(private val customIndexes: List[Index]) {
   private def augmentCustomIndexes = {
     val augmentedCustomIndexes = for {
       customIndex <- customIndexes
-      enhancement <- List(queueIndex, statusIndex)
+      enhancement <- List(queueIndex)
     } yield Index(enhancement.fields ::: customIndex.fields ::: sortIndexFields)
 
     customIndexes ::: augmentedCustomIndexes
