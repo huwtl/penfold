@@ -20,7 +20,6 @@ import org.huwtl.penfold.readstore.PageRequest
 import org.huwtl.penfold.readstore.TaskRecord
 import org.huwtl.penfold.readstore.PageResult
 import org.huwtl.penfold.app.AuthenticationCredentials
-import org.huwtl.penfold.readstore.NavigationDirection.Reverse
 
 class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification {
   sequential
@@ -48,7 +47,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
   "return 200 with hal+json formatted queue response" in {
     val expectedTask1 = TaskRecord(AggregateId("1"), created, QueueBinding(queueId), Status.Ready, created, triggerDate, sort, payload)
     val expectedTask2 = TaskRecord(AggregateId("2"), created, QueueBinding(queueId), Status.Ready, created, triggerDate, sort, payload)
-    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize), Filters.empty) returns PageResult(List(expectedTask2, expectedTask1), previousExists = false, nextExists = false)
+    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize), Filters.empty) returns PageResult(List(expectedTask2, expectedTask1), None, None)
 
     get("/queues/abc/ready", headers = validAuthHeader) {
       status must beEqualTo(200)
@@ -60,7 +59,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
     val expectedTask1 = TaskRecord(AggregateId("1"), created, QueueBinding(queueId), Status.Ready, created, triggerDate, sort, payload)
     val expectedTask2 = TaskRecord(AggregateId("2"), created, QueueBinding(queueId), Status.Ready, created, triggerDate, sort, payload)
     val filters = Filters(List(Filter("data", "value")))
-    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize), filters) returns PageResult(List(expectedTask2, expectedTask1), previousExists = false, nextExists = false)
+    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize), filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
 
     get("/queues/abc/ready?_data=value", headers = validAuthHeader) {
       status must beEqualTo(200)
@@ -69,12 +68,11 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
   }
 
   "return 200 with hal+json formatted queue response with pagination links" in {
-    val lastKnownPageDetails = LastKnownPageDetails(AggregateId("3"), triggerDate.getMillis, Reverse)
     val expectedTask1 = TaskRecord(AggregateId("1"), created, QueueBinding(queueId), Status.Ready, created, triggerDate, sort, payload)
     val expectedTask2 = TaskRecord(AggregateId("2"), created, QueueBinding(queueId), Status.Ready, created, triggerDate, sort, payload)
-    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize, Some(lastKnownPageDetails)), Filters.empty) returns PageResult(List(expectedTask2, expectedTask1), previousExists = true, nextExists = true)
+    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize, Some(PageReference("3~1393336800000~0"))), Filters.empty) returns PageResult(List(expectedTask2, expectedTask1), Some(PageReference("2~1393336800000~0")), Some(PageReference("1~1393336800000~1")))
 
-    get(s"/queues/abc/ready?pageRef=${lastKnownPageDetails.id.value}~${lastKnownPageDetails.score}~0", headers = validAuthHeader) {
+    get(s"/queues/abc/ready?page=3~1393336800000~0", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueWithPaginationLinks.json"))
     }

@@ -1,3 +1,3 @@
 package org.huwtl.penfold.readstore
 
-case class PageRequest(pageSize: Int, lastKnownPageDetails: Option[LastKnownPageDetails] = None)
+case class PageRequest(pageSize: Int, pageReference: Option[PageReference] = None)

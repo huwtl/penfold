@@ -6,7 +6,6 @@ import org.huwtl.penfold.domain.model._
 import org.joda.time.DateTime
 import org.specs2.specification.Scope
 import org.huwtl.penfold.readstore._
-import org.huwtl.penfold.readstore.NavigationDirection._
 import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.readstore.EventRecord
 import org.huwtl.penfold.domain.model.QueueId
@@ -45,9 +44,9 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, payload)
     }
 
-    def forwardFrom(lastEvent: TaskCreatedEvent) = Some(LastKnownPageDetails(lastEvent.aggregateId, lastEvent.triggerDate.getMillis, Forward))
+    def forwardFrom(lastEvent: TaskCreatedEvent) = Some(PageReference(s"${lastEvent.aggregateId.value}~${lastEvent.triggerDate.getMillis}~1"))
 
-    def backFrom(lastEvent: TaskCreatedEvent) = Some(LastKnownPageDetails(lastEvent.aggregateId, lastEvent.triggerDate.getMillis, Reverse))
+    def backFrom(lastEvent: TaskCreatedEvent) = Some(PageReference(s"${lastEvent.aggregateId.value}~${lastEvent.triggerDate.getMillis}~0"))
 
     def setupEntries() = {
       val entries = List(
@@ -104,8 +103,8 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       PageRequest(6)                          ! List("f", "e", "d", "c", "b", "a") ! false     ! false     |
       PageRequest(5)                          ! List("f", "e", "d", "c", "b"     ) ! false     ! true      |
       PageRequest(1)                          ! List("f")                          ! false     ! true      |
-      PageRequest(0)                          ! Nil                                ! false     ! true      |
-      PageRequest(0, forwardFrom(entries(0))) ! Nil                                ! false     ! true      |
+      PageRequest(0)                          ! Nil                                ! false     ! false     |
+      PageRequest(0, forwardFrom(entries(0))) ! Nil                                ! false     ! false     |
       PageRequest(2, forwardFrom(entries(0))) ! List("e", "d")                     ! true      ! true      |
       PageRequest(2, forwardFrom(entries(2))) ! List("c", "b")                     ! true      ! true      |
       PageRequest(2, forwardFrom(entries(1))) ! List("d", "c")                     ! true      ! true      |
@@ -115,8 +114,8 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
 
         val pageResult = readStore.retrieveByQueue(queueId, Waiting, page)
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
-        pageResult.previousExists must beEqualTo(hasPrev)
-        pageResult.nextExists must beEqualTo(hasNext)
+        pageResult.previousPage.isDefined must beEqualTo(hasPrev)
+        pageResult.nextPage.isDefined must beEqualTo(hasNext)
       }
     }
 
@@ -125,7 +124,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
 
       "page"                                 | "expected"                         | "hasPrev" | "hasNext" |
         PageRequest(2, backFrom(entries(5))) ! List("c", "b")                     ! true      ! true      |
-        PageRequest(0, backFrom(entries(5))) ! Nil                                ! true      ! false     |
+        PageRequest(0, backFrom(entries(5))) ! Nil                                ! false     ! false     |
         PageRequest(2, backFrom(entries(2))) ! List("f", "e")                     ! false     ! true      |
         PageRequest(2, backFrom(entries(3))) ! List("e", "d")                     ! true      ! true      |
         PageRequest(2, backFrom(entries(0))) ! Nil                                ! false     ! false     |
@@ -133,8 +132,8 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
 
         val pageResult = readStore.retrieveByQueue(queueId, Waiting, page)
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
-        pageResult.previousExists must beEqualTo(hasPrev)
-        pageResult.nextExists must beEqualTo(hasNext)
+        pageResult.previousPage.isDefined must beEqualTo(hasPrev)
+        pageResult.nextPage.isDefined must beEqualTo(hasNext)
       }
     }
 

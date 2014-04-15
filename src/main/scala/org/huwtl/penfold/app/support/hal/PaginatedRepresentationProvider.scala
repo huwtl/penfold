@@ -1,10 +1,8 @@
 package org.huwtl.penfold.app.support.hal
 
-import org.huwtl.penfold.readstore.{PageRequest, NavigationDirection, PageResult, Filters}
+import org.huwtl.penfold.readstore.{PageReference, PageRequest, PageResult, Filters}
 import com.theoryinpractise.halbuilder.api.RepresentationFactory
 import org.scalatra.util.RicherString
-import org.huwtl.penfold.readstore.NavigationDirection.{Reverse, Forward}
-import org.huwtl.penfold.domain.model.AggregateId
 
 trait PaginatedRepresentationProvider {
 
@@ -16,32 +14,26 @@ trait PaginatedRepresentationProvider {
     val root = representationFactory.newRepresentation(s"$baseSelfLink${queryString}")
 
     if (pageResult.previousExists) {
-      val pageRef = pageReference(pageResult.entries.head.id, pageResult.entries.head.triggerDate.getMillis, Reverse)
+      val pageRef = pageResult.previousPage.get
       val pageParameter = pageParam(pageRef)
-      root.withLink("previous", s"${baseSelfLink}${paramQueryString(pageParameter :: filterParams)}", pageRef, null, null, null)
+      root.withLink("previous", s"${baseSelfLink}${paramQueryString(pageParameter :: filterParams)}", pageRef.value, null, null, null)
     }
 
     if (pageResult.nextExists) {
-      val pageRef = pageReference(pageResult.entries.last.id, pageResult.entries.last.triggerDate.getMillis, Forward)
+      val pageRef = pageResult.nextPage.get
       val pageParameter = pageParam(pageRef)
-      root.withLink("next", s"${baseSelfLink}${paramQueryString(pageParameter :: filterParams)}", pageRef, null, null, null)
+      root.withLink("next", s"${baseSelfLink}${paramQueryString(pageParameter :: filterParams)}", pageRef.value, null, null, null)
     }
 
     root
   }
 
   private def selfPageParams(pageRequest: PageRequest) = {
-    val lastKnownPageDetails = pageRequest.lastKnownPageDetails.get
-    pageParam(pageReference(lastKnownPageDetails.id, lastKnownPageDetails.score, lastKnownPageDetails.direction))
+    pageParam(pageRequest.pageReference.get)
   }
 
-  private def pageReference(lastId: AggregateId, lastScore: Long, direction: NavigationDirection) = {
-    val directionValue = if (direction == Forward) 1 else 0
-    s"${lastId.value}~${lastScore}~${directionValue}"
-  }
-
-  private def pageParam(pageRef: String) = {
-    s"pageRef=${pageRef}"
+  private def pageParam(pageRef: PageReference) = {
+    s"page=${pageRef.value}"
   }
 
   private def paramQueryString(paramStrings: List[String]) = paramStrings match {

@@ -15,7 +15,6 @@ import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.TaskRecord
 import scala.Some
-import org.huwtl.penfold.readstore.NavigationDirection.Forward
 
 class HalTaskFormatterTest extends Specification {
 
@@ -27,7 +26,7 @@ class HalTaskFormatterTest extends Specification {
 
   val filters = Filters(List(Filter("data", "value")))
 
-  val pageRequest = PageRequest(10, Some(LastKnownPageDetails(id, triggerDate.getMillis, Forward)))
+  val pageRequest = PageRequest(10, Some(PageReference("1~1393336800000~1")))
 
   val queueId = QueueId("abc")
 
@@ -65,7 +64,7 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format filtered tasks hal+json with pagination links" in {
-    halTasks(filters, 1, previousPage = true, nextPage = true) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredTasksWithPaginationLinks.json"))
+    halTasks(filters, 1, Some(PageReference("1~1393336800000~0")), Some(PageReference("1~1393336800000~1"))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredTasksWithPaginationLinks.json"))
   }
 
   "format task as hal+json with complex payload" in {
@@ -75,9 +74,9 @@ class HalTaskFormatterTest extends Specification {
     hal(task) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedTaskWithComplexPayload.json"))
   }
 
-  private def halTasks(filters: Filters, pageNumber: Int = 0, previousPage: Boolean = false, nextPage: Boolean = false) = {
+  private def halTasks(filters: Filters, pageNumber: Int = 0, previousPage: Option[PageReference] = None, nextPage: Option[PageReference] = None) = {
     parse(taskFormatter.halFrom(pageRequest,
-      PageResult(List(TaskRecord(id, created, QueueBinding(queueId), Status.Waiting, created, triggerDate, triggerDate.getMillis, payload)), previousExists = previousPage, nextExists = nextPage), filters
+      PageResult(List(TaskRecord(id, created, QueueBinding(queueId), Status.Waiting, created, triggerDate, triggerDate.getMillis, payload)), previousPage, nextPage), filters
     ))
   }
 

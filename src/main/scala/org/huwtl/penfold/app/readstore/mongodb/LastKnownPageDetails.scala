@@ -1,4 +1,4 @@
-package org.huwtl.penfold.readstore
+package org.huwtl.penfold.app.readstore.mongodb
 
 import org.huwtl.penfold.domain.model.AggregateId
 
