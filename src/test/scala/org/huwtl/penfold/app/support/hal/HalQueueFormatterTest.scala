@@ -14,7 +14,7 @@ import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.TaskRecord
 import org.huwtl.penfold.readstore.PageResult
-import org.huwtl.penfold.readstore.NavigationDirection.{Reverse, Forward}
+import org.huwtl.penfold.readstore.NavigationDirection.Reverse
 
 class HalQueueFormatterTest extends Specification {
 
@@ -73,6 +73,6 @@ class HalQueueFormatterTest extends Specification {
   }
 
   def task(id: String, binding: QueueBinding = QueueBinding(queueId)) = {
-    TaskRecord(AggregateId(id), createdDate, binding, status, triggerDate, triggerDate.getMillis, Payload.empty)
+    TaskRecord(AggregateId(id), createdDate, binding, status, createdDate, triggerDate, triggerDate.getMillis, Payload.empty)
   }
 }

@@ -22,6 +22,7 @@
                         "payload": {},
                         "queueBinding": {"id": "abc"},
                         "status": "ready",
+                        "statusLastModified": "2014-02-25 13:00:00",
                         "triggerDate": "2014-02-25 14:00:00"
                     }
                 }
@@ -42,6 +43,7 @@
                         "payload": {},
                         "queueBinding": {"id": "abc"},
                         "status": "ready",
+                        "statusLastModified": "2014-02-25 13:00:00",
                         "triggerDate": "2014-02-25 14:00:00"
                     }
                 }

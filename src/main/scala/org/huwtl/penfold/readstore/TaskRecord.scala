@@ -9,6 +9,7 @@ case class TaskRecord(id: AggregateId,
                      created: DateTime,
                      queueBinding: QueueBinding,
                      status: Status,
+                     statusLastModified: DateTime,
                      triggerDate: DateTime,
                      sort: Long,
                      payload: Payload)

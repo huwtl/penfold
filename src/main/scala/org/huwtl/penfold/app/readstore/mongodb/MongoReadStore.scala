@@ -61,6 +61,7 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
       new DateTime(document.as[Date]("created")),
       QueueBinding(QueueId(document.as[String]("queue"))),
       Status.from(document.as[String]("status")).get,
+      new DateTime(document.as[Date]("statusLastModified")),
       new DateTime(document.as[Date]("triggerDate")),
       document.as[Long]("sort"),
       objectSerializer.deserialize[Payload](JSON.serialize(document("payload")))

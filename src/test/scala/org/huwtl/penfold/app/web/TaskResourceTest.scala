@@ -43,7 +43,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
   addServlet(new TaskResource(readStore, commandDispatcher, new ObjectSerializer, new HalTaskFormatter(new URI("http://host/tasks"), new URI("http://host/queues")), pageSize, Some(validCredentials)), "/tasks/*")
 
   "return 200 with hal+json formatted task response" in {
-    val expectedTask = TaskRecord(AggregateId("1"), created, binding, Status.Waiting, triggerDate,triggerDate.getMillis , Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    val expectedTask = TaskRecord(AggregateId("1"), created, binding, Status.Waiting, created, triggerDate, triggerDate.getMillis, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
     get("/tasks/1", headers = validAuthHeader) {
@@ -53,7 +53,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
   }
 
   "return 200 with hal+json formatted filtered tasks response" in {
-    val expectedTask = TaskRecord(AggregateId("1"), created, binding, Status.Waiting, triggerDate, triggerDate.getMillis, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    val expectedTask = TaskRecord(AggregateId("1"), created, binding, Status.Waiting, created, triggerDate, triggerDate.getMillis, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
     val filters = Filters(List(Filter("data", "value")))
     readStore.retrieveBy(filters, PageRequest(pageSize)) returns PageResult(List(expectedTask), previousExists = false, nextExists = false)
 
@@ -70,7 +70,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
   }
 
   "return 201 when posting new task" in {
-    val expectedTask = TaskRecord(AggregateId("2"), created, binding, Status.Waiting, triggerDate, triggerDate.getMillis, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+    val expectedTask = TaskRecord(AggregateId("2"), created, binding, Status.Waiting, created, triggerDate, triggerDate.getMillis, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
     commandDispatcher.dispatch(CreateTask(binding, expectedTask.payload)) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 

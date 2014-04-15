@@ -41,7 +41,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TaskRecord(aggregateId, created, binding, Status.Started, triggerDate, created.getMillis, payload)))
+    task must beEqualTo(Some(TaskRecord(aggregateId, created, binding, Status.Started, taskStartedEvent.created, triggerDate, created.getMillis, payload)))
   }
 
   "ignore duplicate events" in new context {
@@ -51,6 +51,6 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TaskRecord(aggregateId, created, binding, Status.Started, triggerDate, created.getMillis, payload)))
+    task must beEqualTo(Some(TaskRecord(aggregateId, created, binding, Status.Started, taskStartedEvent.created, triggerDate, created.getMillis, payload)))
   }
 }

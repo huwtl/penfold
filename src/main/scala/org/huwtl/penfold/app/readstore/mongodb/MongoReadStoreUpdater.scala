@@ -51,6 +51,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       "created" -> event.created.toDate,
       "queue" -> queue.value,
       "status" -> status.name,
+      "statusLastModified" -> event.created.toDate,
       "triggerDate" -> event.triggerDate.toDate,
       "payload" -> event.payload.content,
       "sort" -> resolveSortOrder(event, score),
@@ -71,6 +72,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
         val update = $set(
           "version" -> event.aggregateVersion.number,
           "status" -> status.name,
+          "statusLastModified" -> event.created.toDate,
           "sort" -> resolveSortOrder(event, task.as[Long]("score"))
         )
         tasksCollection.update(query, update)

@@ -10,14 +10,14 @@ import org.huwtl.penfold.readstore.NavigationDirection._
 import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.readstore.EventRecord
 import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.domain.event.{TaskCreatedEvent, FutureTaskCreated, Event}
+import org.huwtl.penfold.domain.event.{TaskCreated, TaskCreatedEvent, FutureTaskCreated, Event}
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.PageRequest
 import org.huwtl.penfold.domain.model.QueueBinding
 import org.specs2.matcher.DataTables
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import scala.util.Random
-import org.huwtl.penfold.domain.model.Status.Waiting
+import org.huwtl.penfold.domain.model.Status.{Ready, Waiting}
 import org.specs2.mock.Mockito
 import org.huwtl.penfold.app.support.DateTimeSource
 
@@ -101,6 +101,8 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
 
       "page"                                  | "expected"                         | "hasPrev" | "hasNext" |
       PageRequest(10)                         ! List("f", "e", "d", "c", "b", "a") ! false     ! false     |
+      PageRequest(6)                          ! List("f", "e", "d", "c", "b", "a") ! false     ! false     |
+      PageRequest(5)                          ! List("f", "e", "d", "c", "b"     ) ! false     ! true      |
       PageRequest(1)                          ! List("f")                          ! false     ! true      |
       PageRequest(0)                          ! Nil                                ! false     ! true      |
       PageRequest(0, forwardFrom(entries(0))) ! Nil                                ! false     ! true      |
@@ -130,6 +132,23 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
         PageRequest(2, backFrom(entries(3))) ! List("e", "d")                     ! true      ! true      |> {(page, expected, hasPrev, hasNext) =>
 
         val pageResult = readStore.retrieveByQueue(queueId, Waiting, page)
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+        pageResult.previousExists must beEqualTo(hasPrev)
+        pageResult.nextExists must beEqualTo(hasNext)
+      }
+    }
+
+    "retrieve tasks by next page with additional filter" in new context {
+      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")))
+      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")))
+      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "DEF")))
+      persist(List(event1, event2, event3))
+
+      "page"            | "expected"       | "hasPrev" | "hasNext" |
+        PageRequest(2)  ! List("2", "1")   ! false     ! false     |
+        PageRequest(1)  ! List("2")        ! false     ! true      |> {(page, expected, hasPrev, hasNext) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, Filters(List(Filter("payload.a", "ABC"))))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
         pageResult.previousExists must beEqualTo(hasPrev)
         pageResult.nextExists must beEqualTo(hasNext)
