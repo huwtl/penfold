@@ -6,6 +6,7 @@ import org.eclipse.jetty.webapp.WebAppContext
 import org.scalatra.servlet.ScalatraListener
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
+import scala.util.Try
 
 object Main {
   def main(args: Array[String]) {
@@ -22,7 +23,7 @@ class Main() {
     val server = new Server(config.httpPort)
     val context = new WebAppContext()
     context setContextPath "/"
-    context.setResourceBase("src/main/webapp")
+    context.setResourceBase(Try(getClass.getClassLoader.getResource("webapp").toExternalForm) getOrElse "src/main/webapp" )
     context.addEventListener(new ScalatraListener)
     context.addServlet(classOf[DefaultServlet], "/")
 

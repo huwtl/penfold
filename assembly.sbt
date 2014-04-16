@@ -13,6 +13,18 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
   }
 }
 
+// copy web resources to /webapp folder
+resourceGenerators in Compile <+= (resourceManaged, baseDirectory) map {
+  (managedBase, base) =>
+    val webappBase = base / "src" / "main" / "webapp"
+    for {
+      (from, to) <- webappBase ** "*" x rebase(webappBase, managedBase / "main" / "webapp")
+    } yield {
+      Sync.copy(from, to)
+      to
+    }
+}
+
 artifact in (Compile, assembly) ~= { art =>
   art.copy(`classifier` = Some("assembly"))
 }
