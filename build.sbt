@@ -1,4 +1,4 @@
-organization := "org.huwtl"
+organization := "com.qmetric"
 
 name := "penfold"
 
@@ -13,6 +13,10 @@ seq(webSettings :_*)
 conflictWarning in ThisBuild := ConflictWarning.disable
 
 parallelExecution in Global := false
+
+publishMavenStyle := true
+
+publishArtifact in Test := false
 
 libraryDependencies ++= Seq(
   "org.scalatra" % "scalatra_2.10" % "2.2.2",
@@ -48,3 +52,33 @@ resolvers += Classpaths.sbtPluginReleases
 ScoverageSbtPlugin.instrumentSettings
 
 CoverallsPlugin.singleProject
+
+publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (version.value.trim.endsWith("SNAPSHOT"))
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+}
+
+pomExtra := (
+  <url>https://github.com/qmetric/penfold</url>
+  <licenses>
+    <license>
+      <name>Apache 2.0 License</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <url>git@github.com:qmetric/penfold.git</url>
+    <connection>scm:git:git@github.com:qmetric/penfold.git</connection>
+  </scm>
+  <developers>
+    <developer>
+      <id>huwtl</id>
+      <name>Huw Lewis</name>
+      <url>https://github.com/huwtl</url>
+    </developer>
+  </developers>
+)
