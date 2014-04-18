@@ -24,7 +24,7 @@ class HalTaskFormatterTest extends Specification {
 
   val triggerDate = new DateTime(2014, 2, 25, 14, 0, 0, 0)
 
-  val filters = Filters(List(Filter("data", "value")))
+  val filters = Filters(List(Filter("data", Some("value"))))
 
   val pageRequest = PageRequest(10, Some(PageReference("1~1393336800000~1")))
 
@@ -59,7 +59,7 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format filtered tasks hal+json with encoded filter value" in {
-    val filters = Filters(List(Filter("data", "zzz%^&*ee$")))
+    val filters = Filters(List(Filter("data", Some("zzz%^&*ee$"))))
     halTasks(filters) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredTasksWithEncodedFilterValue.json"))
   }
 

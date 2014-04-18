@@ -1,12 +1,12 @@
 package org.huwtl.penfold.app.web
 
-import org.scalatra.Params
+import org.scalatra.MultiParams
 import org.huwtl.penfold.readstore.{Filters, Filter}
 
 trait FilterParamsProvider {
-  def parseFilters(params: Params) = {
-    val filters = params.filterKeys(_.startsWith("_")).collect {
-      case param if !param._2.isEmpty => Filter(param._1.tail, param._2)
+  def parseFilters(params: MultiParams) = {
+    val filters = params.filterKeys(_.startsWith("_")).map {
+      case (key, values) => Filter(key.tail, values.map(v => if (v.isEmpty) None else Some(v)).toSet[Option[String]])
     }
     Filters(filters.toList)
   }

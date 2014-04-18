@@ -4,10 +4,8 @@ object Filters {
   val empty = Filters(Nil)
 }
 
-case class Filters(private val filters: List[Filter]) {
-  val all = filters.filter(!_.value.isEmpty)
+case class Filters(filters: List[Filter]) {
+  def get(name: String): Option[Filter] = filters.find(_.key == name)
 
-  def get(name: String): Option[Filter] = all.find(_.key == name)
-
-  def keys = all.map(_.key)
+  def keys = filters.map(_.key)
 }

@@ -58,12 +58,24 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
   "return 200 with hal+json formatted filtered queue response" in {
     val expectedTask1 = TaskRecord(AggregateId("1"), created, QueueBinding(queueId), Status.Ready, created, triggerDate, sort, payload)
     val expectedTask2 = TaskRecord(AggregateId("2"), created, QueueBinding(queueId), Status.Ready, created, triggerDate, sort, payload)
-    val filters = Filters(List(Filter("data", "value")))
+    val filters = Filters(List(Filter("data", Some("value"))))
     readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize), filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
 
     get("/queues/abc/ready?_data=value", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueue.json"))
+    }
+  }
+
+  "return 200 with hal+json formatted filtered queue response with multparams" in {
+    val expectedTask1 = TaskRecord(AggregateId("1"), created, QueueBinding(queueId), Status.Ready, created, triggerDate, sort, payload)
+    val expectedTask2 = TaskRecord(AggregateId("2"), created, QueueBinding(queueId), Status.Ready, created, triggerDate, sort, payload)
+    val filters = Filters(List(Filter("data", Set(Some("value1"), Some("value2"), None))))
+    readStore.retrieveByQueue(queueId, Status.Ready, PageRequest(pageSize), filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
+
+    get("/queues/abc/ready?_data=value1&_data=value1&_data=value2&_data=", headers = validAuthHeader) {
+      status must beEqualTo(200)
+      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedMultiParamFilteredQueue.json"))
     }
   }
 

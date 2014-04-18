@@ -30,7 +30,7 @@ class TaskResource(readStore: ReadStore,
   }
 
   get("/") {
-    val filters = parseFilters(params)
+    val filters = parseFilters(multiParams)
     val page = parsePageRequestParams(params, pageSize)
     Ok(halFormatter.halFrom(page, readStore.retrieveBy(filters, page), filters))
   }

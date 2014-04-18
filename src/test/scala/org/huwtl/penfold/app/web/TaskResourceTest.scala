@@ -54,7 +54,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
 
   "return 200 with hal+json formatted filtered tasks response" in {
     val expectedTask = TaskRecord(AggregateId("1"), created, binding, Status.Waiting, created, triggerDate, triggerDate.getMillis, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
-    val filters = Filters(List(Filter("data", "value")))
+    val filters = Filters(List(Filter("data", Some("value"))))
     readStore.retrieveBy(filters, PageRequest(pageSize)) returns PageResult(List(expectedTask), None, None)
 
     get("/tasks?_data=value", headers = validAuthHeader) {
