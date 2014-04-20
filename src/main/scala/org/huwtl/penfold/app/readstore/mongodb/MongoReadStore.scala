@@ -17,8 +17,10 @@ import java.util.Date
 import scala.util.{Failure, Try, Success}
 import org.huwtl.penfold.app.support.DateTimeSource
 
-class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource) extends ReadStore {
+class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource) extends ReadStore {
   private val connectionSuccess = true
+
+  private val pageReferenceSeparator = "~"
 
   lazy private val tasksCollection = database("tasks")
 
@@ -40,13 +42,13 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, filters: Filters) = {
-    val criteria = appendFiltersToCriteria(MongoDBObject("queue" -> queueId.value, "status" -> status.name), filters)
+    val criteria = appendFiltersToCriteria(MongoDBObject("queue" -> queueId.value, "status" -> status.name), indexes.transformForSuitableIndex(filters))
 
     retrievePage(criteria, pageRequest)
   }
 
   override def retrieveBy(filters: Filters, pageRequest: PageRequest) = {
-    val criteria = appendFiltersToCriteria(MongoDBObject.empty, filters)
+    val criteria = appendFiltersToCriteria(MongoDBObject.empty, indexes.transformForSuitableIndex(filters))
 
     retrievePage(criteria, pageRequest)
   }
@@ -123,7 +125,7 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
 
   private def parseLastKnownPageDetails(pageReference: Option[PageReference]) = {
     if (pageReference.isDefined) {
-      pageReference.get.value.split('~') match {
+      pageReference.get.value.split(pageReferenceSeparator) match {
         case Array(idFromLastViewedPage, sortValueFromLastViewedPage, navigationalDirection) => {
           Some(LastKnownPageDetails(AggregateId(idFromLastViewedPage), sortValueFromLastViewedPage.toLong, if (navigationalDirection == "1") Forward else Reverse))
         }
@@ -137,10 +139,10 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
 
   private def pageReference(results: List[TaskRecord], direction: NavigationDirection) = {
     if (direction == Forward) {
-      Some(PageReference(s"${results.last.id.value}~${results.last.sort}~${1}"))
+      Some(PageReference(Array(results.last.id.value, results.last.sort, 1) mkString pageReferenceSeparator))
     }
     else {
-      Some(PageReference(s"${results.head.id.value}~${results.head.sort}~${0}"))
+      Some(PageReference(Array(results.head.id.value, results.head.sort, 0) mkString pageReferenceSeparator))
     }
   }
 

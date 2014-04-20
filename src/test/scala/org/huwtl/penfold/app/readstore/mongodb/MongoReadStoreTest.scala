@@ -29,11 +29,12 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     val none : Option[String] = None
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
+    val indexes = Indexes(List(Index(List(IndexField("a", "payload.a"))), Index(List(IndexField("a", "payload.a"), IndexField("b", "payload.b")))))
     val mongoClient = MongoClient("localhost", embedConnectionPort())
     val database = mongoClient("penfoldtest")
     val dateTimeSource = mock[DateTimeSource]
     val readStoreUpdater = new MongoReadStoreUpdater(database, new MongoEventTracker("tracker", database), new ObjectSerializer)
-    val readStore = new MongoReadStore(database, new ObjectSerializer, dateTimeSource)
+    val readStore = new MongoReadStore(database, indexes, new ObjectSerializer, dateTimeSource)
 
     def persist(events: List[Event]) = {
       Random.shuffle(events).zipWithIndex.foreach{
@@ -88,12 +89,13 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      readStore.retrieveBy(Filters(List(Filter("payload.a", Some("123")), Filter("payload.b", Some("1")))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(Filter("a", Some("123")), Filter("b", Some("1")))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(Filter("a", Some("123")))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
       readStore.retrieveBy(Filters(List(Filter("payload.a", Some("123")))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(Filter("payload.unknown", None))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(Filter("payload.unknown", Some("123")))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      readStore.retrieveBy(Filters(List(Filter("payload.a", Some("mismatch")), Filter("payload.b", Some("1")))), pageRequest).entries.map(_.id.value) must beEmpty
-      readStore.retrieveBy(Filters(List(Filter("payload.a", Some("123")), Filter("payload.b", Some("mismatch")))), pageRequest).entries.map(_.id.value) must beEmpty
+      readStore.retrieveBy(Filters(List(Filter("unknown", None))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(Filter("unknown", Some("123")))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(Filter("a", Some("mismatch")), Filter("b", Some("1")))), pageRequest).entries.map(_.id.value) must beEmpty
+      readStore.retrieveBy(Filters(List(Filter("a", Some("123")), Filter("b", Some("mismatch")))), pageRequest).entries.map(_.id.value) must beEmpty
     }
 
     "apply or operator for multi value filters" in new context {
@@ -104,13 +106,13 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       val event5 = TaskCreated(AggregateId("5"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload.empty)
       persist(List(event1, event2, event3, event4, event5))
 
-      "page"            | "filter"                                               | "expected"          |
-        PageRequest(5)  ! Filter("payload.a", Set(Option("ABC"), Option("DEF"))) ! List("3", "2", "1") |
-        PageRequest(5)  ! Filter("payload.a", Set(Option("DEF")))                ! List("3")           |
-        PageRequest(5)  ! Filter("payload.a", Set(Option("DEF"), none))          ! List("5", "3")      |
-        PageRequest(5)  ! Filter("payload.a", Set(none))                         ! List("5")           |
-        PageRequest(5)  ! Filter("payload.a", Set(Option("")))                   ! List("4")           |
-        PageRequest(5)  ! Filter("payload.a", Set(Option("ABC")))                ! List("2", "1")      |> {(page, filter, expected) =>
+      "page"            | "filter"                                       | "expected"          |
+        PageRequest(5)  ! Filter("a", Set(Option("ABC"), Option("DEF"))) ! List("3", "2", "1") |
+        PageRequest(5)  ! Filter("a", Set(Option("DEF")))                ! List("3")           |
+        PageRequest(5)  ! Filter("a", Set(Option("DEF"), none))          ! List("5", "3")      |
+        PageRequest(5)  ! Filter("a", Set(none))                         ! List("5")           |
+        PageRequest(5)  ! Filter("a", Set(Option("")))                   ! List("4")           |
+        PageRequest(5)  ! Filter("a", Set(Option("ABC")))                ! List("2", "1")      |> {(page, filter, expected) =>
 
         val pageResult = readStore.retrieveByQueue(queueId, Ready, page, Filters(List(filter)))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
@@ -171,7 +173,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
         PageRequest(2)  ! List("2", "1")   ! false     ! false     |
         PageRequest(1)  ! List("2")        ! false     ! true      |> {(page, expected, hasPrev, hasNext) =>
 
-        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, Filters(List(Filter("payload.a", Some("ABC")))))
+        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, Filters(List(Filter("a", Some("ABC")))))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
         pageResult.previousExists must beEqualTo(hasPrev)
         pageResult.nextExists must beEqualTo(hasNext)

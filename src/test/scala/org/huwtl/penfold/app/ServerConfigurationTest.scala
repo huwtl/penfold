@@ -19,8 +19,8 @@ class ServerConfigurationTest extends Specification {
   val jdbcUrl = "jdbc:hsqldb:mem:penfold;sql.syntax_mys=true"
 
   val indexes = List(
-    Index(List(IndexField("field1"))),
-    Index(List(IndexField("field1"), IndexField("field2"))))
+    Index(List(IndexField("field1", "payload.field1"))),
+    Index(List(IndexField("field1", "payload.field1"), IndexField("field2", "payload.field2"))))
 
   "load minimally populated config file" in {
     val expectedConfig = ServerConfiguration(publicUrl, httpPort, None, JdbcConnectionPool(jdbcUrl, "user", "", "org.hsqldb.jdbcDriver"),
