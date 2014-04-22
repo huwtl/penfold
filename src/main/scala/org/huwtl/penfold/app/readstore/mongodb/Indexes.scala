@@ -1,24 +1,40 @@
 package org.huwtl.penfold.app.readstore.mongodb
 
+import org.huwtl.penfold.readstore.{Filter, Filters}
+
 case class Indexes(private val customIndexes: List[Index]) {
-  private val statusField = IndexField("status")
+  private val statusField = IndexField("status", "status")
 
-  private val sortIndexFields = List(IndexField("sort"), IndexField("_id"))
+  private val sortIndexFields = List(IndexField("sort", "sort"), IndexField("_id", "_id"))
 
-  private val idVersionIndex = Index(List(IndexField("_id"), IndexField("version")))
+  private val queueIndexFields = List(IndexField("queue", "queue"), statusField)
 
-  private val queueIndex = Index(List(IndexField("queue"), statusField) ::: sortIndexFields)
+  private val idVersionIndex = Index(List(IndexField("_id", "_id"), IndexField("version", "version")))
+
+  private val queueIndex = Index(queueIndexFields ::: sortIndexFields)
 
   private val statusIndex = Index(statusField :: sortIndexFields)
 
   val all = idVersionIndex :: queueIndex :: statusIndex :: augmentCustomIndexes
 
-  private def augmentCustomIndexes = {
-    val augmentedCustomIndexes = for {
-      customIndex <- customIndexes
-      enhancement <- List(queueIndex)
-    } yield Index(enhancement.fields ::: customIndex.fields ::: sortIndexFields)
+  def transformForSuitableIndex(filters: Filters) = {
+    customIndexes.find(_.suitableFor(filters)) match {
+      case Some(suitableIndex) => Filters(suitableIndex.fields.map(field => Filter(field.path, filters.get(field.alias).get.values)))
+      case None => filters
+    }
+  }
 
-    customIndexes ::: augmentedCustomIndexes
+  private def augmentCustomIndexes = {
+    val customIndexesWithSort = for {
+      customIndex <- customIndexes
+      enhancementFields <- List(sortIndexFields)
+    } yield Index(customIndex.fields ::: enhancementFields)
+
+    val customIndexesForSortedQueue = for {
+      customIndex <- customIndexes
+      enhancementFields <- List(queueIndexFields)
+    } yield Index(enhancementFields ::: customIndex.fields ::: sortIndexFields)
+
+    customIndexesWithSort ::: customIndexesForSortedQueue
   }
 }

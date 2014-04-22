@@ -4,6 +4,6 @@ import org.huwtl.penfold.readstore.Filters
 
 case class Index(fields: List[IndexField]) {
   def suitableFor(filters: Filters) = {
-    filters.keys.toSet == fields.toSet
+    filters.keys.toSet == fields.map(_.alias).toSet
   }
 }

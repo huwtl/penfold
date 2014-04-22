@@ -21,7 +21,7 @@ class HalQueueFormatterTest extends Specification {
 
   val triggerDate = new DateTime(2014, 2, 25, 14, 0, 0, 0)
 
-  val filters = Filters(List(Filter("data", "value")))
+  val filters = Filters(List(Filter("data", Some("value"))))
 
   val pageRequest = PageRequest(10, Some(PageReference("3~1393336800000~0")))
 
@@ -50,7 +50,7 @@ class HalQueueFormatterTest extends Specification {
   }
 
   "format filtered queue as hal+json with encoded filter value" in {
-    val filters = Filters(List(Filter("data", "zzz%^&*ee$")))
+    val filters = Filters(List(Filter("data", Some("zzz%^&*ee$"))))
     val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task("2"), task("1")), None, None), filters)
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueueWithEncodedFilterValue.json"))
   }

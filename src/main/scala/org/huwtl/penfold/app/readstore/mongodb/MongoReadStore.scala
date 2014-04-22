@@ -17,8 +17,10 @@ import java.util.Date
 import scala.util.{Failure, Try, Success}
 import org.huwtl.penfold.app.support.DateTimeSource
 
-class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource) extends ReadStore {
+class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource) extends ReadStore {
   private val connectionSuccess = true
+
+  private val pageReferenceSeparator = "~"
 
   lazy private val tasksCollection = database("tasks")
 
@@ -40,13 +42,13 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, filters: Filters) = {
-    val criteria = MongoDBObject("queue" -> queueId.value, "status" -> status.name) ++ MongoDBObject(filters.all.map(f => f.key -> f.value))
+    val criteria = appendFiltersToCriteria(MongoDBObject("queue" -> queueId.value, "status" -> status.name), indexes.transformForSuitableIndex(filters))
 
     retrievePage(criteria, pageRequest)
   }
 
   override def retrieveBy(filters: Filters, pageRequest: PageRequest) = {
-    val criteria = MongoDBObject(filters.all.map(f => f.key -> f.value))
+    val criteria = appendFiltersToCriteria(MongoDBObject.empty, indexes.transformForSuitableIndex(filters))
 
     retrievePage(criteria, pageRequest)
   }
@@ -88,11 +90,11 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
 
     parseLastKnownPageDetails(pageRequest.pageReference) match {
       case Some(lastKnownPageDetails) => {
-        val scoreMatch = "sort" $eq lastKnownPageDetails.score
+        val sortMatch = MongoDBObject("sort" -> lastKnownPageDetails.sortValue)
 
         lastKnownPageDetails.direction match {
           case Forward => {
-            val skipForwardFromLastVisitedPage = $or($and(scoreMatch, "_id" $lt lastKnownPageDetails.id.value), "sort" $lt lastKnownPageDetails.score)
+            val skipForwardFromLastVisitedPage = $or($and(sortMatch, "_id" $lt lastKnownPageDetails.id.value), "sort" $lt lastKnownPageDetails.sortValue)
             val resultsWithOverflow = execPageQueryWithOverflow(criteria ++ skipForwardFromLastVisitedPage, sortDesc, pageSize)
             val results = resultsWithOverflow take pageSize
             val previousPage = if (results.nonEmpty) pageReference(results, Reverse) else None
@@ -101,7 +103,7 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
             PageResult(results, previousPage = previousPage, nextPage = nextPage)
           }
           case Reverse => {
-            val skipBackFromLastVisitedPage = $or($and(scoreMatch, "_id" $gt lastKnownPageDetails.id.value), "sort" $gt lastKnownPageDetails.score)
+            val skipBackFromLastVisitedPage = $or($and(sortMatch, "_id" $gt lastKnownPageDetails.id.value), "sort" $gt lastKnownPageDetails.sortValue)
             val resultsWithOverflow = execPageQueryWithOverflow(criteria ++ skipBackFromLastVisitedPage, sortAsc, pageSize)
             val results = sortPageInDescOrder(resultsWithOverflow take pageSize)
             val previousPage = if (resultsWithOverflow.size > pageSize) pageReference(results, Reverse) else None
@@ -123,9 +125,9 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
 
   private def parseLastKnownPageDetails(pageReference: Option[PageReference]) = {
     if (pageReference.isDefined) {
-      pageReference.get.value.split('~') match {
-        case Array(idFromLastViewedPage, scoreFromLastViewedPage, navigationalDirection) => {
-          Some(LastKnownPageDetails(AggregateId(idFromLastViewedPage), scoreFromLastViewedPage.toLong, if (navigationalDirection == "1") Forward else Reverse))
+      pageReference.get.value.split(pageReferenceSeparator) match {
+        case Array(idFromLastViewedPage, sortValueFromLastViewedPage, navigationalDirection) => {
+          Some(LastKnownPageDetails(AggregateId(idFromLastViewedPage), sortValueFromLastViewedPage.toLong, if (navigationalDirection == "1") Forward else Reverse))
         }
         case _ => None
       }
@@ -137,11 +139,19 @@ class MongoReadStore(database: MongoDB, objectSerializer: ObjectSerializer, date
 
   private def pageReference(results: List[TaskRecord], direction: NavigationDirection) = {
     if (direction == Forward) {
-      Some(PageReference(s"${results.last.id.value}~${results.last.sort}~${1}"))
+      Some(PageReference(Array(results.last.id.value, results.last.sort, 1) mkString pageReferenceSeparator))
     }
     else {
-      Some(PageReference(s"${results.head.id.value}~${results.head.sort}~${0}"))
+      Some(PageReference(Array(results.head.id.value, results.head.sort, 0) mkString pageReferenceSeparator))
     }
-
   }
+
+  private def appendFiltersToCriteria(criteria: MongoDBObject, filters: Filters) = {
+    filters.filters.foldLeft(criteria)((previousFilters, filter) => {
+      val values = filter.values.map(nullWhenNone)
+      previousFilters ++ (if (filter.isMulti) filter.key $in values else MongoDBObject(filter.key -> values.head))
+    })
+  }
+
+  private def nullWhenNone(value: Option[String]) = value getOrElse null
 }

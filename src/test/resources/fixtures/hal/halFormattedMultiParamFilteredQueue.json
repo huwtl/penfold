@@ -1,0 +1,50 @@
+{
+    "_links": {
+        "self": {"href": "http://host/queues/abc/ready?_data=&_data=value1&_data=value2"}
+    },
+    "_embedded": {
+        "queue": [
+            {
+                "_links": {
+                    "self": {"href": "http://host/queues/abc/ready/2"}
+                },
+                "taskId": "2",
+                "_embedded": {
+                    "task": {
+                        "_links": {
+                            "self": {"href": "http://host/tasks/2"},
+                            "queue": {"href": "http://host/queues/abc"},
+                            "start": {"href": "http://host/queues/abc/started"}
+                        },
+                        "id": "2",
+                        "payload": {},
+                        "status": "ready",
+                        "statusLastModified": "2014-02-25 13:00:00",
+                        "triggerDate": "2014-02-25 14:00:00",
+                        "queueBinding": {"id": "abc"}
+                    }
+                }
+            },
+            {
+                "_links": {
+                    "self": {"href": "http://host/queues/abc/ready/1"}
+                },
+                "taskId": "1",
+                "_embedded": {
+                    "task": {
+                        "_links": {
+                            "self": {"href": "http://host/tasks/1"},
+                            "queue": {"href": "http://host/queues/abc"},
+                            "start": {"href": "http://host/queues/abc/started"}
+                        },
+                        "id": "1",
+                        "payload": {},
+                        "queueBinding": {"id": "abc"},
+                        "status": "ready",
+                        "statusLastModified": "2014-02-25 13:00:00",
+                        "triggerDate": "2014-02-25 14:00:00"
+                    }
+                }
+            }
+    ]
+}}

@@ -27,7 +27,7 @@ class QueueResource(readStore: ReadStore,
       status => {
         val queue = QueueId(params("queue"))
         val page = parsePageRequestParams(params, pageSize)
-        val filters = parseFilters(params)
+        val filters = parseFilters(multiParams)
         Ok(halFormatter.halFrom(queue, status, page, readStore.retrieveByQueue(queue, status, page, filters), filters))
       }
     }

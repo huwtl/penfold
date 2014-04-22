@@ -3,6 +3,7 @@ package org.huwtl.penfold.app.support.hal
 import org.huwtl.penfold.readstore.{PageReference, PageRequest, PageResult, Filters}
 import com.theoryinpractise.halbuilder.api.RepresentationFactory
 import org.scalatra.util.RicherString
+import scala.collection.SortedSet
 
 trait PaginatedRepresentationProvider {
 
@@ -41,7 +42,12 @@ trait PaginatedRepresentationProvider {
     case params => params.mkString("?", "&", "")
   }
 
-  private def filterParameters(filters: Filters) = filters.all.map(filter => s"_${encode(filter.key)}=${encode(filter.value)}").toList
+  private def filterParameters(filters: Filters) = {
+    for {
+      filter <- filters.filters
+      filterValue <- SortedSet(filter.values.toList :_*)
+    } yield s"_${encode(filter.key)}=${encode(filterValue getOrElse "")}"
+  }
 
   private def encode(str: String) = new RicherString(str).urlEncode.replace("&", "%26")
 }
