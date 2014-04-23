@@ -54,17 +54,20 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
   }
 
   override def retrieveBy(id: AggregateId) = {
-    tasksCollection.findOne(MongoDBObject("_id" -> id.value)).map(convertDocumentToTask(_))
+    val task = tasksCollection.findOne(MongoDBObject("_id" -> id.value)).map(convertDocumentToTask(_))
+    task
   }
 
   private def convertDocumentToTask(document: MongoDBObject) = {
     TaskRecord(
       AggregateId(document.as[String]("_id")),
+      AggregateVersion(document.as[Int]("version")),
       new DateTime(document.as[Date]("created")),
       QueueBinding(QueueId(document.as[String]("queue"))),
       Status.from(document.as[String]("status")).get,
       new DateTime(document.as[Date]("statusLastModified")),
       new DateTime(document.as[Date]("triggerDate")),
+      document.as[Long]("score"),
       document.as[Long]("sort"),
       objectSerializer.deserialize[Payload](JSON.serialize(document("payload")))
     )

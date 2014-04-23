@@ -27,6 +27,10 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       .withProperty("queueBinding", JavaMapUtil.deepConvertToJavaMap(bindingToMap(task.queueBinding)))
       .withLink("queue", s"${baseQueueLink.toString}/$queueIdParam")
 
+    if (task.status != Completed & task.status != Cancelled) {
+      representation.withLink("updatePayload", s"${baseTaskLink.toString}/${task.id.value}/${task.version.number}/payload")
+    }
+
     task.status match {
       case Ready => {
         representation.withLink("start", s"${baseQueueLink.toString}/$queueIdParam/${Started.name}")

@@ -9,7 +9,7 @@ class MongoEventTracker(trackerKey: String, database: MongoDB) extends EventTrac
   override def trackEvent(eventId: EventSequenceId) = {
     val query = MongoDBObject("_id" -> trackerKey)
 
-    val tracking = MongoDBObject("lastEventId" -> eventId.value)
+    val tracking = MongoDBObject("_id" -> trackerKey, "lastEventId" -> eventId.value)
 
     trackers.update(query, tracking, upsert = true)
   }

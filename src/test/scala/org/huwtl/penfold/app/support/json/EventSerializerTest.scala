@@ -20,7 +20,10 @@ class EventSerializerTest extends Specification with DataTables {
   val dateTime = new DateTime(2014, 2, 3, 12, 47, 54)
   val queue1 = QueueId("q1")
   val queue2 = QueueId("q2")
-  val taskCreatedEvent = TaskCreated(AggregateId("a1"), AggregateVersion.init, dateTime, QueueBinding(queue1), new DateTime(2014, 2, 3, 14, 30, 1), Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+  val triggerDate = new DateTime(2014, 2, 3, 14, 30, 1)
+  val taskCreatedEvent = TaskCreated(AggregateId("a1"), AggregateVersion.init, dateTime, QueueBinding(queue1), triggerDate, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))), triggerDate.getMillis)
+  val futureTaskCreatedEvent = FutureTaskCreated(AggregateId("a1"), AggregateVersion.init, dateTime, QueueBinding(queue1), triggerDate, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))), triggerDate.getMillis)
+  val taskPayloadUpdatedEvent = TaskPayloadUpdated(AggregateId("a1"), AggregateVersion.init, dateTime, Payload(Map("stuff" -> "something")), Some("update_type_1"), Some(100))
   val taskTriggeredEvent = TaskTriggered(AggregateId("a1"), AggregateVersion.init, dateTime)
   val taskStartedEvent = TaskStarted(AggregateId("a1"), AggregateVersion.init, dateTime)
   val taskCancelledEvent = TaskCancelled(AggregateId("a1"), AggregateVersion.init, dateTime)
@@ -28,12 +31,14 @@ class EventSerializerTest extends Specification with DataTables {
   val serializer = new EventSerializer
 
   "deserialise task event" in {
-    "jsonPath"           || "expectedEvent"   |
-    "task_created.json"   !! taskCreatedEvent   |
-    "task_triggered.json" !! taskTriggeredEvent |
-    "task_started.json"   !! taskStartedEvent   |
-    "task_cancelled.json" !! taskCancelledEvent |
-    "task_completed.json" !! taskCompletedEvent |> {
+    "jsonPath"                  || "expectedEvent"         |
+    "task_created.json"         !! taskCreatedEvent        |
+    "future_task_created.json"  !! futureTaskCreatedEvent  |
+    "task_payload_updated.json" !! taskPayloadUpdatedEvent |
+    "task_triggered.json"       !! taskTriggeredEvent      |
+    "task_started.json"         !! taskStartedEvent        |
+    "task_cancelled.json"       !! taskCancelledEvent      |
+    "task_completed.json"       !! taskCompletedEvent      |> {
       (jsonPath, expectedEvent) =>
         val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/$jsonPath")).mkString
         val actualEvent = serializer.deserialize(json)
@@ -42,12 +47,14 @@ class EventSerializerTest extends Specification with DataTables {
   }
 
   "serialise task event" in {
-    "event"             || "expectedJsonPath"   |
-      taskCreatedEvent   !! "task_created.json"   |
-      taskTriggeredEvent !! "task_triggered.json" |
-      taskStartedEvent   !! "task_started.json"   |
-      taskCancelledEvent !! "task_cancelled.json" |
-      taskCompletedEvent !! "task_completed.json" |> {
+    "event"                 || "expectedJsonPath"          |
+    taskCreatedEvent        !! "task_created.json"         |
+    futureTaskCreatedEvent  !! "future_task_created.json"  |
+    taskPayloadUpdatedEvent !! "task_payload_updated.json" |
+    taskTriggeredEvent      !! "task_triggered.json"       |
+    taskStartedEvent        !! "task_started.json"         |
+    taskCancelledEvent      !! "task_cancelled.json"       |
+    taskCompletedEvent      !! "task_completed.json"       |> {
       (event, expectedJsonPath) =>
         val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/${expectedJsonPath}")).mkString))
         val json = serializer.serialize(event)

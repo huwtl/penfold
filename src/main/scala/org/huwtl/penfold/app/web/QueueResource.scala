@@ -38,23 +38,21 @@ class QueueResource(readStore: ReadStore,
       status => {
         readStore.retrieveBy(AggregateId(params("id"))) match {
           case Some(task) => Ok(halFormatter.halFrom(QueueId(queueIdParam), task))
-          case _ => errorResponse(NotFound(s"$status task not found"))
+          case None => errorResponse(NotFound(s"$status task not found"))
         }
       }
     }
   }
 
   post("/:queue/started") {
-    val queue = QueueId(queueIdParam)
     val startTaskRequest = jsonConverter.deserialize[StartTaskRequest](request.body)
-    commandDispatcher.dispatch[StartTask](startTaskRequest.toCommand(queue))
+    commandDispatcher.dispatch[StartTask](startTaskRequest.toCommand)
     Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(startTaskRequest.id).get))
   }
 
   post("/:queue/completed") {
-    val queue = QueueId(queueIdParam)
     val completeTaskRequest = jsonConverter.deserialize[CompleteTaskRequest](request.body)
-    commandDispatcher.dispatch[CompleteTask](completeTaskRequest.toCommand(queue))
+    commandDispatcher.dispatch[CompleteTask](completeTaskRequest.toCommand)
     Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(completeTaskRequest.id).get))
   }
 

@@ -70,18 +70,18 @@ class HalTaskFormatterTest extends Specification {
   "format task as hal+json with complex payload" in {
     val complexPayload = Payload(
       Map("data" -> "value", "inner" -> Map("bool" -> true, "inner2" -> List(Map("a" -> "1", "b" -> 1), Map("a" -> "2", "b" -> 2)))))
-    val task = TaskRecord(id, created, QueueBinding(queueId), Status.Waiting, created, triggerDate, triggerDate.getMillis, complexPayload)
+    val task = TaskRecord(id, AggregateVersion.init, created, QueueBinding(queueId), Status.Waiting, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, complexPayload)
     hal(task) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedTaskWithComplexPayload.json"))
   }
 
   private def halTasks(filters: Filters, pageNumber: Int = 0, previousPage: Option[PageReference] = None, nextPage: Option[PageReference] = None) = {
     parse(taskFormatter.halFrom(pageRequest,
-      PageResult(List(TaskRecord(id, created, QueueBinding(queueId), Status.Waiting, created, triggerDate, triggerDate.getMillis, payload)), previousPage, nextPage), filters
+      PageResult(List(TaskRecord(id, AggregateVersion.init, created, QueueBinding(queueId), Status.Waiting, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, payload)), previousPage, nextPage), filters
     ))
   }
 
   private def hal(status: Status, binding: QueueBinding = QueueBinding(queueId)) = {
-    parse(taskFormatter.halFrom(TaskRecord(id, created, binding, status, created, triggerDate, triggerDate.getMillis, payload)))
+    parse(taskFormatter.halFrom(TaskRecord(id, AggregateVersion.init, created, binding, status, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, payload)))
   }
 
   private def hal(task: TaskRecord) = {

@@ -15,8 +15,17 @@ import org.specs2.specification.Scope
 class JdbcEventStoreTest extends Specification with DataTables with JdbcSpecification {
 
   class context extends Scope {
+    val triggerDate = new DateTime(2014, 4, 3, 13, 0, 0, 0)
     val database = newDatabase()
     val store = new JdbcEventStore(database, new EventSerializer)
+
+    def createdEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {
+      TaskCreated(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), QueueBinding(QueueId("q1")), triggerDate, Payload.empty, triggerDate.getMillis)
+    }
+
+    def triggeredEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {
+      TaskTriggered(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0))
+    }
   }
 
   "store events" in new context {
@@ -42,13 +51,5 @@ class JdbcEventStoreTest extends Specification with DataTables with JdbcSpecific
 
   "check connectivity to store" in new context {
     store.checkConnectivity.left.getOrElse(false) must beTrue
-  }
-
-  private def createdEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {
-    TaskCreated(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), QueueBinding(QueueId("q1")), new DateTime(2014, 4, 3, 13, 0, 0, 0), Payload.empty)
-  }
-
-  private def triggeredEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {
-    TaskTriggered(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0))
   }
 }

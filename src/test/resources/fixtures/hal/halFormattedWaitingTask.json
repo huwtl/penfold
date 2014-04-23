@@ -1,7 +1,8 @@
 {
     "_links": {
         "self": {"href": "http://host/tasks/1"},
-        "queue": {"href": "http://host/queues/abc"}
+        "queue": {"href": "http://host/queues/abc"},
+        "updatePayload": {"href": "http://host/tasks/1/1/payload"}
     },
     "id": "1",
     "payload": {

@@ -7,13 +7,15 @@ import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.model.Status._
 
 object Task extends AggregateFactory {
-  def create(aggregateId: AggregateId, queueBinding: QueueBinding, payload: Payload) = {
+  def create(aggregateId: AggregateId, queueBinding: QueueBinding, payload: Payload, score: Option[Long]) = {
     val currentDateTime = now
-    applyTaskCreated(TaskCreated(aggregateId, AggregateVersion.init, currentDateTime, queueBinding, currentDateTime, payload))
+    val scoreValue = score getOrElse currentDateTime.getMillis
+    applyTaskCreated(TaskCreated(aggregateId, AggregateVersion.init, currentDateTime, queueBinding, currentDateTime, payload, scoreValue))
   }
 
-  def create(aggregateId: AggregateId, queueBinding: QueueBinding, triggerDate: DateTime, payload: Payload) = {
-    val createdTask = applyFutureTaskCreated(FutureTaskCreated(aggregateId, AggregateVersion.init, now, queueBinding, triggerDate, payload))
+  def create(aggregateId: AggregateId, queueBinding: QueueBinding, triggerDate: DateTime, payload: Payload, score: Option[Long]) = {
+    val scoreValue = score getOrElse triggerDate.getMillis
+    val createdTask = applyFutureTaskCreated(FutureTaskCreated(aggregateId, AggregateVersion.init, now, queueBinding, triggerDate, payload, scoreValue))
     if (createdTask.triggerDate.isAfterNow) createdTask else createdTask.trigger()
   }
 
@@ -31,7 +33,8 @@ object Task extends AggregateFactory {
     event.queueBinding,
     Ready,
     event.triggerDate,
-    event.payload
+    event.payload,
+    event.score
   )
 
   private def applyFutureTaskCreated(event: FutureTaskCreated) = Task(
@@ -42,7 +45,8 @@ object Task extends AggregateFactory {
     event.queueBinding,
     Waiting,
     event.triggerDate,
-    event.payload
+    event.payload,
+    event.score
   )
 }
 
@@ -53,7 +57,8 @@ case class Task(uncommittedEvents: List[Event],
                         queueBinding: QueueBinding,
                         status: Status,
                         triggerDate: DateTime,
-                        payload: Payload) extends AggregateRoot {
+                        payload: Payload,
+                        score: Long) extends AggregateRoot {
 
   override def aggregateType = AggregateType.Task
 
@@ -62,16 +67,22 @@ case class Task(uncommittedEvents: List[Event],
     applyTaskTriggered(TaskTriggered(aggregateId, version.next, now))
   }
 
-  def start(queue: QueueId): Task = {
+  def updatePayload(expectedVersion: AggregateVersion, payload: Payload, updateType: Option[String], score: Option[Long]): Task = {
+    checkVersion(expectedVersion)
+    require(status != Completed && status != Cancelled, s"Cannot update payload for completed or cancelled task but was $status")
+    applyTaskPayloadUpdated(TaskPayloadUpdated(aggregateId, version.next, now, payload, updateType, score))
+  }
+
+  def start(): Task = {
     require(status == Ready, s"Can only start a task that is ready but was $status")
     applyTaskStarted(TaskStarted(aggregateId, version.next, now))
   }
 
-  def cancel(queue: QueueId): Task = {
+  def cancel(): Task = {
     applyTaskCancelled(TaskCancelled(aggregateId, version.next, now))
   }
 
-  def complete(queue: QueueId): Task = {
+  def complete(): Task = {
     require(status == Started, s"Can only complete a started task but was $status")
     applyTaskCompleted(TaskCompleted(aggregateId, version.next, now))
   }
@@ -83,14 +94,17 @@ case class Task(uncommittedEvents: List[Event],
     case event: TaskStarted => applyTaskStarted(event)
     case event: TaskCancelled => applyTaskCancelled(event)
     case event: TaskCompleted => applyTaskCompleted(event)
+    case event: TaskPayloadUpdated => applyTaskPayloadUpdated(event)
     case event => unhandled(event)
   }
 
-  private def applyTaskTriggered(event: TaskTriggered) = copy(event :: uncommittedEvents, version = version.next, status = Ready)
+  private def applyTaskTriggered(event: TaskTriggered) = copy(event :: uncommittedEvents, version = event.aggregateVersion, status = Ready)
 
-  private def applyTaskStarted(event: TaskStarted) = copy(event :: uncommittedEvents, version = version.next, status = Started)
+  private def applyTaskStarted(event: TaskStarted) = copy(event :: uncommittedEvents, version = event.aggregateVersion, status = Started)
 
-  private def applyTaskCancelled(event: TaskCancelled) = copy(event :: uncommittedEvents, event.aggregateId, version = version.next, status = Cancelled)
+  private def applyTaskCancelled(event: TaskCancelled) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Cancelled)
 
-  private def applyTaskCompleted(event: TaskCompleted) = copy(event :: uncommittedEvents, event.aggregateId, version = version.next, status = Completed)
+  private def applyTaskCompleted(event: TaskCompleted) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Completed)
+
+  private def applyTaskPayloadUpdated(event: TaskPayloadUpdated) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, payload = event.payload, score = event.score getOrElse score)
 }

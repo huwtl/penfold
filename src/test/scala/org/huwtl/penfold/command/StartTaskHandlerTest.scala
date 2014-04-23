@@ -8,8 +8,6 @@ import org.huwtl.penfold.domain.store.DomainRepository
 class StartTaskHandlerTest extends Specification with Mockito {
   val expectedAggregateId = AggregateId("a1")
 
-  val queue = QueueId("q1")
-
   val domainRepository = mock[DomainRepository]
 
   val readyTask = mock[Task]
@@ -19,9 +17,9 @@ class StartTaskHandlerTest extends Specification with Mockito {
 
   "start ready task" in {
     domainRepository.getById[Task](expectedAggregateId) returns readyTask
-    readyTask.start(queue) returns startedTask
+    readyTask.start() returns startedTask
 
-    handler.handle(new StartTask(expectedAggregateId, queue))
+    handler.handle(new StartTask(expectedAggregateId))
 
     there was one(domainRepository).add(startedTask)
   }

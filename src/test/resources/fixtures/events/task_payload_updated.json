@@ -1,0 +1,12 @@
+{
+    "type" : "TaskPayloadUpdated",
+    "aggregateId" : "a1",
+    "aggregateVersion" : 1,
+    "created" : "2014-02-03 12:47:54",
+    "payload" : {
+        "stuff" : "something"
+    },
+    "updateType": "update_type_1",
+    "score" : 100,
+    "aggregateType" : "Task"
+}

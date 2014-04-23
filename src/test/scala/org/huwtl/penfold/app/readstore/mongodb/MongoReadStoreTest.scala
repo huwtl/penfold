@@ -29,6 +29,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     val none : Option[String] = None
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
+    val score = triggerDate.getMillis
     val indexes = Indexes(List(Index(List(IndexField("a", "payload.a"))), Index(List(IndexField("a", "payload.a"), IndexField("b", "payload.b")))))
     val mongoClient = MongoClient("localhost", embedConnectionPort())
     val database = mongoClient("penfoldtest")
@@ -43,7 +44,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     }
 
     def entry(aggregateId: String, triggerDate: DateTime) = {
-      FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, payload)
+      FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, payload, triggerDate.getMillis)
     }
 
     def forwardFrom(lastEvent: TaskCreatedEvent) = Some(PageReference(s"${lastEvent.aggregateId.value}~${lastEvent.triggerDate.getMillis}~1"))
@@ -99,11 +100,11 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     }
 
     "apply or operator for multi value filters" in new context {
-      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")))
-      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")))
-      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "DEF")))
-      val event4 = TaskCreated(AggregateId("4"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "")))
-      val event5 = TaskCreated(AggregateId("5"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload.empty)
+      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "DEF")), score)
+      val event4 = TaskCreated(AggregateId("4"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "")), score)
+      val event5 = TaskCreated(AggregateId("5"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload.empty, score)
       persist(List(event1, event2, event3, event4, event5))
 
       "page"            | "filter"                                       | "expected"          |
@@ -164,9 +165,9 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     }
 
     "retrieve tasks by next page with additional filter" in new context {
-      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")))
-      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")))
-      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "DEF")))
+      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "DEF")), score)
       persist(List(event1, event2, event3))
 
       "page"            | "expected"       | "hasPrev" | "hasNext" |

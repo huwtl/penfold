@@ -1,0 +1,11 @@
+{
+    "payload": {
+        "stuff": "something",
+
+        "nested": {
+            "inner": true
+        }
+    },
+    "updateType": "update_type_1",
+    "score": 100
+}

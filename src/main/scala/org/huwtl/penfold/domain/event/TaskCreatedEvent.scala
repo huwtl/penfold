@@ -12,4 +12,5 @@ trait TaskCreatedEvent extends TaskEvent {
   val queueBinding: QueueBinding
   val triggerDate: DateTime
   val payload: Payload
+  val score: Long
 }
