@@ -4,6 +4,7 @@
         "queue": {"href": "http://host/queues/abc"}
     },
     "id": "1",
+    "version": 1,
     "payload": {
         "data": "value",
         "inner": {

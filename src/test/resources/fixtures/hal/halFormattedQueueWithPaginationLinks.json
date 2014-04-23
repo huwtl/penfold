@@ -20,6 +20,7 @@
                             "updatePayload": {"href": "http://host/tasks/2/1/payload"}
                         },
                         "id": "2",
+                        "version": 1,
                         "payload": {},
                         "queueBinding": {"id": "abc"},
                         "status": "ready",
@@ -42,6 +43,7 @@
                             "updatePayload": {"href": "http://host/tasks/1/1/payload"}
                         },
                         "id": "1",
+                        "version": 1,
                         "payload": {},
                         "queueBinding": {"id": "abc"},
                         "status": "ready",

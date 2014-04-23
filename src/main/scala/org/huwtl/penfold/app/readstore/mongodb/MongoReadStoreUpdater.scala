@@ -57,7 +57,10 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       "score" -> event.score
     )
 
-    Try(tasksCollection.insert(task)) recover {
+    try {
+      tasksCollection.insert(task)
+    }
+    catch {
       case e: DuplicateKeyException => logger.info("task creation event already handled, ignoring", e)
       case e: Exception => throw e
     }

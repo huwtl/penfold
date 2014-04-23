@@ -12,6 +12,7 @@
                 "updatePayload": {"href": "http://host/tasks/1/1/payload"}
             },
             "id": "1",
+            "version": 1,
             "payload": {},
             "status": "ready",
             "statusLastModified": "2014-02-25 13:00:00",

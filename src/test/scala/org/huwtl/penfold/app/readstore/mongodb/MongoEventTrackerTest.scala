@@ -13,6 +13,7 @@ class MongoEventTrackerTest extends Specification with EmbedConnection {
     val trackingKey = "testKey"
     val mongoClient = MongoClient("localhost", embedConnectionPort())
     val database = mongoClient("penfoldtest")
+    database("eventTrackers").dropCollection()
     val tracker = new MongoEventTracker(trackingKey, database)
     val nextExpectedEventIdProvider = new MongoNextExpectedEventIdProvider(trackingKey, database)
   }
@@ -33,5 +34,13 @@ class MongoEventTrackerTest extends Specification with EmbedConnection {
     tracker.trackEvent(EventSequenceId(2))
 
     nextExpectedEventIdProvider.nextExpectedEvent must beEqualTo(EventSequenceId(3))
+  }
+
+  "ignore requests to track previously tracked events" in new context {
+    tracker.trackEvent(EventSequenceId(0))
+    tracker.trackEvent(EventSequenceId(1))
+    tracker.trackEvent(EventSequenceId(0))
+
+    nextExpectedEventIdProvider.nextExpectedEvent must beEqualTo(EventSequenceId(2))
   }
 }
