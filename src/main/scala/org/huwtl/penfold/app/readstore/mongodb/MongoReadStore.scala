@@ -93,11 +93,9 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
 
     parseLastKnownPageDetails(pageRequest.pageReference) match {
       case Some(lastKnownPageDetails) => {
-        val sortMatch = MongoDBObject("sort" -> lastKnownPageDetails.sortValue)
-
         lastKnownPageDetails.direction match {
           case Forward => {
-            val skipForwardFromLastVisitedPage = $or($and(sortMatch, "_id" $lt lastKnownPageDetails.id.value), "sort" $lt lastKnownPageDetails.sortValue)
+            val skipForwardFromLastVisitedPage = $and("sort" $lte lastKnownPageDetails.sortValue, "_id" $lt lastKnownPageDetails.id.value)
             val resultsWithOverflow = execPageQueryWithOverflow(criteria ++ skipForwardFromLastVisitedPage, sortDesc, pageSize)
             val results = resultsWithOverflow take pageSize
             val previousPage = if (results.nonEmpty) pageReference(results, Reverse) else None
@@ -106,7 +104,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
             PageResult(results, previousPage = previousPage, nextPage = nextPage)
           }
           case Reverse => {
-            val skipBackFromLastVisitedPage = $or($and(sortMatch, "_id" $gt lastKnownPageDetails.id.value), "sort" $gt lastKnownPageDetails.sortValue)
+            val skipBackFromLastVisitedPage = $and("sort" $gte lastKnownPageDetails.sortValue, "_id" $gt lastKnownPageDetails.id.value)
             val resultsWithOverflow = execPageQueryWithOverflow(criteria ++ skipBackFromLastVisitedPage, sortAsc, pageSize)
             val results = sortPageInDescOrder(resultsWithOverflow take pageSize)
             val previousPage = if (resultsWithOverflow.size > pageSize) pageReference(results, Reverse) else None
