@@ -7,6 +7,7 @@ import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.event.TaskTriggered
 import org.huwtl.penfold.domain.event.TaskStarted
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
+import org.huwtl.penfold.domain.patch.Patch
 
 class TaskTest extends Specification {
 
@@ -64,19 +65,19 @@ class TaskTest extends Specification {
   }
 
   "update task payload" in {
-    val updatedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).updatePayload(AggregateVersion.init, Payload.empty, None, None)
+    val updatedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).updatePayload(AggregateVersion.init, Patch(Nil), None, None)
     typesOf(updatedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskPayloadUpdated], classOf[TaskCreated]))
   }
 
   "prevent concurrent task payload updates"in {
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
-      .updatePayload(AggregateVersion.init, Payload.empty, None, None)
-      .updatePayload(AggregateVersion.init, Payload.empty, None, None) must throwA[AggregateConflictException]
+      .updatePayload(AggregateVersion.init, Patch(Nil), None, None)
+      .updatePayload(AggregateVersion.init, Patch(Nil), None, None) must throwA[AggregateConflictException]
   }
 
   "ensure completed or cancelled tasks cannot accept updated payload" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete().updatePayload(AggregateVersion.init, Payload.empty, None, None) must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel().updatePayload(AggregateVersion.init.next, Payload.empty, None, None) must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete().updatePayload(AggregateVersion.init, Patch(Nil), None, None) must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel().updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
   }
 
   private def typesOf(events: List[Event]) = {

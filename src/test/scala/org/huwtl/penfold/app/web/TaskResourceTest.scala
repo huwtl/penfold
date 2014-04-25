@@ -20,6 +20,7 @@ import org.huwtl.penfold.readstore.TaskRecord
 import scala.Some
 import org.huwtl.penfold.readstore.PageResult
 import org.huwtl.penfold.app.AuthenticationCredentials
+import org.huwtl.penfold.domain.patch.{Patch, Value, Add}
 
 class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification {
   sequential
@@ -82,7 +83,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
 
   "return 200 when updating payload" in {
     val expectedTask = TaskRecord(AggregateId("2"), AggregateVersion.init, created, binding, Status.Waiting, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
-    commandDispatcher.dispatch(UpdateTaskPayload(expectedTask.id, expectedTask.version, Some("update_type_1"), expectedTask.payload, Some(100))) returns expectedTask.id
+    commandDispatcher.dispatch(UpdateTaskPayload(expectedTask.id, expectedTask.version, Some("update_type_1"), Patch(List(Add("/a/b", Value("1")))), Some(100))) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
     put("/tasks/2/1/payload", textFromFile("fixtures/web/payload_update.json"), headers = validAuthHeader) {

@@ -15,6 +15,7 @@ import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.event.TaskTriggered
 import org.huwtl.penfold.domain.event.TaskStarted
 import org.specs2.matcher.DataTables
+import org.huwtl.penfold.domain.patch.{Patch, Value, Add}
 
 class EventSerializerTest extends Specification with DataTables {
   val dateTime = new DateTime(2014, 2, 3, 12, 47, 54)
@@ -23,7 +24,7 @@ class EventSerializerTest extends Specification with DataTables {
   val triggerDate = new DateTime(2014, 2, 3, 14, 30, 1)
   val taskCreatedEvent = TaskCreated(AggregateId("a1"), AggregateVersion.init, dateTime, QueueBinding(queue1), triggerDate, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))), triggerDate.getMillis)
   val futureTaskCreatedEvent = FutureTaskCreated(AggregateId("a1"), AggregateVersion.init, dateTime, QueueBinding(queue1), triggerDate, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))), triggerDate.getMillis)
-  val taskPayloadUpdatedEvent = TaskPayloadUpdated(AggregateId("a1"), AggregateVersion.init, dateTime, Payload(Map("stuff" -> "something")), Some("update_type_1"), Some(100))
+  val taskPayloadUpdatedEvent = TaskPayloadUpdated(AggregateId("a1"), AggregateVersion.init, dateTime, Patch(List(Add("/a/b", Value("1")))), Some("update_type_1"), Some(100))
   val taskTriggeredEvent = TaskTriggered(AggregateId("a1"), AggregateVersion.init, dateTime)
   val taskStartedEvent = TaskStarted(AggregateId("a1"), AggregateVersion.init, dateTime)
   val taskCancelledEvent = TaskCancelled(AggregateId("a1"), AggregateVersion.init, dateTime)

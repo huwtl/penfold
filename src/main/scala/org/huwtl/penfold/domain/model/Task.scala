@@ -5,6 +5,7 @@ import org.joda.time.DateTime.now
 import org.huwtl.penfold.domain.event._
 import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.model.Status._
+import org.huwtl.penfold.domain.patch.Patch
 
 object Task extends AggregateFactory {
   def create(aggregateId: AggregateId, queueBinding: QueueBinding, payload: Payload, score: Option[Long]) = {
@@ -51,14 +52,14 @@ object Task extends AggregateFactory {
 }
 
 case class Task(uncommittedEvents: List[Event],
-                        aggregateId: AggregateId,
-                        version: AggregateVersion,
-                        created: DateTime,
-                        queueBinding: QueueBinding,
-                        status: Status,
-                        triggerDate: DateTime,
-                        payload: Payload,
-                        score: Long) extends AggregateRoot {
+                aggregateId: AggregateId,
+                version: AggregateVersion,
+                created: DateTime,
+                queueBinding: QueueBinding,
+                status: Status,
+                triggerDate: DateTime,
+                payload: Payload,
+                score: Long) extends AggregateRoot {
 
   override def aggregateType = AggregateType.Task
 
@@ -67,10 +68,10 @@ case class Task(uncommittedEvents: List[Event],
     applyTaskTriggered(TaskTriggered(aggregateId, version.next, now))
   }
 
-  def updatePayload(expectedVersion: AggregateVersion, payload: Payload, updateType: Option[String], score: Option[Long]): Task = {
+  def updatePayload(expectedVersion: AggregateVersion, payloadUpdate: Patch, updateType: Option[String], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
     require(status != Completed && status != Cancelled, s"Cannot update payload for completed or cancelled task but was $status")
-    applyTaskPayloadUpdated(TaskPayloadUpdated(aggregateId, version.next, now, payload, updateType, score))
+    applyTaskPayloadUpdated(TaskPayloadUpdated(aggregateId, version.next, now, payloadUpdate, updateType, score))
   }
 
   def start(): Task = {
@@ -106,5 +107,11 @@ case class Task(uncommittedEvents: List[Event],
 
   private def applyTaskCompleted(event: TaskCompleted) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Completed)
 
-  private def applyTaskPayloadUpdated(event: TaskPayloadUpdated) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, payload = event.payload, score = event.score getOrElse score)
+  private def applyTaskPayloadUpdated(event: TaskPayloadUpdated) = copy(
+    event :: uncommittedEvents,
+    event.aggregateId,
+    version = event.aggregateVersion,
+    payload = Payload(event.payloadUpdate.exec(payload.content)),
+    score = event.score getOrElse score
+  )
 }

@@ -13,6 +13,7 @@ class ObjectSerializer {
     new IdJsonSerializer +
     new VersionJsonSerializer +
     new QueueIdJsonSerializer
+    new PatchOperationJsonSerializer
 
   def serialize[T](event: T) = {
     compact(decompose(event))

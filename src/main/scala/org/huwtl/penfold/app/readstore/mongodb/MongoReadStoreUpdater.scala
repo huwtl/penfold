@@ -3,7 +3,7 @@ package org.huwtl.penfold.app.readstore.mongodb
 import org.huwtl.penfold.readstore.{EventTracker, EventListener}
 import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.domain.model.Status._
-import org.huwtl.penfold.domain.model.Status
+import org.huwtl.penfold.domain.model.{Payload, Status}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.domain.event._
 import org.huwtl.penfold.domain.event.TaskCompleted
@@ -16,6 +16,7 @@ import org.huwtl.penfold.domain.event.TaskStarted
 import com.mongodb.DuplicateKeyException
 import grizzled.slf4j.Logger
 import scala.util.Try
+import com.mongodb.util.JSON
 
 class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
@@ -90,10 +91,11 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case Some(task) => {
         val status = Status.from(task.as[String]("status")).get
         val previousScore = task.as[Long]("score")
+        val payload = objectSerializer.deserialize[Payload](JSON.serialize(task.as[String]("payload")))
 
         val update = $set(
           "version" -> event.aggregateVersion.number,
-          "payload" -> event.payload.content,
+          "payload" -> event.payloadUpdate.exec(payload.content),
           "score" -> event.score.getOrElse(previousScore),
           "sort" -> resolveSortOrder(event, status, previousScore)
         )

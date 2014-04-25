@@ -15,6 +15,7 @@ import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.app.support.DateTimeSource
 import java.util.UUID
 import org.huwtl.penfold.domain.model.Status.{Waiting, Started, Ready}
+import org.huwtl.penfold.domain.patch.{Remove, Patch}
 
 class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
   sequential
@@ -50,8 +51,9 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
   "update payload of ready task" in new context {
     val updateTime = new DateTime(2014, 2, 22, 13, 0, 0, 0)
     val updatedPayload = Payload(Map("field1" -> "1234"))
+    val payloadUpdate = Patch(List(Remove("/inner")))
     val updatedScore = updateTime.getMillis
-    val taskPayloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), updateTime, updatedPayload, None, Some(updatedScore))
+    val taskPayloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), updateTime, payloadUpdate, None, Some(updatedScore))
 
     readStoreUpdater.handle(EventRecord(EventSequenceId(1), taskCreatedEvent))
     readStoreUpdater.handle(EventRecord(EventSequenceId(2), taskPayloadUpdatedEvent))
@@ -64,9 +66,10 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
   "update payload of waiting task" in new context {
     val updateTime = new DateTime(2014, 2, 22, 13, 0, 0, 0)
     val updatedPayload = Payload(Map("field1" -> "1234"))
+    val payloadUpdate = Patch(List(Remove("/inner")))
     val updatedScore = new DateTime(2014, 2, 22, 14, 0, 0, 0).getMillis
     val futureTaskCreatedEvent = FutureTaskCreated(aggregateId, AggregateVersion(1), created, QueueBinding(queueId), triggerDate, payload, score)
-    val taskPayloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), updateTime, updatedPayload, None, Some(updatedScore))
+    val taskPayloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), updateTime, payloadUpdate, None, Some(updatedScore))
 
     readStoreUpdater.handle(EventRecord(EventSequenceId(1), futureTaskCreatedEvent))
     readStoreUpdater.handle(EventRecord(EventSequenceId(2), taskPayloadUpdatedEvent))
