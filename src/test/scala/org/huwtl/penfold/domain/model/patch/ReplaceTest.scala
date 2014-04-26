@@ -1,0 +1,25 @@
+package org.huwtl.penfold.domain.model.patch
+
+import org.specs2.mutable.Specification
+import org.specs2.matcher.DataTables
+
+class ReplaceTest extends Specification with DataTables {
+
+  "apply replace operation" in {
+    "existing"                                || "operation"                                || "expected"                                |
+      Map("a" -> Map("c" -> "2"))             !! Replace("/a/c", Value("3"))                !! Map("a" -> Map("c" -> "3"))               |
+      Map("a" -> Map("c" -> "2"))             !! Replace("/a", Value("1"))                  !! Map("a" -> "1")                           |
+      Map("list" -> List("a", "b"))           !! Replace("/list/0", Value("c"))             !! Map("list" -> List("c", "b"))             |
+      Map("list" -> List("a", "b"))           !! Replace("/list/1", Value("c"))             !! Map("list" -> List("a", "c"))             |
+      Map("list" -> List("a", "b"))           !! Replace("/list/1", Value(Map("d" -> "4"))) !! Map("list" -> List("a", Map("d" -> "4"))) |
+      Map("list" -> List("a", Map("b" -> 2))) !! Replace("/list/1/b", Value(3))             !! Map("list" -> List("a", Map("b" -> 3)))   |> {
+      (existing, operation, expected) =>
+        operation.exec(existing.asInstanceOf[Map[String, Any]]) must beEqualTo(expected)
+    }
+  }
+
+  "throw error when invalid path" in {
+    Replace("/unknown/b", Value("2")).exec(Map("a" -> "1")) must throwA[IllegalArgumentException]
+  }
+}
+

@@ -8,7 +8,6 @@ class IndexesTest extends Specification {
     val indexes = Indexes(List(Index(List(customIndexField))))
 
     indexes.all must beEqualTo(List(
-      Index(List(IndexField("_id", "_id"), IndexField("version", "version"))),
       Index(List(IndexField("queue", "queue"), IndexField("status", "status"), IndexField("sort", "sort"), IndexField("_id", "_id"))),
       Index(List(IndexField("status", "status"), IndexField("sort", "sort"), IndexField("_id", "_id"))),
       Index(List(customIndexField, IndexField("sort", "sort"), IndexField("_id", "_id"))),

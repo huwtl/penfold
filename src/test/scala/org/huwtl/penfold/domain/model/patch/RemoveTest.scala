@@ -1,4 +1,4 @@
-package org.huwtl.penfold.domain.patch
+package org.huwtl.penfold.domain.model.patch
 
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
@@ -16,6 +16,7 @@ class RemoveTest extends Specification with DataTables {
   }
 
   "throw error when invalid path" in {
-    Remove("/unknown").exec(Map("a" -> "1")) must throwA[IllegalStateException]
+    Remove("/unknown").exec(Map("a" -> "1")) must throwA[IllegalArgumentException]
+    Remove("/a/1/unknown").exec(Map("a" -> List("1", "2"))) must throwA[IllegalArgumentException]
   }
 }

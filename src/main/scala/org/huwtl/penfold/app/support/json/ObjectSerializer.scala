@@ -12,11 +12,12 @@ class ObjectSerializer {
     new AggregateTypeJsonSerializer +
     new IdJsonSerializer +
     new VersionJsonSerializer +
-    new QueueIdJsonSerializer
-    new PatchOperationJsonSerializer
+    new QueueIdJsonSerializer +
+    new PatchOperationJsonSerializer +
+    new ValueJsonSerializer
 
-  def serialize[T](event: T) = {
-    compact(decompose(event))
+  def serialize[T](obj: T) = {
+    compact(decompose(obj))
   }
 
   def deserialize[T](json: String)(implicit manifest: Manifest[T]) = {

@@ -1,4 +1,4 @@
-package org.huwtl.penfold.domain.patch
+package org.huwtl.penfold.domain.model.patch
 
 trait PatchOperation {
   val path: String

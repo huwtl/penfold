@@ -9,13 +9,11 @@ case class Indexes(private val customIndexes: List[Index]) {
 
   private val queueIndexFields = List(IndexField("queue", "queue"), statusField)
 
-  private val idVersionIndex = Index(List(IndexField("_id", "_id"), IndexField("version", "version")))
-
   private val queueIndex = Index(queueIndexFields ::: sortIndexFields)
 
   private val statusIndex = Index(statusField :: sortIndexFields)
 
-  val all = idVersionIndex :: queueIndex :: statusIndex :: augmentCustomIndexes
+  val all = queueIndex :: statusIndex :: augmentCustomIndexes
 
   def transformForSuitableIndex(filters: Filters) = {
     customIndexes.find(_.suitableFor(filters)) match {

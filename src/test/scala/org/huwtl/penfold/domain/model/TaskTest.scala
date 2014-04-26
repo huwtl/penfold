@@ -7,7 +7,7 @@ import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.event.TaskTriggered
 import org.huwtl.penfold.domain.event.TaskStarted
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
-import org.huwtl.penfold.domain.patch.Patch
+import org.huwtl.penfold.domain.model.patch.Patch
 
 class TaskTest extends Specification {
 

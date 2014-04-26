@@ -4,9 +4,9 @@ import org.specs2.mutable.Specification
 import scala.io.Source._
 import org.json4s.jackson.JsonMethods._
 import org.specs2.matcher.DataTables
-import org.huwtl.penfold.domain.patch.{Replace, Remove, Value, Add}
+import org.huwtl.penfold.domain.model.patch.{Replace, Remove, Value, Add}
 
-class PatchOperationJsonSerializerTest extends Specification with DataTables {
+class PatchOperationSerializerTest extends Specification with DataTables {
 
   val addOperation = Add("/a/b", Value("1"))
   val addOperationWithNumberic = Add("/a/b", Value(1))
@@ -14,7 +14,7 @@ class PatchOperationJsonSerializerTest extends Specification with DataTables {
   val removeOperation = Remove("/a/b")
   val replaceOperation = Replace("/a/b", Value("1"))
 
-  val serializer = new PatchOperationJsonSerializer
+  val serializer = new PatchOperationSerializer
 
   "deserialise patch operation" in {
     "jsonPath"                      || "expected"                |

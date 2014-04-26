@@ -3,7 +3,7 @@ package org.huwtl.penfold.command
 import org.joda.time.DateTime
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.domain.patch.Patch
+import org.huwtl.penfold.domain.model.patch.Patch
 
 sealed trait TaskCommand extends Command
 

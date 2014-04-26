@@ -5,7 +5,7 @@ import org.joda.time.DateTime.now
 import org.huwtl.penfold.domain.event._
 import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.model.Status._
-import org.huwtl.penfold.domain.patch.Patch
+import org.huwtl.penfold.domain.model.patch.Patch
 
 object Task extends AggregateFactory {
   def create(aggregateId: AggregateId, queueBinding: QueueBinding, payload: Payload, score: Option[Long]) = {
@@ -26,25 +26,17 @@ object Task extends AggregateFactory {
     case event => unhandled(event)
   }
 
-  private def applyTaskCreated(event: TaskCreated) = Task(
-    event :: Nil,
-    event.aggregateId,
-    event.aggregateVersion,
-    event.created,
-    event.queueBinding,
-    Ready,
-    event.triggerDate,
-    event.payload,
-    event.score
-  )
+  private def applyTaskCreated(event: TaskCreated) = applyTaskCreatedEvent(event, Ready)
 
-  private def applyFutureTaskCreated(event: FutureTaskCreated) = Task(
+  private def applyFutureTaskCreated(event: FutureTaskCreated) = applyTaskCreatedEvent(event, Waiting)
+
+  private def applyTaskCreatedEvent(event: TaskCreatedEvent, status: Status) = Task(
     event :: Nil,
     event.aggregateId,
     event.aggregateVersion,
     event.created,
     event.queueBinding,
-    Waiting,
+    status,
     event.triggerDate,
     event.payload,
     event.score

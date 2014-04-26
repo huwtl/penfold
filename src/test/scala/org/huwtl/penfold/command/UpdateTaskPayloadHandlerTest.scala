@@ -5,7 +5,7 @@ import org.specs2.mock.Mockito
 import org.huwtl.penfold.domain.model.{Task, Payload, AggregateVersion, AggregateId}
 import org.huwtl.penfold.domain.store.DomainRepository
 import org.specs2.specification.Scope
-import org.huwtl.penfold.domain.patch.Patch
+import org.huwtl.penfold.domain.model.patch.Patch
 
 class UpdateTaskPayloadHandlerTest extends Specification with Mockito {
   val expectedAggregateId = AggregateId("a1")

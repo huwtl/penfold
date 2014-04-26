@@ -15,7 +15,7 @@ import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.event.TaskTriggered
 import org.huwtl.penfold.domain.event.TaskStarted
 import org.specs2.matcher.DataTables
-import org.huwtl.penfold.domain.patch.{Patch, Value, Add}
+import org.huwtl.penfold.domain.model.patch.{Patch, Value, Add}
 
 class EventSerializerTest extends Specification with DataTables {
   val dateTime = new DateTime(2014, 2, 3, 12, 47, 54)

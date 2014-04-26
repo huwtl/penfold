@@ -4,7 +4,7 @@ import org.json4s._
 import org.json4s.Extraction._
 import org.json4s.TypeInfo
 import org.json4s.JValue
-import org.huwtl.penfold.domain.patch.Value
+import org.huwtl.penfold.domain.model.patch.Value
 
 class ValueJsonSerializer extends Serializer[Value] {
   private val ValueClass = classOf[Value]
