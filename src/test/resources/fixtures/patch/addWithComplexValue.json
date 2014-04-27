@@ -1,0 +1,7 @@
+{
+    "op": "Add",
+    "path": "/a/b",
+    "value": {
+        "complex": "1"
+    }
+}

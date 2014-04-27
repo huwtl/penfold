@@ -8,9 +8,11 @@
             "_links": {
                 "self": {"href": "http://host/tasks/1"},
                 "queue": {"href": "http://host/queues/abc"},
-                "start": {"href": "http://host/queues/abc/started"}
+                "start": {"href": "http://host/queues/abc/started"},
+                "updatePayload": {"href": "http://host/tasks/1/1/payload"}
             },
             "id": "1",
+            "version": 1,
             "payload": {},
             "status": "ready",
             "statusLastModified": "2014-02-25 13:00:00",

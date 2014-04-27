@@ -2,13 +2,11 @@ package org.huwtl.penfold.command
 
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
-import org.huwtl.penfold.domain.model.{QueueId, Task, AggregateId}
+import org.huwtl.penfold.domain.model.{Task, AggregateId}
 import org.huwtl.penfold.domain.store.DomainRepository
 
 class CompleteTaskHandlerTest extends Specification with Mockito {
   val expectedAggregateId = AggregateId("a1")
-
-  val queue = QueueId("q1")
 
   val domainRepository = mock[DomainRepository]
 
@@ -19,9 +17,9 @@ class CompleteTaskHandlerTest extends Specification with Mockito {
 
   "complete started task" in {
     domainRepository.getById[Task](expectedAggregateId) returns startedTask
-    startedTask.complete(queue) returns completedTask
+    startedTask.complete() returns completedTask
 
-    handler.handle(new CompleteTask(expectedAggregateId, queue))
+    handler.handle(new CompleteTask(expectedAggregateId))
 
     there was one(domainRepository).add(completedTask)
   }

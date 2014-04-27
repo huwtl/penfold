@@ -52,7 +52,7 @@ class Bootstrap extends LifeCycle {
 
     val indexes = Indexes(config.readStoreIndexes)
     indexes.all.map(index =>
-      readStoreDatabase("tasks").ensureIndex(MongoDBObject(index.fields.map(f => f.alias -> 1)), MongoDBObject("background" -> true))
+      readStoreDatabase("tasks").ensureIndex(MongoDBObject(index.fields.map(f => f.path -> 1)), MongoDBObject("background" -> true))
     )
 
     val eventNotifiers = List(readStoreUpdater)
@@ -65,7 +65,8 @@ class Bootstrap extends LifeCycle {
       classOf[TriggerTask] -> new TriggerTaskHandler(domainRepository), //
       classOf[StartTask] -> new StartTaskHandler(domainRepository), //
       classOf[CompleteTask] -> new CompleteTaskHandler(domainRepository), //
-      classOf[CancelTask] -> new CancelTaskHandler(domainRepository) //
+      classOf[CancelTask] -> new CancelTaskHandler(domainRepository), //
+      classOf[UpdateTaskPayload] -> new UpdateTaskPayloadHandler(domainRepository) //
     ))
 
     val readStore = new MongoReadStore(readStoreDatabase, indexes, objectSerializer, new DateTimeSource)

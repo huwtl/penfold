@@ -3,7 +3,7 @@ package org.huwtl.penfold.app.readstore.mongodb
 import org.huwtl.penfold.readstore.{EventTracker, EventListener}
 import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.domain.model.Status._
-import org.huwtl.penfold.domain.model.Status
+import org.huwtl.penfold.domain.model.{Payload, Status}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.domain.event._
 import org.huwtl.penfold.domain.event.TaskCompleted
@@ -15,10 +15,13 @@ import scala.Some
 import org.huwtl.penfold.domain.event.TaskStarted
 import com.mongodb.DuplicateKeyException
 import grizzled.slf4j.Logger
-import scala.util.Try
+import com.mongodb.util.JSON
+import org.huwtl.penfold.app.support.RegisterBigIntConversionHelpers
 
 class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
+
+  RegisterBigIntConversionHelpers()
 
   private val success = true
 
@@ -32,6 +35,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case e: TaskStarted => handleUpdateStatusEvent(e, Started)
       case e: TaskCompleted => handleUpdateStatusEvent(e, Completed)
       case e: TaskCancelled => handleUpdateStatusEvent(e, Cancelled)
+      case e: TaskPayloadUpdated => handleUpdatePayloadEvent(e)
       case _ =>
     }
 
@@ -41,8 +45,6 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
   }
 
   private def handleCreateEvent(event: TaskCreatedEvent, status: Status) = {
-    val score = event.triggerDate.getMillis
-
     val queue = event.queueBinding.id
 
     val task = MongoDBObject(
@@ -54,18 +56,21 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       "statusLastModified" -> event.created.toDate,
       "triggerDate" -> event.triggerDate.toDate,
       "payload" -> event.payload.content,
-      "sort" -> resolveSortOrder(event, score),
-      "score" -> score
+      "sort" -> resolveSortOrder(event, status, event.score),
+      "score" -> event.score
     )
 
-    Try(tasksCollection.insert(task)) recover {
+    try {
+      tasksCollection.insert(task)
+    }
+    catch {
       case e: DuplicateKeyException => logger.info("task creation event already handled, ignoring", e)
-      case e => throw e
+      case e: Exception => throw e
     }
   }
 
   private def handleUpdateStatusEvent(event: Event, status: Status) = {
-    val query = MongoDBObject("_id" -> event.aggregateId.value, "version" -> event.aggregateVersion.previous.number)
+    val query = updateByIdVersion(event)
 
     tasksCollection.findOne(query) match {
       case Some(task) => {
@@ -73,7 +78,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
           "version" -> event.aggregateVersion.number,
           "status" -> status.name,
           "statusLastModified" -> event.created.toDate,
-          "sort" -> resolveSortOrder(event, task.as[Long]("score"))
+          "sort" -> resolveSortOrder(event, status, task.as[Long]("score"))
         )
         tasksCollection.update(query, update)
       }
@@ -81,12 +86,36 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     }
   }
 
-  private def resolveSortOrder(event: Event, score: Long) = {
+  private def handleUpdatePayloadEvent(event: TaskPayloadUpdated) = {
+    val query = updateByIdVersion(event)
+
+    tasksCollection.findOne(query) match {
+      case Some(task) => {
+        val status = Status.from(task.as[String]("status")).get
+        val previousScore = task.as[Long]("score")
+        val payload = objectSerializer.deserialize[Payload](JSON.serialize(task.as[String]("payload")))
+
+        val update = $set(
+          "version" -> event.aggregateVersion.number,
+          "payload" -> event.payloadUpdate.exec(payload.content),
+          "score" -> event.score.getOrElse(previousScore),
+          "sort" -> resolveSortOrder(event, status, previousScore)
+        )
+        tasksCollection.update(query, update)
+      }
+      case None =>
+    }
+  }
+
+  private def resolveSortOrder(event: Event, status: Status, previousScore: Long) = {
     event match {
-      case e: TaskCreated => score
-      case e: TaskTriggered => score
-      case e: FutureTaskCreated => e.triggerDate.getMillis
+      case e: TaskCreated => e.score
+      case e: FutureTaskCreated => e.score
+      case e: TaskTriggered => previousScore
+      case e: TaskPayloadUpdated if status == Ready => e.score getOrElse previousScore
       case _ => event.created.getMillis
     }
   }
+
+  private def updateByIdVersion(event: Event) = MongoDBObject("_id" -> event.aggregateId.value, "version" -> event.aggregateVersion.previous.number)
 }

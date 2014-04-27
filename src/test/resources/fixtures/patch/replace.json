@@ -1,0 +1,5 @@
+{
+    "op": "Replace",
+    "path": "/a/b",
+    "value": "1"
+}

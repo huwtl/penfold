@@ -19,7 +19,7 @@ trait ErrorHandling extends ScalatraServlet {
     case e: JsonParseException => errorResponse(BadRequest(s"Bad request: ${e.getMessage}"), e)
     case e: AggregateConflictException => {
       logger.info("Conflict:", e)
-      errorResponse(Conflict(s"Conflict: ${e.getMessage}"))
+      errorResponse(Conflict(e.getMessage))
     }
     case e: Exception => errorResponse(InternalServerError("Crumbs!"), e)
   }

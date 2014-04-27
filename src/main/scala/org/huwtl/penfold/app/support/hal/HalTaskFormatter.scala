@@ -20,12 +20,17 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
 
     val representation: Representation = representationFactory.newRepresentation(s"${baseTaskLink.toString}/${task.id.value}")
       .withProperty("id", task.id.value)
+      .withProperty("version", task.version.number)
       .withProperty("status", task.status.name)
       .withProperty("statusLastModified", dateFormatter.print(task.statusLastModified))
       .withProperty("triggerDate", dateFormatter.print(task.triggerDate))
       .withProperty("payload", JavaMapUtil.deepConvertToJavaMap(task.payload.content))
       .withProperty("queueBinding", JavaMapUtil.deepConvertToJavaMap(bindingToMap(task.queueBinding)))
       .withLink("queue", s"${baseQueueLink.toString}/$queueIdParam")
+
+    if (task.status != Completed & task.status != Cancelled) {
+      representation.withLink("updatePayload", s"${baseTaskLink.toString}/${task.id.value}/${task.version.number}/payload")
+    }
 
     task.status match {
       case Ready => {

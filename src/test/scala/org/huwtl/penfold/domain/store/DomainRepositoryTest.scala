@@ -18,7 +18,7 @@ class DomainRepositoryTest extends Specification with Mockito {
 
     val timestamp = DateTime.now
 
-    val createdTask = Task.create(aggregateId, binding, Payload.empty)
+    val createdTask = Task.create(aggregateId, binding, Payload.empty, None)
 
     val eventStore = mock[EventStore]
 
@@ -36,7 +36,7 @@ class DomainRepositoryTest extends Specification with Mockito {
 
   "load aggregate by id" in new context {
     eventStore.retrieveBy(aggregateId) returns List(
-      TaskCreated(aggregateId, AggregateVersion.init, timestamp, binding, timestamp, Payload.empty),
+      TaskCreated(aggregateId, AggregateVersion.init, timestamp, binding, timestamp, Payload.empty, timestamp.getMillis),
       TaskTriggered(aggregateId, AggregateVersion.init.next, timestamp)
     )
 

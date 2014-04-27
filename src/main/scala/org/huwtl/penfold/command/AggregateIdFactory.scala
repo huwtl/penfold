@@ -1,4 +1,4 @@
-package org.huwtl.penfold.command.support
+package org.huwtl.penfold.command
 
 import org.huwtl.penfold.domain.model.AggregateId
 

@@ -1,6 +1,7 @@
 package org.huwtl.penfold.domain.model
 
 import org.huwtl.penfold.domain.event.Event
+import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 
 trait EventSourced {
   def applyEvent: Event => EventSourced
@@ -18,6 +19,8 @@ trait AggregateRoot extends EventSourced {
   def uncommittedEvents: List[Event]
 
   def markCommitted: AggregateRoot
+
+  def checkVersion(expectedVersion: AggregateVersion) = if (expectedVersion != version) throw new AggregateConflictException(s"aggregate conflict ${aggregateId}")
 }
 
 trait AggregateFactory extends EventSourced {

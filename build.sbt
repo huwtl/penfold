@@ -33,6 +33,7 @@ libraryDependencies ++= Seq(
   "com.googlecode.flyway" % "flyway-core" % "2.3.1",
   "org.hsqldb" % "hsqldb" % "2.3.2",
   "com.codahale.metrics" % "metrics-healthchecks" % "3.0.2",
+  "me.moocar" % "logback-gelf" % "0.10p1",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "org.specs2" % "specs2_2.10" % "2.1.1" % "test",
   "org.scalatra" %% "scalatra-specs2" % "2.2.2" % "test",
