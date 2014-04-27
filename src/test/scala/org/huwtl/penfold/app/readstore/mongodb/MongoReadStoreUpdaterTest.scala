@@ -1,12 +1,8 @@
 package org.huwtl.penfold.app.readstore.mongodb
 
 import com.github.athieriot.EmbedConnection
-import org.huwtl.penfold.domain.event.{FutureTaskCreated, TaskPayloadUpdated, TaskStarted, TaskCreated}
 import org.huwtl.penfold.domain.model._
-import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.domain.model.QueueBinding
-import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.readstore.{TaskRecord, EventSequenceId, EventRecord}
+import org.huwtl.penfold.readstore.EventSequenceId
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import org.joda.time.DateTime
@@ -15,7 +11,19 @@ import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.app.support.DateTimeSource
 import java.util.UUID
 import org.huwtl.penfold.domain.model.Status.{Waiting, Started, Ready}
-import org.huwtl.penfold.domain.model.patch.{Remove, Patch}
+import org.huwtl.penfold.domain.model.patch._
+import org.huwtl.penfold.readstore.EventRecord
+import org.huwtl.penfold.domain.event.TaskPayloadUpdated
+import org.huwtl.penfold.domain.model.QueueId
+import org.huwtl.penfold.domain.event.FutureTaskCreated
+import org.huwtl.penfold.domain.model.AggregateId
+import org.huwtl.penfold.readstore.TaskRecord
+import scala.Some
+import org.huwtl.penfold.domain.event.TaskCreated
+import org.huwtl.penfold.domain.event.TaskStarted
+import org.huwtl.penfold.domain.model.patch.Value
+import org.huwtl.penfold.domain.model.patch.Patch
+import org.huwtl.penfold.domain.model.QueueBinding
 
 class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
   sequential
@@ -50,8 +58,8 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
   "update payload of ready task" in new context {
     val updateTime = new DateTime(2014, 2, 22, 13, 0, 0, 0)
-    val updatedPayload = Payload(Map("field1" -> "123"))
-    val payloadUpdate = Patch(List(Remove("/inner")))
+    val updatedPayload = Payload(Map("field1" -> "123", "inner" -> 1))
+    val payloadUpdate = Patch(List(Replace("/inner", Value(1))))
     val updatedScore = updateTime.getMillis
     val taskPayloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), updateTime, payloadUpdate, None, Some(updatedScore))
 
@@ -65,8 +73,8 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
   "update payload of waiting task" in new context {
     val updateTime = new DateTime(2014, 2, 22, 13, 0, 0, 0)
-    val updatedPayload = Payload(Map("field1" -> "123"))
-    val payloadUpdate = Patch(List(Remove("/inner")))
+    val updatedPayload = Payload(Map("field1" -> "123", "inner" -> 1))
+    val payloadUpdate = Patch(List(Replace("/inner", Value(BigInt(1)))))
     val updatedScore = new DateTime(2014, 2, 22, 14, 0, 0, 0).getMillis
     val futureTaskCreatedEvent = FutureTaskCreated(aggregateId, AggregateVersion(1), created, QueueBinding(queueId), triggerDate, payload, score)
     val taskPayloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), updateTime, payloadUpdate, None, Some(updatedScore))

@@ -15,11 +15,13 @@ import scala.Some
 import org.huwtl.penfold.domain.event.TaskStarted
 import com.mongodb.DuplicateKeyException
 import grizzled.slf4j.Logger
-import scala.util.Try
 import com.mongodb.util.JSON
+import org.huwtl.penfold.app.support.RegisterBigIntConversionHelpers
 
 class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
+
+  RegisterBigIntConversionHelpers()
 
   private val success = true
 
