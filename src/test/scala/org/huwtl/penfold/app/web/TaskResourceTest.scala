@@ -86,7 +86,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(UpdateTaskPayload(expectedTask.id, expectedTask.version, Some("update_type_1"), Patch(List(Add("/a/b", Value("1")))), Some(100))) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    patch("/tasks/2/1/payload", textFromFile("fixtures/web/payload_update.json"), headers = validAuthHeader) {
+    put("/tasks/2/1/payload", textFromFile("fixtures/web/payload_update.json"), headers = validAuthHeader) {
       status must beEqualTo(200)
     }
   }
