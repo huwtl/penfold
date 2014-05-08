@@ -18,8 +18,7 @@ class ReplaceTest extends Specification with DataTables {
     }
   }
 
-  "throw error when invalid path" in {
-    Replace("/unknown/b", Value("2")).exec(Map("a" -> "1")) must throwA[IllegalArgumentException]
+  "apply addition when path item to replace not found" in {
+    Replace("/unknown", Value("2")).exec(Map("a" -> "1")) must beEqualTo(Map("a" -> "1", "unknown" -> "2"))
   }
 }
-
