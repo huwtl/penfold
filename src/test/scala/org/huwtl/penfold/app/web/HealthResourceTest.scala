@@ -5,10 +5,10 @@ import org.specs2.mock.Mockito
 import com.codahale.metrics.health.HealthCheckRegistry
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 
-class HealthCheckResourceTest extends MutableScalatraSpec with Mockito {
+class HealthResourceTest extends MutableScalatraSpec with Mockito {
   sequential
 
-  addServlet(new HealthCheckResource(new HealthCheckRegistry, new ObjectSerializer), "/healthcheck")
+  addServlet(new HealthResource(new HealthCheckRegistry, new ObjectSerializer), "/healthcheck")
 
   "return 200" in {
     get("/healthcheck") {

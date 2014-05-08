@@ -7,7 +7,7 @@ import org.huwtl.penfold.app.support.json.ObjectSerializer
 import scala.collection.mutable
 import com.codahale.metrics.health.HealthCheck.Result
 
-class HealthCheckResource(healthCheckRegistry: HealthCheckRegistry, objectSerializer: ObjectSerializer) extends ScalatraServlet {
+class HealthResource(healthCheckRegistry: HealthCheckRegistry, objectSerializer: ObjectSerializer) extends ScalatraServlet {
   before() {
     contentType = "application/json"
   }
@@ -31,4 +31,4 @@ class HealthCheckResource(healthCheckRegistry: HealthCheckRegistry, objectSerial
   }
 }
 
-case class HealthCheckResult(isHealthy: Boolean, message: Option[String])
+case class HealthCheckResult(healthy: Boolean, message: Option[String])
