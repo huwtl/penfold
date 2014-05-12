@@ -27,6 +27,7 @@ class EventSerializerTest extends Specification with DataTables {
   val taskPayloadUpdatedEvent = TaskPayloadUpdated(AggregateId("a1"), AggregateVersion.init, dateTime, Patch(List(Add("/a/b", Value("1")))), Some("update_type_1"), Some(100))
   val taskTriggeredEvent = TaskTriggered(AggregateId("a1"), AggregateVersion.init, dateTime)
   val taskStartedEvent = TaskStarted(AggregateId("a1"), AggregateVersion.init, dateTime)
+  val taskRequeuedEvent = TaskRequeued(AggregateId("a1"), AggregateVersion.init, dateTime)
   val taskCancelledEvent = TaskCancelled(AggregateId("a1"), AggregateVersion.init, dateTime)
   val taskCompletedEvent = TaskCompleted(AggregateId("a1"), AggregateVersion.init, dateTime)
   val serializer = new EventSerializer
@@ -38,6 +39,7 @@ class EventSerializerTest extends Specification with DataTables {
     "task_payload_updated.json" !! taskPayloadUpdatedEvent |
     "task_triggered.json"       !! taskTriggeredEvent      |
     "task_started.json"         !! taskStartedEvent        |
+    "task_requeued.json"        !! taskRequeuedEvent       |
     "task_cancelled.json"       !! taskCancelledEvent      |
     "task_completed.json"       !! taskCompletedEvent      |> {
       (jsonPath, expectedEvent) =>
@@ -54,6 +56,7 @@ class EventSerializerTest extends Specification with DataTables {
     taskPayloadUpdatedEvent !! "task_payload_updated.json" |
     taskTriggeredEvent      !! "task_triggered.json"       |
     taskStartedEvent        !! "task_started.json"         |
+    taskRequeuedEvent       !! "task_requeued.json"        |
     taskCancelledEvent      !! "task_cancelled.json"       |
     taskCompletedEvent      !! "task_completed.json"       |> {
       (event, expectedJsonPath) =>

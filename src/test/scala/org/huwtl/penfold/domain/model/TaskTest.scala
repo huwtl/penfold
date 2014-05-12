@@ -50,18 +50,28 @@ class TaskTest extends Specification {
   }
 
   "cancel task" in {
-    val startedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel()
-    typesOf(startedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCancelled], classOf[TaskCreated]))
+    val cancelledTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel()
+    typesOf(cancelledTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCancelled], classOf[TaskCreated]))
   }
 
   "complete task" in {
-    val startedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().complete()
-    typesOf(startedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCompleted], classOf[TaskStarted], classOf[TaskCreated]))
+    val completedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().complete()
+    typesOf(completedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCompleted], classOf[TaskStarted], classOf[TaskCreated]))
   }
 
   "ensure only started tasks can be completed" in {
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete() must throwA[RuntimeException]
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().cancel().complete() must throwA[RuntimeException]
+  }
+
+  "requeue task" in {
+    val requeuedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().requeue()
+    typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[TaskStarted], classOf[TaskCreated]))
+  }
+
+  "ensure waiting or ready tasks cannot be requeued" in {
+    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue() must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue() must throwA[RuntimeException]
   }
 
   "update task payload" in {

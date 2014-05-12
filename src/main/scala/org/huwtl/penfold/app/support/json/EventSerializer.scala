@@ -12,7 +12,7 @@ class EventSerializer {
 
   implicit val formats = new Formats {
     val dateFormat = DefaultFormats.lossless.dateFormat
-    override val typeHints = ShortTypeHints(classOf[TaskCreated] :: classOf[FutureTaskCreated] :: classOf[TaskPayloadUpdated] :: classOf[TaskTriggered] :: classOf[TaskStarted] :: classOf[TaskCompleted] :: classOf[TaskCancelled] :: Nil)
+    override val typeHints = ShortTypeHints(classOf[TaskCreated] :: classOf[FutureTaskCreated] :: classOf[TaskPayloadUpdated] :: classOf[TaskTriggered] :: classOf[TaskStarted] :: classOf[TaskRequeued] :: classOf[TaskCompleted] :: classOf[TaskCancelled] :: Nil)
     override val typeHintFieldName = "type"
   } +
     new PayloadJsonSerializer +

@@ -37,14 +37,14 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
 
   val validCredentials = AuthenticationCredentials("user", "secret")
 
-  val  readStore = mock[ReadStore]
+  val readStore = mock[ReadStore]
 
   val commandDispatcher = mock[CommandDispatcher]
 
   addServlet(new TaskResource(readStore, commandDispatcher, new ObjectSerializer, new HalTaskFormatter(new URI("http://host/tasks"), new URI("http://host/queues")), pageSize, Some(validCredentials)), "/tasks/*")
 
   "return 200 with hal+json formatted task response" in {
-    val expectedTask = TaskRecord(AggregateId("1"), AggregateVersion.init, created, binding, Status.Waiting, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    val expectedTask = TaskRecord(AggregateId("1"), AggregateVersion.init, created, binding, Status.Waiting, created, None, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
     get("/tasks/1", headers = validAuthHeader) {
@@ -54,7 +54,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
   }
 
   "return 200 with hal+json formatted filtered tasks response" in {
-    val expectedTask = TaskRecord(AggregateId("1"), AggregateVersion.init, created, binding, Status.Waiting, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
+    val expectedTask = TaskRecord(AggregateId("1"), AggregateVersion.init, created, binding, Status.Waiting, created, None, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload(Map("data" -> "value", "inner" -> Map("bool" -> true))))
     val filters = Filters(List(Filter("data", Some("value"))))
     readStore.retrieveBy(filters, PageRequest(pageSize)) returns PageResult(List(expectedTask), None, None)
 
@@ -72,7 +72,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
   }
 
   "return 201 when posting new task" in {
-    val expectedTask = TaskRecord(AggregateId("2"), AggregateVersion.init, created, binding, Status.Waiting, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+    val expectedTask = TaskRecord(AggregateId("2"), AggregateVersion.init, created, binding, Status.Waiting, created, None, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
     commandDispatcher.dispatch(CreateTask(binding, expectedTask.payload, None)) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
@@ -82,7 +82,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
   }
 
   "return 200 when updating payload" in {
-    val expectedTask = TaskRecord(AggregateId("2"), AggregateVersion.init, created, binding, Status.Waiting, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
+    val expectedTask = TaskRecord(AggregateId("2"), AggregateVersion.init, created, binding, Status.Waiting, created, None, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true))))
     commandDispatcher.dispatch(UpdateTaskPayload(expectedTask.id, expectedTask.version, Some("update_type_1"), Patch(List(Add("/a/b", Value("1")))), Some(100))) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 

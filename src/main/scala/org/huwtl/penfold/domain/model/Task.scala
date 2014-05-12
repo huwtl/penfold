@@ -80,6 +80,11 @@ case class Task(uncommittedEvents: List[Event],
     applyTaskCompleted(TaskCompleted(aggregateId, version.next, now))
   }
 
+  def requeue(): Task = {
+    require(status != Waiting && status != Ready, s"Cannot requeue from status $status")
+    applyTaskRequeued(TaskRequeued(aggregateId, version.next, now))
+  }
+
   def markCommitted = copy(uncommittedEvents = Nil)
 
   def applyEvent = {
@@ -88,6 +93,7 @@ case class Task(uncommittedEvents: List[Event],
     case event: TaskCancelled => applyTaskCancelled(event)
     case event: TaskCompleted => applyTaskCompleted(event)
     case event: TaskPayloadUpdated => applyTaskPayloadUpdated(event)
+    case event: TaskRequeued => applyTaskRequeued(event)
     case event => unhandled(event)
   }
 
@@ -106,4 +112,6 @@ case class Task(uncommittedEvents: List[Event],
     payload = Payload(event.payloadUpdate.exec(payload.content)),
     score = event.score getOrElse score
   )
+
+  private def applyTaskRequeued(event: TaskRequeued) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Ready)
 }

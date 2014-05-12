@@ -64,6 +64,7 @@ class Bootstrap extends LifeCycle {
       classOf[CreateFutureTask] -> new CreateFutureTaskHandler(domainRepository, aggregateIdFactory), //
       classOf[TriggerTask] -> new TriggerTaskHandler(domainRepository), //
       classOf[StartTask] -> new StartTaskHandler(domainRepository), //
+      classOf[RequeueTask] -> new RequeueTaskHandler(domainRepository), //
       classOf[CompleteTask] -> new CompleteTaskHandler(domainRepository), //
       classOf[CancelTask] -> new CancelTaskHandler(domainRepository), //
       classOf[UpdateTaskPayload] -> new UpdateTaskPayloadHandler(domainRepository) //

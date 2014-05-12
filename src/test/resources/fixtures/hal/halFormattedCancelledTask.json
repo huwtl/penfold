@@ -1,7 +1,8 @@
 {
     "_links": {
         "self": {"href": "http://host/tasks/1"},
-        "queue": {"href": "http://host/queues/abc"}
+        "queue": {"href": "http://host/queues/abc"},
+        "requeue": {"href": "http://host/queues/abc/ready"}
     },
     "id": "1",
     "version": 1,
@@ -13,6 +14,10 @@
     },
     "status": "cancelled",
     "statusLastModified": "2014-02-14 12:00:00",
+    "previousStatus": {
+        "status": "ready",
+        "statusLastModified": "2014-02-14 12:00:00"
+    },
     "triggerDate": "2014-02-25 14:00:00",
     "queueBinding": {"id": "abc"}
 }

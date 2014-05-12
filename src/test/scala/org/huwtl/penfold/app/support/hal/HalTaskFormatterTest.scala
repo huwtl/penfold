@@ -32,6 +32,8 @@ class HalTaskFormatterTest extends Specification {
 
   val payload = Payload(Map("data" -> "value", "inner" -> Map("bool" -> true)))
 
+  val previousStatus = PreviousStatus(Status.Ready, created)
+
   val taskFormatter = new HalTaskFormatter(new URI("http://host/tasks"), new URI("http://host/queues"))
 
   "format waiting task as hal+json" in {
@@ -43,15 +45,15 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format started task as hal+json" in {
-    hal(Status.Started) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedStartedTask.json"))
+    hal(Status.Started, previousStatus = Some(previousStatus)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedStartedTask.json"))
   }
 
   "format completed task as hal+json" in {
-    hal(Status.Completed) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCompletedTask.json"))
+    hal(Status.Completed, previousStatus = Some(previousStatus)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCompletedTask.json"))
   }
 
   "format cancelled task as hal+json" in {
-    hal(Status.Cancelled) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCancelledTask.json"))
+    hal(Status.Cancelled, previousStatus = Some(previousStatus)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCancelledTask.json"))
   }
 
   "format filtered tasks hal+json" in {
@@ -70,18 +72,18 @@ class HalTaskFormatterTest extends Specification {
   "format task as hal+json with complex payload" in {
     val complexPayload = Payload(
       Map("data" -> "value", "inner" -> Map("bool" -> true, "inner2" -> List(Map("a" -> "1", "b" -> 1), Map("a" -> "2", "b" -> 2)))))
-    val task = TaskRecord(id, AggregateVersion.init, created, QueueBinding(queueId), Status.Waiting, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, complexPayload)
+    val task = TaskRecord(id, AggregateVersion.init, created, QueueBinding(queueId), Status.Waiting, created, None, triggerDate, triggerDate.getMillis, triggerDate.getMillis, complexPayload)
     hal(task) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedTaskWithComplexPayload.json"))
   }
 
   private def halTasks(filters: Filters, pageNumber: Int = 0, previousPage: Option[PageReference] = None, nextPage: Option[PageReference] = None) = {
     parse(taskFormatter.halFrom(pageRequest,
-      PageResult(List(TaskRecord(id, AggregateVersion.init, created, QueueBinding(queueId), Status.Waiting, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, payload)), previousPage, nextPage), filters
+      PageResult(List(TaskRecord(id, AggregateVersion.init, created, QueueBinding(queueId), Status.Waiting, created, None, triggerDate, triggerDate.getMillis, triggerDate.getMillis, payload)), previousPage, nextPage), filters
     ))
   }
 
-  private def hal(status: Status, binding: QueueBinding = QueueBinding(queueId)) = {
-    parse(taskFormatter.halFrom(TaskRecord(id, AggregateVersion.init, created, binding, status, created, triggerDate, triggerDate.getMillis, triggerDate.getMillis, payload)))
+  private def hal(status: Status, binding: QueueBinding = QueueBinding(queueId), previousStatus: Option[PreviousStatus] = None) = {
+    parse(taskFormatter.halFrom(TaskRecord(id, AggregateVersion.init, created, binding, status, created, previousStatus, triggerDate, triggerDate.getMillis, triggerDate.getMillis, payload)))
   }
 
   private def hal(task: TaskRecord) = {

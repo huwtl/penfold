@@ -11,7 +11,10 @@ case class TaskRecord(id: AggregateId,
                       queueBinding: QueueBinding,
                       status: Status,
                       statusLastModified: DateTime,
+                      previousStatus: Option[PreviousStatus],
                       triggerDate: DateTime,
                       score: Long,
                       sort: Long,
                       payload: Payload)
+
+case class PreviousStatus(status: Status, statusLastModified: DateTime)

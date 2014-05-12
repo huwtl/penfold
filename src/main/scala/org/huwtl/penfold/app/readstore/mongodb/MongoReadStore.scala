@@ -13,9 +13,10 @@ import org.huwtl.penfold.readstore.TaskRecord
 import NavigationDirection.{Reverse, Forward}
 import org.huwtl.penfold.domain.model.Status.Waiting
 import org.joda.time.DateTime
-import java.util.Date
 import scala.util.{Failure, Try, Success}
 import org.huwtl.penfold.app.support.DateTimeSource
+import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
+import java.util.Date
 
 class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource) extends ReadStore {
   private val connectionSuccess = true
@@ -23,6 +24,8 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
   private val pageReferenceSeparator = "~"
 
   lazy private val tasksCollection = database("tasks")
+
+  RegisterJodaTimeConversionHelpers()
 
   override def checkConnectivity: Either[Boolean, Exception] = {
     Try(database.collectionNames()) match {
@@ -59,14 +62,20 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
   }
 
   private def convertDocumentToTask(document: MongoDBObject) = {
+    def parsePreviousStatus = document.getAs[Map[String, Any]]("previousStatus") match {
+      case Some(previousStatus) => objectSerializer.deserialize[Option[PreviousStatus]](objectSerializer.serialize(previousStatus))
+      case None => None
+    }
+
     TaskRecord(
       AggregateId(document.as[String]("_id")),
       AggregateVersion(document.as[Int]("version")),
-      new DateTime(document.as[Date]("created")),
+      document.as[DateTime]("created"),
       QueueBinding(QueueId(document.as[String]("queue"))),
       Status.from(document.as[String]("status")).get,
-      new DateTime(document.as[Date]("statusLastModified")),
-      new DateTime(document.as[Date]("triggerDate")),
+      document.as[DateTime]("statusLastModified"),
+      parsePreviousStatus,
+      document.as[DateTime]("triggerDate"),
       document.as[Long]("score"),
       document.as[Long]("sort"),
       objectSerializer.deserialize[Payload](JSON.serialize(document("payload")))
