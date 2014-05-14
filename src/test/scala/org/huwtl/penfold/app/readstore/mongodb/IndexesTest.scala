@@ -44,12 +44,12 @@ class IndexesTest extends Specification {
 
   "transform filters by resoving index aliases and index field order" in {
     val indexes = new Indexes(List(Index(List(customIndexField, customMultiIndexField))))
-    val expectedTransformedFilters = Filters(List(filter("payload.idx1"), filter("payload.idxs1")))
+    val expectedTransformedFilters = Filters(List(filter("queue"), filter("status"), filter("payload.idx1"), filter("payload.idxs1")))
 
-    indexes.transformForSuitableIndex(Filters(List(filter("f1"), filter("f2")))) must beEqualTo(expectedTransformedFilters)
-    indexes.transformForSuitableIndex(Filters(List(filter("f1"), filter("f2")))) must beEqualTo(expectedTransformedFilters)
-    indexes.transformForSuitableIndex(Filters(List(filter("f1")))) must beEqualTo(Filters(List(filter("f1"))))
-    indexes.transformForSuitableIndex(Filters(List(filter("f3")))) must beEqualTo(Filters(List(filter("f3"))))
+    indexes.transformForSuitableIndex(Filters(List(filter("queue"), filter("status"), filter("f1"), filter("f2")))) must beEqualTo(expectedTransformedFilters)
+    indexes.transformForSuitableIndex(Filters(List(filter("queue"), filter("status"), filter("f1"), filter("f2")))) must beEqualTo(expectedTransformedFilters)
+    indexes.transformForSuitableIndex(Filters(List(filter("queue"), filter("status"), filter("f1")))) must beEqualTo(Filters(List(filter("queue"), filter("status"), filter("f1"))))
+    indexes.transformForSuitableIndex(Filters(List(filter("queue"), filter("status"), filter("f3")))) must beEqualTo(Filters(List(filter("queue"), filter("status"), filter("f3"))))
   }
 
   private def filter(key: String) = Filter(key, None)

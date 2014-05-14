@@ -44,9 +44,10 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, filters: Filters) = {
-    val filtersWithQueueStatus = new Filters(Filter("queue", Some(queueId.value)) :: Filter("status", Some(status.name)) :: indexes.transformForSuitableIndex(filters).filters)
+    val filtersWithQueueStatus = new Filters(Filter("queue", Some(queueId.value)) :: Filter("status", Some(status.name)) :: filters.filters)
+    val suitableIndex = indexes.suitableIndex(filtersWithQueueStatus)
 
-    retrievePage(filtersToCriteria(filtersWithQueueStatus), pageRequest, indexes.suitableIndex(filtersWithQueueStatus))
+    retrievePage(filtersToCriteria(indexes.transformForSuitableIndex(filtersWithQueueStatus)), pageRequest, suitableIndex)
   }
 
   override def retrieveBy(filters: Filters, pageRequest: PageRequest) = {
@@ -79,6 +80,14 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
       document.as[Long]("sort"),
       objectSerializer.deserialize[Payload](JSON.serialize(document("payload")))
     )
+  }
+
+  private def filtersToCriteria(filters: Filters) = {
+    val criteria = MongoDBObject.empty
+    filters.filters.foldLeft(criteria)((previousFilters, filter) => {
+      val values = filter.values.map(_ getOrElse null)
+      previousFilters ++ (if (filter.isMulti) filter.key $in values else MongoDBObject(filter.key -> values.head))
+    })
   }
 
   private def retrievePage(criteria: MongoDBObject, pageRequest: PageRequest, suitableIndex: Option[Index]) = {
@@ -164,13 +173,4 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
     }
   }
 
-  private def filtersToCriteria(filters: Filters) = {
-    val criteria = MongoDBObject.empty
-    filters.filters.foldLeft(criteria)((previousFilters, filter) => {
-      val values = filter.values.map(nullWhenNone)
-      previousFilters ++ (if (filter.isMulti) filter.key $in values else MongoDBObject(filter.key -> values.head))
-    })
-  }
-
-  private def nullWhenNone(value: Option[String]) = value getOrElse null
 }
