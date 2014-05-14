@@ -22,17 +22,18 @@ case class Indexes(private val customIndexes: List[Index]) {
     }
   }
 
+  def suitableIndex(filters: Filters) = {
+    all.find(index => {
+      val indexWithoutSortFields = Index(index.fields.filterNot(sortIndexFields.contains))
+      indexWithoutSortFields.suitableFor(filters)
+    })
+  }
+
   private def augmentCustomIndexes = {
-    val customIndexesWithSort = for {
-      customIndex <- customIndexes
-      enhancementFields <- List(sortIndexFields)
-    } yield Index(customIndex.fields ::: enhancementFields)
+    val customIndexesWithSort = customIndexes.map(idx => Index(idx.singleKeyFields ::: sortIndexFields ::: idx.multiKeyFields))
 
-    val customIndexesForSortedQueue = for {
-      customIndex <- customIndexes
-      enhancementFields <- List(queueIndexFields)
-    } yield Index(enhancementFields ::: customIndex.fields ::: sortIndexFields)
+    val customIndexesWithQueueAndSort = customIndexesWithSort.map(idx => Index(queueIndexFields ::: idx.fields))
 
-    customIndexesWithSort ::: customIndexesForSortedQueue
+    customIndexesWithSort ::: customIndexesWithQueueAndSort
   }
 }

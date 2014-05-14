@@ -10,13 +10,12 @@ import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.TaskRecord
-import NavigationDirection.{Reverse, Forward}
+import org.huwtl.penfold.app.readstore.mongodb.NavigationDirection.{Forward, Reverse}
 import org.huwtl.penfold.domain.model.Status.Waiting
 import org.joda.time.DateTime
 import scala.util.{Failure, Try, Success}
 import org.huwtl.penfold.app.support.DateTimeSource
 import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
-import java.util.Date
 
 class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource) extends ReadStore {
   private val connectionSuccess = true
@@ -45,15 +44,15 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, filters: Filters) = {
-    val criteria = appendFiltersToCriteria(MongoDBObject("queue" -> queueId.value, "status" -> status.name), indexes.transformForSuitableIndex(filters))
+    val filtersWithQueueStatus = new Filters(Filter("queue", Some(queueId.value)) :: Filter("status", Some(status.name)) :: indexes.transformForSuitableIndex(filters).filters)
 
-    retrievePage(criteria, pageRequest)
+    retrievePage(filtersToCriteria(filtersWithQueueStatus), pageRequest, indexes.suitableIndex(filtersWithQueueStatus))
   }
 
   override def retrieveBy(filters: Filters, pageRequest: PageRequest) = {
-    val criteria = appendFiltersToCriteria(MongoDBObject.empty, indexes.transformForSuitableIndex(filters))
+    val criteria = filtersToCriteria(indexes.transformForSuitableIndex(filters))
 
-    retrievePage(criteria, pageRequest)
+    retrievePage(criteria, pageRequest, indexes.suitableIndex(filters))
   }
 
   override def retrieveBy(id: AggregateId) = {
@@ -82,7 +81,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
     )
   }
 
-  private def retrievePage(criteria: MongoDBObject, pageRequest: PageRequest) = {
+  private def retrievePage(criteria: MongoDBObject, pageRequest: PageRequest, suitableIndex: Option[Index]) = {
     def execPageQueryWithOverflow(criteria: MongoDBObject, sort: MongoDBObject, pageSize: Int) = {
       if (pageSize > 0) {
         tasksCollection.find(criteria).sort(sort).limit(pageSize + 1).map(convertDocumentToTask(_)).toList
@@ -96,9 +95,39 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
       results.sortWith((e1, e2) => e1.id.value > e2.id.value).sortWith((e1, e2) => e1.sort > e2.sort)
     }
 
+    def sortCriteria(direction: NavigationDirection) = {
+      val sortDirection = if (direction == Forward) -1 else 1
+
+      suitableIndex match {
+        case Some(index) => MongoDBObject(index.fields.map(_.path -> sortDirection))
+        case None => MongoDBObject("sort" -> sortDirection, "_id" -> sortDirection)
+      }
+    }
+
+    def parseLastKnownPageDetails(pageReference: Option[PageReference]) = {
+      if (pageReference.isDefined) {
+        pageReference.get.value.split(pageReferenceSeparator) match {
+          case Array(idFromLastViewedPage, sortValueFromLastViewedPage, navigationalDirection) => {
+            Some(LastKnownPageDetails(AggregateId(idFromLastViewedPage), sortValueFromLastViewedPage.toLong, if (navigationalDirection == "1") Forward else Reverse))
+          }
+          case _ => None
+        }
+      }
+      else {
+        None
+      }
+    }
+
+    def pageReference(results: List[TaskRecord], direction: NavigationDirection) = {
+      if (direction == Forward) {
+        Some(PageReference(Array(results.last.id.value, results.last.sort, 1) mkString pageReferenceSeparator))
+      }
+      else {
+        Some(PageReference(Array(results.head.id.value, results.head.sort, 0) mkString pageReferenceSeparator))
+      }
+    }
+
     val pageSize = pageRequest.pageSize
-    val sortDesc = MongoDBObject("sort" -> -1, "_id" -> -1)
-    val sortAsc = MongoDBObject("sort" -> 1, "_id" -> 1)
 
     parseLastKnownPageDetails(pageRequest.pageReference) match {
       case Some(lastKnownPageDetails) => {
@@ -107,7 +136,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
         lastKnownPageDetails.direction match {
           case Forward => {
             val skipForwardFromLastVisitedPage = $or($and(sortMatch, "_id" $lt lastKnownPageDetails.id.value), "sort" $lt lastKnownPageDetails.sortValue)
-            val resultsWithOverflow = execPageQueryWithOverflow(criteria ++ skipForwardFromLastVisitedPage, sortDesc, pageSize)
+            val resultsWithOverflow = execPageQueryWithOverflow(criteria ++ skipForwardFromLastVisitedPage, sortCriteria(Forward), pageSize)
             val results = resultsWithOverflow take pageSize
             val previousPage = if (results.nonEmpty) pageReference(results, Reverse) else None
             val nextPage = if (resultsWithOverflow.size > pageSize) pageReference(results, Forward) else None
@@ -116,7 +145,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
           }
           case Reverse => {
             val skipBackFromLastVisitedPage = $or($and(sortMatch, "_id" $gt lastKnownPageDetails.id.value), "sort" $gt lastKnownPageDetails.sortValue)
-            val resultsWithOverflow = execPageQueryWithOverflow(criteria ++ skipBackFromLastVisitedPage, sortAsc, pageSize)
+            val resultsWithOverflow = execPageQueryWithOverflow(criteria ++ skipBackFromLastVisitedPage, sortCriteria(Reverse), pageSize)
             val results = sortPageInDescOrder(resultsWithOverflow take pageSize)
             val previousPage = if (resultsWithOverflow.size > pageSize) pageReference(results, Reverse) else None
             val nextPage = if (results.nonEmpty) pageReference(results, Forward) else None
@@ -126,7 +155,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
         }
       }
       case None => {
-        val resultsWithOverflow = execPageQueryWithOverflow(criteria, sortDesc, pageSize)
+        val resultsWithOverflow = execPageQueryWithOverflow(criteria, sortCriteria(Forward), pageSize)
         val results = resultsWithOverflow take pageSize
         val nextPage = if (resultsWithOverflow.size > pageSize) pageReference(results, Forward) else None
 
@@ -135,30 +164,8 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
     }
   }
 
-  private def parseLastKnownPageDetails(pageReference: Option[PageReference]) = {
-    if (pageReference.isDefined) {
-      pageReference.get.value.split(pageReferenceSeparator) match {
-        case Array(idFromLastViewedPage, sortValueFromLastViewedPage, navigationalDirection) => {
-          Some(LastKnownPageDetails(AggregateId(idFromLastViewedPage), sortValueFromLastViewedPage.toLong, if (navigationalDirection == "1") Forward else Reverse))
-        }
-        case _ => None
-      }
-    }
-    else {
-      None
-    }
-  }
-
-  private def pageReference(results: List[TaskRecord], direction: NavigationDirection) = {
-    if (direction == Forward) {
-      Some(PageReference(Array(results.last.id.value, results.last.sort, 1) mkString pageReferenceSeparator))
-    }
-    else {
-      Some(PageReference(Array(results.head.id.value, results.head.sort, 0) mkString pageReferenceSeparator))
-    }
-  }
-
-  private def appendFiltersToCriteria(criteria: MongoDBObject, filters: Filters) = {
+  private def filtersToCriteria(filters: Filters) = {
+    val criteria = MongoDBObject.empty
     filters.filters.foldLeft(criteria)((previousFilters, filter) => {
       val values = filter.values.map(nullWhenNone)
       previousFilters ++ (if (filter.isMulti) filter.key $in values else MongoDBObject(filter.key -> values.head))

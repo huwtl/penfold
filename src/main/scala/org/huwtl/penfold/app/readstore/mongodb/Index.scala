@@ -6,4 +6,7 @@ case class Index(fields: List[IndexField]) {
   def suitableFor(filters: Filters) = {
     filters.keys.toSet == fields.map(_.alias).toSet
   }
+
+  val singleKeyFields = fields.filter(!_.multiKey)
+  val multiKeyFields = fields.filter(_.multiKey)
 }

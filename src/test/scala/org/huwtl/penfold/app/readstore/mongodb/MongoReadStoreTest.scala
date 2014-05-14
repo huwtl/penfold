@@ -30,7 +30,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val score = triggerDate.getMillis
-    val indexes = Indexes(List(Index(List(IndexField("a", "payload.a"))), Index(List(IndexField("a", "payload.a"), IndexField("b", "payload.b")))))
+    val indexes = Indexes(List(Index(List(IndexField("a", "payload.a"))), Index(List(IndexField("a", "payload.a"), IndexField("b", "payload.b", multiKey = true)))))
     val mongoClient = MongoClient("localhost", embedConnectionPort())
     val database = mongoClient("penfoldtest")
     val dateTimeSource = mock[DateTimeSource]
