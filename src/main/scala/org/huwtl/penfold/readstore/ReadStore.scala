@@ -14,4 +14,6 @@ trait ReadStore {
   def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, filters: Filters = Filters.empty): PageResult
 
   def retrieveTasksToTrigger: Iterator[TaskRecordReference]
+
+  def retrieveTasksToArchive(timeoutAttributePath: String): Iterator[TaskRecordReference]
 }

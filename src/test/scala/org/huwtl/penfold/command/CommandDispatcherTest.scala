@@ -19,13 +19,13 @@ class CommandDispatcherTest extends Specification with Mockito {
   ))
 
   "dispatch command to correct handler" in  {
-    dispatch.dispatch[TriggerTask](triggerTaskCommand)
+    dispatch.dispatch(triggerTaskCommand)
 
     there was one(triggerTaskHandler).handle(triggerTaskCommand)
     there were noCallsTo(startTaskHandler)
   }
 
   "throw exception when no suitable handler" in {
-    dispatch.dispatch[CompleteTask](completeTaskCommand) must throwA[RuntimeException]
+    dispatch.dispatch(completeTaskCommand) must throwA[RuntimeException]
   }
 }

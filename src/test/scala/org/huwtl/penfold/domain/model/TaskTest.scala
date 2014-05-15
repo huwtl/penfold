@@ -69,9 +69,10 @@ class TaskTest extends Specification {
     typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[TaskStarted], classOf[TaskCreated]))
   }
 
-  "ensure waiting or ready tasks cannot be requeued" in {
+  "ensure waiting, ready, archived tasks cannot be requeued" in {
     Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue() must throwA[RuntimeException]
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue() must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().requeue() must throwA[RuntimeException]
   }
 
   "update task payload" in {
@@ -85,9 +86,19 @@ class TaskTest extends Specification {
       .updatePayload(AggregateVersion.init, Patch(Nil), None, None) must throwA[AggregateConflictException]
   }
 
-  "ensure completed or cancelled tasks cannot accept updated payload" in {
+  "ensure completed, cancelled, archived tasks cannot accept updated payload" in {
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete().updatePayload(AggregateVersion.init, Patch(Nil), None, None) must throwA[RuntimeException]
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel().updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
+  }
+
+  "archive task" in {
+    val archivedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive()
+    typesOf(archivedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskArchived], classOf[TaskCreated]))
+  }
+
+  "ensure cannot archive an already archived task" in {
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().archive() must throwA[RuntimeException]
   }
 
   private def typesOf(events: List[Event]) = {

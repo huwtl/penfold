@@ -26,6 +26,8 @@ case class CompleteTask(id: AggregateId) extends TaskCommand
 
 case class CancelTask(id: AggregateId) extends TaskCommand
 
+case class ArchiveTask(id: AggregateId) extends TaskCommand
+
 case class UpdateTaskPayload(id: AggregateId,
                              version: AggregateVersion,
                              updateType: Option[String],

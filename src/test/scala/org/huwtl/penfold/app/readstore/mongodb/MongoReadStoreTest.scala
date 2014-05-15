@@ -24,18 +24,27 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
   sequential
 
   class context extends Scope {
+    clearDownExistingDatabase()
+
     val queueId = QueueId("q1")
     val payload = Payload(Map("a" -> "123", "b" -> "1"))
     val none : Option[String] = None
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val score = triggerDate.getMillis
-    val indexes = Indexes(List(Index(List(IndexField("a", "payload.a", multiKey = true))), Index(List(IndexField("a", "payload.a", multiKey = true), IndexField("b", "payload.b")))))
-    val mongoClient = MongoClient("localhost", embedConnectionPort())
-    val database = mongoClient("penfoldtest")
     val dateTimeSource = mock[DateTimeSource]
+    val indexes = Indexes(List(Index(List(IndexField("a", "payload.a", multiKey = true))), Index(List(IndexField("a", "payload.a", multiKey = true), IndexField("b", "payload.b")))))
+
+    val database = getDatabase
     val readStoreUpdater = new MongoReadStoreUpdater(database, new MongoEventTracker("tracker", database), new ObjectSerializer)
     val readStore = new MongoReadStore(database, indexes, new ObjectSerializer, dateTimeSource)
+
+    def clearDownExistingDatabase() = getDatabase.dropDatabase()
+
+    def getDatabase = {
+      val mongoClient = MongoClient("localhost", embedConnectionPort())
+      mongoClient("penfoldtest")
+    }
 
     def persist(events: List[Event]) = {
       Random.shuffle(events).zipWithIndex.foreach{
@@ -67,8 +76,6 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
 
   "check connectivity" in new context {
     readStore.checkConnectivity.isLeft must beTrue
-    mongoClient.close()
-    readStore.checkConnectivity.isRight must beTrue
   }
 
   "retrieve waiting tasks to trigger" in new context {
@@ -76,6 +83,19 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     setupEntries()
 
     readStore.retrieveTasksToTrigger.toList.map(_.id.value) must beEqualTo(List("a", "b", "c", "d"))
+  }
+
+  "retrieve tasks to archive" in new context {
+    def createTask(aggId: String, timeout: Long) = FutureTaskCreated(AggregateId(aggId), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("timeout" -> timeout)), triggerDate.getMillis)
+
+    val archiveThreshold = created
+    dateTimeSource.now returns archiveThreshold
+    val task1 = createTask("a1", timeout = archiveThreshold.minusSeconds(1).getMillis)
+    val task2 = createTask("a2", timeout = archiveThreshold.getMillis)
+    val task3 = createTask("a3", timeout = archiveThreshold.plusSeconds(1).getMillis)
+    persist(task1 :: task2 :: task3 :: Nil)
+
+    readStore.retrieveTasksToArchive("payload.timeout").toList.map(_.id.value) must containTheSameElementsAs(List("a1", "a2"))
   }
 
   "retrieve task by id" in new context {

@@ -43,6 +43,14 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
     tasksCollection.find(query).sort(sort).map(doc => TaskRecordReference(AggregateId(doc.as[String]("_id"))))
   }
 
+  override def retrieveTasksToArchive(timeoutAttributePath: String): Iterator[TaskRecordReference] = {
+    val currentTime = dateTimeSource.now
+
+    val query = MongoDBObject.empty ++ (timeoutAttributePath $lte currentTime.getMillis)
+
+    tasksCollection.find(query).map(doc => TaskRecordReference(AggregateId(doc.as[String]("_id"))))
+  }
+
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, filters: Filters) = {
     val filtersWithQueueStatus = new Filters(Filter("queue", Some(queueId.value)) :: Filter("status", Some(status.name)) :: filters.filters)
     val suitableIndex = indexes.suitableIndex(filtersWithQueueStatus)

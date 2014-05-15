@@ -13,13 +13,13 @@ class TriggerTaskHandlerTest extends Specification with Mockito {
   val createdTask = mock[Task]
   val readyTask = mock[Task]
 
-  val handler = new TriggerTaskHandler(domainRepository)
+  val commandDispatcher = new CommandDispatcherFactory(domainRepository, null).create
 
   "trigger waiting task" in {
     domainRepository.getById[Task](expectedAggregateId) returns createdTask
     createdTask.trigger returns readyTask
 
-    handler.handle(new TriggerTask(expectedAggregateId))
+    commandDispatcher.dispatch(new TriggerTask(expectedAggregateId))
 
     there was one(domainRepository).add(readyTask)
   }

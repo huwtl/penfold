@@ -2,7 +2,7 @@ package org.huwtl.penfold.app.readstore.mongodb
 
 import com.github.athieriot.EmbedConnection
 import org.huwtl.penfold.domain.model._
-import org.huwtl.penfold.readstore.{PreviousStatus, EventSequenceId, EventRecord, TaskRecord}
+import org.huwtl.penfold.readstore.EventSequenceId
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import org.joda.time.DateTime
@@ -11,15 +11,19 @@ import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.app.support.DateTimeSource
 import java.util.UUID
 import org.huwtl.penfold.domain.model.Status.{Waiting, Started, Ready}
-import org.huwtl.penfold.domain.model.patch._
+import org.huwtl.penfold.domain.event._
+import org.huwtl.penfold.readstore.EventRecord
+import org.huwtl.penfold.domain.model.patch.Replace
 import org.huwtl.penfold.domain.event.TaskPayloadUpdated
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.event.FutureTaskCreated
 import org.huwtl.penfold.domain.model.AggregateId
+import org.huwtl.penfold.readstore.TaskRecord
 import scala.Some
 import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.event.TaskStarted
 import org.huwtl.penfold.domain.model.patch.Value
+import org.huwtl.penfold.readstore.PreviousStatus
 import org.huwtl.penfold.domain.model.patch.Patch
 import org.huwtl.penfold.domain.model.QueueBinding
 
@@ -93,5 +97,24 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     val task = readStore.retrieveBy(aggregateId)
 
     task must beEqualTo(Some(TaskRecord(aggregateId, lastVersion, created, binding, Started, taskStartedEvent.created, Some(PreviousStatus(Ready, created)), triggerDate, score, created.getMillis, payload)))
+  }
+
+  "remove task on archive" in new context {
+    readStoreUpdater.handle(EventRecord(EventSequenceId(1), taskCreatedEvent))
+    readStoreUpdater.handle(EventRecord(EventSequenceId(2), TaskArchived(aggregateId, taskCreatedEvent.aggregateVersion.next, created)))
+
+    val task = readStore.retrieveBy(aggregateId)
+    task must beNone
+  }
+
+  "ignore events on aggregate version mismatch" in new context {
+    readStoreUpdater.handle(EventRecord(EventSequenceId(1), taskCreatedEvent))
+    readStoreUpdater.handle(EventRecord(EventSequenceId(2), taskStartedEvent))
+
+    val unexpectedVersion = taskStartedEvent.aggregateVersion
+    readStoreUpdater.handle(EventRecord(EventSequenceId(3), TaskArchived(taskStartedEvent.aggregateId, taskStartedEvent.aggregateVersion, created)))
+
+    val task = readStore.retrieveBy(aggregateId)
+    task must beSome(TaskRecord(aggregateId, lastVersion, created, binding, Started, taskStartedEvent.created, Some(PreviousStatus(Ready, created)), triggerDate, score, created.getMillis, payload))
   }
 }

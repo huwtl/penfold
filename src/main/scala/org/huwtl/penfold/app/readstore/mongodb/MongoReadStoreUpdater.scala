@@ -40,6 +40,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case e: TaskCompleted => handleUpdateStatusEvent(e, Completed)
       case e: TaskCancelled => handleUpdateStatusEvent(e, Cancelled)
       case e: TaskPayloadUpdated => handleUpdatePayloadEvent(e)
+      case e: TaskArchived => handleArchiveEvent(e)
       case _ =>
     }
 
@@ -112,10 +113,16 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     }
   }
 
+  private def handleArchiveEvent(event: TaskArchived) = {
+    val query = updateByIdVersion(event)
+
+    tasksCollection.remove(query)
+  }
+
   private def resolveSortOrder(event: Event, status: Status, previousScore: Long) = {
     event match {
       case e: TaskCreated => e.score
-      case e: FutureTaskCreated => e.score
+      case e: FutureTaskCreated => e.triggerDate.getMillis
       case e: TaskTriggered => previousScore
       case e: TaskRequeued => previousScore
       case e: TaskPayloadUpdated if status == Ready => e.score getOrElse previousScore

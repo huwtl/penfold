@@ -62,7 +62,7 @@ case class Task(uncommittedEvents: List[Event],
 
   def updatePayload(expectedVersion: AggregateVersion, payloadUpdate: Patch, updateType: Option[String], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
-    require(status != Completed && status != Cancelled, s"Cannot update payload for completed or cancelled task but was $status")
+    require(status != Completed && status != Cancelled && status != Archived, s"Cannot update payload for completed/cancelled/archived task but was $status")
     applyTaskPayloadUpdated(TaskPayloadUpdated(aggregateId, version.next, now, payloadUpdate, updateType, score))
   }
 
@@ -81,8 +81,13 @@ case class Task(uncommittedEvents: List[Event],
   }
 
   def requeue(): Task = {
-    require(status != Waiting && status != Ready, s"Cannot requeue from status $status")
+    require(status != Waiting && status != Ready && status != Archived, s"Cannot requeue from status $status")
     applyTaskRequeued(TaskRequeued(aggregateId, version.next, now))
+  }
+
+  def archive(): Task = {
+    require(status != Archived, s"Cannot archive when already archived")
+    applyTaskArchived(TaskArchived(aggregateId, version.next, now))
   }
 
   def markCommitted = copy(uncommittedEvents = Nil)
@@ -94,6 +99,7 @@ case class Task(uncommittedEvents: List[Event],
     case event: TaskCompleted => applyTaskCompleted(event)
     case event: TaskPayloadUpdated => applyTaskPayloadUpdated(event)
     case event: TaskRequeued => applyTaskRequeued(event)
+    case event: TaskArchived => applyTaskArchived(event)
     case event => unhandled(event)
   }
 
@@ -114,4 +120,6 @@ case class Task(uncommittedEvents: List[Event],
   )
 
   private def applyTaskRequeued(event: TaskRequeued) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Ready)
+
+  private def applyTaskArchived(event: TaskArchived) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Archived)
 }
