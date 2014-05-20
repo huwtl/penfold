@@ -56,7 +56,7 @@ case class Task(uncommittedEvents: List[Event],
   override def aggregateType = AggregateType.Task
 
   def trigger(): Task = {
-    require(status == Waiting, s"Can only trigger a waiting task but was $status")
+    checkConflict(status == Waiting, s"Can only trigger a waiting task but was $status")
     applyTaskTriggered(TaskTriggered(aggregateId, version.next, now))
   }
 
@@ -67,7 +67,7 @@ case class Task(uncommittedEvents: List[Event],
   }
 
   def start(): Task = {
-    require(status == Ready, s"Can only start a task that is ready but was $status")
+    checkConflict(status == Ready, s"Can only start a task that is ready but was $status")
     applyTaskStarted(TaskStarted(aggregateId, version.next, now))
   }
 
@@ -76,17 +76,17 @@ case class Task(uncommittedEvents: List[Event],
   }
 
   def complete(): Task = {
-    require(status == Started, s"Can only complete a started task but was $status")
+    checkConflict(status == Started, s"Can only complete a started task but was $status")
     applyTaskCompleted(TaskCompleted(aggregateId, version.next, now))
   }
 
   def requeue(): Task = {
-    require(status != Waiting && status != Ready && status != Archived, s"Cannot requeue from status $status")
+    checkConflict(status != Waiting && status != Ready && status != Archived, s"Cannot requeue from status $status")
     applyTaskRequeued(TaskRequeued(aggregateId, version.next, now))
   }
 
   def archive(): Task = {
-    require(status != Archived, s"Cannot archive when already archived")
+    checkConflict(status != Archived, s"Cannot archive when already archived")
     applyTaskArchived(TaskArchived(aggregateId, version.next, now))
   }
 

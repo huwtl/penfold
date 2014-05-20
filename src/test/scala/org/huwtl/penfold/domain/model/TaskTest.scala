@@ -34,9 +34,9 @@ class TaskTest extends Specification {
   }
 
   "ensure only waiting tasks can be triggered" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).trigger() must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).trigger().trigger() must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().trigger() must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).trigger() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).trigger().trigger() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().trigger() must throwA[AggregateConflictException]
   }
 
   "start task" in {
@@ -45,8 +45,8 @@ class TaskTest extends Specification {
   }
 
   "ensure only ready tasks can be started" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).start() must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().start() must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).start() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().start() must throwA[AggregateConflictException]
   }
 
   "cancel task" in {
@@ -60,8 +60,8 @@ class TaskTest extends Specification {
   }
 
   "ensure only started tasks can be completed" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete() must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().cancel().complete() must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().cancel().complete() must throwA[AggregateConflictException]
   }
 
   "requeue task" in {
@@ -70,9 +70,9 @@ class TaskTest extends Specification {
   }
 
   "ensure waiting, ready, archived tasks cannot be requeued" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue() must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue() must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().requeue() must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().requeue() must throwA[AggregateConflictException]
   }
 
   "update task payload" in {
@@ -87,7 +87,7 @@ class TaskTest extends Specification {
   }
 
   "ensure completed, cancelled, archived tasks cannot accept updated payload" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete().updatePayload(AggregateVersion.init, Patch(Nil), None, None) must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().complete().updatePayload(AggregateVersion.init.next.next, Patch(Nil), None, None) must throwA[RuntimeException]
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel().updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
   }
@@ -98,7 +98,7 @@ class TaskTest extends Specification {
   }
 
   "ensure cannot archive an already archived task" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().archive() must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().archive() must throwA[AggregateConflictException]
   }
 
   private def typesOf(events: List[Event]) = {
