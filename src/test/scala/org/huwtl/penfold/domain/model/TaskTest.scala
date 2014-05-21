@@ -29,50 +29,51 @@ class TaskTest extends Specification {
   }
 
   "trigger future task" in {
-    val readyTask = Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).trigger()
+    val readyTask = Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).trigger
     typesOf(readyTask.uncommittedEvents) must beEqualTo(List(classOf[TaskTriggered], classOf[FutureTaskCreated]))
   }
 
   "ensure only waiting tasks can be triggered" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).trigger() must throwA[AggregateConflictException]
-    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).trigger().trigger() must throwA[AggregateConflictException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().trigger() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).trigger must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).trigger.trigger must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).trigger must throwA[AggregateConflictException]
   }
 
   "start task" in {
-    val startedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start()
+    val startedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None)
     typesOf(startedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskStarted], classOf[TaskCreated]))
   }
 
   "ensure only ready tasks can be started" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).start() must throwA[AggregateConflictException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().start() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).start(None) must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).start(None) must throwA[AggregateConflictException]
   }
 
   "cancel task" in {
-    val cancelledTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel()
+    val cancelledTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel
     typesOf(cancelledTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCancelled], classOf[TaskCreated]))
   }
 
   "complete task" in {
-    val completedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().complete()
+    val completedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).complete
     typesOf(completedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCompleted], classOf[TaskStarted], classOf[TaskCreated]))
   }
 
   "ensure only started tasks can be completed" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete() must throwA[AggregateConflictException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().cancel().complete() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).cancel.complete must throwA[AggregateConflictException]
   }
 
   "requeue task" in {
-    val requeuedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().requeue()
+    val requeuedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(Some(Assignee("user"))).requeue
     typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[TaskStarted], classOf[TaskCreated]))
+    requeuedTask.assignee must beNone
   }
 
   "ensure waiting, ready, archived tasks cannot be requeued" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue() must throwA[AggregateConflictException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue() must throwA[AggregateConflictException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().requeue() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive.requeue must throwA[AggregateConflictException]
   }
 
   "update task payload" in {
@@ -87,18 +88,18 @@ class TaskTest extends Specification {
   }
 
   "ensure completed, cancelled, archived tasks cannot accept updated payload" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start().complete().updatePayload(AggregateVersion.init.next.next, Patch(Nil), None, None) must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel().updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).complete.updatePayload(AggregateVersion.init.next.next, Patch(Nil), None, None) must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel.updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive.updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
   }
 
   "archive task" in {
-    val archivedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive()
+    val archivedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive
     typesOf(archivedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskArchived], classOf[TaskCreated]))
   }
 
   "ensure cannot archive an already archived task" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive().archive() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive.archive must throwA[AggregateConflictException]
   }
 
   private def typesOf(events: List[Event]) = {

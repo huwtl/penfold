@@ -17,7 +17,7 @@ class RequeueTaskHandlerTest extends Specification with Mockito {
 
   "requeue task" in {
     domainRepository.getById[Task](expectedAggregateId) returns startedTask
-    startedTask.requeue() returns requeuedTask
+    startedTask.requeue returns requeuedTask
 
     commandDispatcher.dispatch(RequeueTask(expectedAggregateId))
 

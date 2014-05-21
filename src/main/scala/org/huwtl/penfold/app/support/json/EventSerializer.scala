@@ -24,6 +24,7 @@ class EventSerializer {
     new QueueIdJsonSerializer +
     new PatchOperationJsonSerializer +
     new ValueJsonSerializer +
+    new AssigneeJsonSerializer +
     FieldSerializer[Event]()
 
   def serialize(event: Event) = {

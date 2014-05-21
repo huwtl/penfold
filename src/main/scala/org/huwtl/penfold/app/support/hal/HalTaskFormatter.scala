@@ -31,6 +31,10 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       .withProperty("queueBinding", JavaMapUtil.deepConvertToJavaMap(bindingToMap(task.queueBinding)))
       .withLink("queue", s"${baseQueueLink.toString}/$queueIdParam")
 
+    if (task.assignee.isDefined) {
+      representation.withProperty("assignee", task.assignee.get.username)
+    }
+
     if (task.previousStatus.isDefined) {
       representation.withProperty("previousStatus", JavaMapUtil.deepConvertToJavaMap(previousStatusToMap(task.previousStatus.get)))
     }

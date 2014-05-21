@@ -35,13 +35,15 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     val queueId = QueueId("q1")
     val payload = Payload(Map("field1" -> "123", "inner" -> Map("field2" -> 1)))
     val binding = QueueBinding(queueId)
+    val assignee = Assignee("user1")
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val score = triggerDate.getMillis
     val lastVersion = AggregateVersion(2)
     val serializer = new EventSerializer
     val taskCreatedEvent = TaskCreated(aggregateId, AggregateVersion(1), created, QueueBinding(queueId), triggerDate, payload, score)
-    val taskStartedEvent = TaskStarted(aggregateId, AggregateVersion(2), created)
+    val taskStartedEvent = TaskStarted(aggregateId, AggregateVersion(2), created, Some(assignee))
+    val taskRequeuedEvent = TaskRequeued(aggregateId, AggregateVersion(3), created)
 
     val mongoClient = MongoClient("localhost", embedConnectionPort())
     val database = mongoClient("penfoldtest")
@@ -55,7 +57,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TaskRecord(aggregateId, lastVersion, created, binding, Started, taskStartedEvent.created, Some(PreviousStatus(Ready, created)), triggerDate, score, created.getMillis, payload)))
+    task must beEqualTo(Some(TaskRecord(aggregateId, lastVersion, created, binding, Started, taskStartedEvent.created, Some(PreviousStatus(Ready, created)), Some(assignee), triggerDate, score, created.getMillis, payload)))
   }
 
   "update payload of ready task" in new context {
@@ -70,7 +72,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TaskRecord(aggregateId, lastVersion, created, binding, Ready, created, None, triggerDate, updatedScore, updatedScore, updatedPayload)))
+    task must beEqualTo(Some(TaskRecord(aggregateId, lastVersion, created, binding, Ready, created, None, None, triggerDate, updatedScore, updatedScore, updatedPayload)))
   }
 
   "update payload of waiting task" in new context {
@@ -86,7 +88,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TaskRecord(aggregateId, lastVersion, created, binding, Waiting, created, None, triggerDate, updatedScore, updateTime.getMillis, updatedPayload)))
+    task must beEqualTo(Some(TaskRecord(aggregateId, lastVersion, created, binding, Waiting, created, None, None, triggerDate, updatedScore, updateTime.getMillis, updatedPayload)))
   }
 
   "ignore duplicate events" in new context {
@@ -96,7 +98,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TaskRecord(aggregateId, lastVersion, created, binding, Started, taskStartedEvent.created, Some(PreviousStatus(Ready, created)), triggerDate, score, created.getMillis, payload)))
+    task must beEqualTo(Some(TaskRecord(aggregateId, lastVersion, created, binding, Started, taskStartedEvent.created, Some(PreviousStatus(Ready, created)), Some(assignee), triggerDate, score, created.getMillis, payload)))
   }
 
   "remove task on archive" in new context {
@@ -107,6 +109,16 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     task must beNone
   }
 
+  "requeue started task and clear assignee if present" in new context {
+    readStoreUpdater.handle(EventRecord(EventSequenceId(1), taskCreatedEvent))
+    readStoreUpdater.handle(EventRecord(EventSequenceId(2), taskStartedEvent))
+    readStoreUpdater.handle(EventRecord(EventSequenceId(2), taskRequeuedEvent))
+
+    val task = readStore.retrieveBy(aggregateId)
+
+    task must beEqualTo(Some(TaskRecord(aggregateId, AggregateVersion(3), created, binding, Ready, taskRequeuedEvent.created, Some(PreviousStatus(Started, created)), None, triggerDate, score, score, payload)))
+  }
+
   "ignore events on aggregate version mismatch" in new context {
     readStoreUpdater.handle(EventRecord(EventSequenceId(1), taskCreatedEvent))
     readStoreUpdater.handle(EventRecord(EventSequenceId(2), taskStartedEvent))
@@ -115,6 +127,6 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     readStoreUpdater.handle(EventRecord(EventSequenceId(3), TaskArchived(taskStartedEvent.aggregateId, taskStartedEvent.aggregateVersion, created)))
 
     val task = readStore.retrieveBy(aggregateId)
-    task must beSome(TaskRecord(aggregateId, lastVersion, created, binding, Started, taskStartedEvent.created, Some(PreviousStatus(Ready, created)), triggerDate, score, created.getMillis, payload))
+    task must beSome(TaskRecord(aggregateId, lastVersion, created, binding, Started, taskStartedEvent.created, Some(PreviousStatus(Ready, created)), Some(assignee), triggerDate, score, created.getMillis, payload))
   }
 }

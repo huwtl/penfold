@@ -84,6 +84,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
           "previousStatus" -> Map("status" -> task.as[String]("status"), "statusLastModified" -> task.as[DateTime]("statusLastModified")),
           "status" -> status.name,
           "statusLastModified" -> event.created.toDate,
+          "assignee" -> resolveAssignee(event, task.getAs[String]("assignee")),
           "sort" -> resolveSortOrder(event, status, task.as[Long]("score"))
         )
         tasksCollection.update(query, update)
@@ -117,6 +118,14 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     val query = updateByIdVersion(event)
 
     tasksCollection.remove(query)
+  }
+
+  private def resolveAssignee(event: Event, previousAssignee: Option[String]) = {
+    event match {
+      case e: TaskRequeued => None
+      case e: TaskStarted => e.assignee.map(_.username)
+      case _ => previousAssignee
+    }
   }
 
   private def resolveSortOrder(event: Event, status: Status, previousScore: Long) = {

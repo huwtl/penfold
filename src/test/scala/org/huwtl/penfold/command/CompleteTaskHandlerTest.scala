@@ -18,7 +18,7 @@ class CompleteTaskHandlerTest extends Specification with Mockito {
 
   "complete started task" in {
     domainRepository.getById[Task](expectedAggregateId) returns startedTask
-    startedTask.complete() returns completedTask
+    startedTask.complete returns completedTask
 
     commandDispatcher.dispatch(CompleteTask(expectedAggregateId))
 

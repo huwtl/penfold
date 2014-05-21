@@ -72,6 +72,6 @@ class HalQueueFormatterTest extends Specification {
   }
 
   def task(id: String, binding: QueueBinding = QueueBinding(queueId)) = {
-    TaskRecord(AggregateId(id), AggregateVersion.init, createdDate, binding, status, createdDate, None, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload.empty)
+    TaskRecord(AggregateId(id), AggregateVersion.init, createdDate, binding, status, createdDate, None, None, triggerDate, triggerDate.getMillis, triggerDate.getMillis, Payload.empty)
   }
 }

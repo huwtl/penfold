@@ -19,7 +19,7 @@ class CancelTaskHandlerTest extends Specification with Mockito {
 
   "cancel task" in {
     domainRepository.getById[Task](expectedAggregateId) returns readyTask
-    readyTask.cancel() returns cancelledTask
+    readyTask.cancel returns cancelledTask
 
     commandDispatcher.dispatch(CancelTask(expectedAggregateId))
 

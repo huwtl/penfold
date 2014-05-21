@@ -20,7 +20,7 @@ class ArchiveTaskHandlerTest extends Specification with Mockito
   "archive task" in
   {
     domainRepository.getById[Task](expectedAggregateId) returns startedTask
-    startedTask.archive() returns archivedTask
+    startedTask.archive returns archivedTask
 
     commandDispatcher.dispatch(ArchiveTask(expectedAggregateId))
 

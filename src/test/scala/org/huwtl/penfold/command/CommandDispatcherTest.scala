@@ -7,7 +7,7 @@ import org.huwtl.penfold.domain.model.AggregateId
 class CommandDispatcherTest extends Specification with Mockito {
 
   val triggerTaskCommand = TriggerTask(AggregateId("a1"))
-  val startTaskCommand = StartTask(AggregateId("a1"))
+  val startTaskCommand = StartTask(AggregateId("a1"), None)
   val completeTaskCommand = CompleteTask(AggregateId("a1"))
 
   val triggerTaskHandler = mock[TriggerTaskHandler]
