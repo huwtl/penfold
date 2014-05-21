@@ -1,11 +1,12 @@
 {
-    "payload": {
-        "stuff": "something",
+  "payload": {
+    "data": "value",
+    "inner": {
+      "bool": true
+    }
+  },
 
-        "nested": {
-            "inner": true
-        }
-    },
-
-    "queueBinding": {"id": "abc"}
+  "queueBinding": {
+    "id": "abc"
+  }
 }

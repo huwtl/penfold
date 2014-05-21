@@ -4,56 +4,41 @@ import java.net.URI
 import scala.io.Source._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import org.joda.time.DateTime
 import org.specs2.mutable.Specification
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.readstore._
-import org.huwtl.penfold.domain.model.Payload
-import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.readstore.Filter
-import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.TaskRecord
 import scala.Some
+import org.huwtl.penfold.support.TestModel._
+import org.huwtl.penfold.support.TestModel
 
 class HalTaskFormatterTest extends Specification {
-
-  val id = AggregateId("1")
-
-  val created = new DateTime(2014, 2, 14, 12, 0, 0, 0)
-
-  val triggerDate = new DateTime(2014, 2, 25, 14, 0, 0, 0)
 
   val filters = Filters(List(Filter("data", Some("value"))))
 
   val pageRequest = PageRequest(10, Some(PageReference("1~1393336800000~1")))
 
-  val queueId = QueueId("abc")
-
-  val payload = Payload(Map("data" -> "value", "inner" -> Map("bool" -> true)))
-
-  val previousStatus = PreviousStatus(Status.Ready, created)
-
   val taskFormatter = new HalTaskFormatter(new URI("http://host/tasks"), new URI("http://host/queues"))
 
   "format waiting task as hal+json" in {
-    hal(Status.Waiting) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingTask.json"))
+    hal(task.copy(status = Status.Waiting)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingTask.json"))
   }
 
   "format ready task as hal+json" in {
-    hal(Status.Ready, QueueBinding(QueueId("abc"))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedReadyTask.json"))
+    hal(task.copy(status = Status.Ready)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedReadyTask.json"))
   }
 
   "format started task as hal+json" in {
-    hal(Status.Started, previousStatus = Some(previousStatus), assignee = Some(Assignee("user1"))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedStartedTask.json"))
+    hal(task.copy(status = Status.Started, previousStatus = Some(previousStatus), assignee = Some(assignee))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedStartedTask.json"))
   }
 
   "format completed task as hal+json" in {
-    hal(Status.Completed, previousStatus = Some(previousStatus)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCompletedTask.json"))
+    hal(task.copy(status = Status.Completed, previousStatus = Some(previousStatus))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCompletedTask.json"))
   }
 
   "format cancelled task as hal+json" in {
-    hal(Status.Cancelled, previousStatus = Some(previousStatus)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCancelledTask.json"))
+    hal(task.copy(status = Status.Cancelled, previousStatus = Some(previousStatus))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCancelledTask.json"))
   }
 
   "format filtered tasks hal+json" in {
@@ -70,20 +55,14 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format task as hal+json with complex payload" in {
-    val complexPayload = Payload(
-      Map("data" -> "value", "inner" -> Map("bool" -> true, "inner2" -> List(Map("a" -> "1", "b" -> 1), Map("a" -> "2", "b" -> 2)))))
-    val task = TaskRecord(id, AggregateVersion.init, created, QueueBinding(queueId), Status.Waiting, created, None, None, triggerDate, triggerDate.getMillis, triggerDate.getMillis, complexPayload)
+    val task = TestModel.task.copy(status = Status.Waiting, payload = complexPayload)
     hal(task) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedTaskWithComplexPayload.json"))
   }
 
   private def halTasks(filters: Filters, pageNumber: Int = 0, previousPage: Option[PageReference] = None, nextPage: Option[PageReference] = None) = {
     parse(taskFormatter.halFrom(pageRequest,
-      PageResult(List(TaskRecord(id, AggregateVersion.init, created, QueueBinding(queueId), Status.Waiting, created, None, None, triggerDate, triggerDate.getMillis, triggerDate.getMillis, payload)), previousPage, nextPage), filters
+      PageResult(List(TestModel.task.copy(status = Status.Waiting)), previousPage, nextPage), filters
     ))
-  }
-
-  private def hal(status: Status, binding: QueueBinding = QueueBinding(queueId), previousStatus: Option[PreviousStatus] = None, assignee: Option[Assignee] = None) = {
-    parse(taskFormatter.halFrom(TaskRecord(id, AggregateVersion.init, created, binding, status, created, previousStatus, assignee, triggerDate, triggerDate.getMillis, triggerDate.getMillis, payload)))
   }
 
   private def hal(task: TaskRecord) = {

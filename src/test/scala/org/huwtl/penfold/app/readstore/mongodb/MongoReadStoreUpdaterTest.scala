@@ -15,7 +15,6 @@ import org.huwtl.penfold.domain.event._
 import org.huwtl.penfold.readstore.EventRecord
 import org.huwtl.penfold.domain.model.patch.Replace
 import org.huwtl.penfold.domain.event.TaskPayloadUpdated
-import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.event.FutureTaskCreated
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.TaskRecord
@@ -26,22 +25,23 @@ import org.huwtl.penfold.domain.model.patch.Value
 import org.huwtl.penfold.readstore.PreviousStatus
 import org.huwtl.penfold.domain.model.patch.Patch
 import org.huwtl.penfold.domain.model.QueueBinding
+import org.huwtl.penfold.support.TestModel
 
 class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
   sequential
 
   trait context extends Scope {
     val aggregateId = AggregateId(UUID.randomUUID().toString)
-    val queueId = QueueId("q1")
+    val queueId = TestModel.queueId
     val payload = Payload(Map("field1" -> "123", "inner" -> Map("field2" -> 1)))
     val binding = QueueBinding(queueId)
-    val assignee = Assignee("user1")
-    val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
-    val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
+    val assignee = TestModel.assignee
+    val created = TestModel.createdDate
+    val triggerDate =  TestModel.triggerDate
     val score = triggerDate.getMillis
     val lastVersion = AggregateVersion(2)
     val serializer = new EventSerializer
-    val taskCreatedEvent = TaskCreated(aggregateId, AggregateVersion(1), created, QueueBinding(queueId), triggerDate, payload, score)
+    val taskCreatedEvent = TaskCreated(aggregateId, AggregateVersion(1), created, binding, triggerDate, payload, score)
     val taskStartedEvent = TaskStarted(aggregateId, AggregateVersion(2), created, Some(assignee))
     val taskRequeuedEvent = TaskRequeued(aggregateId, AggregateVersion(3), created)
 
