@@ -8,7 +8,6 @@ import org.huwtl.penfold.readstore._
 import org.huwtl.penfold.domain.model.Status._
 import com.theoryinpractise.halbuilder.api.Representation
 import org.huwtl.penfold.app.support.JavaMapUtil
-import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.readstore.PageRequest
 import org.huwtl.penfold.readstore.TaskRecord
 import org.huwtl.penfold.domain.model.QueueBinding
