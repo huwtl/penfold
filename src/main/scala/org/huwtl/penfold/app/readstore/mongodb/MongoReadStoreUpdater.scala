@@ -85,6 +85,8 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
           "status" -> status.name,
           "statusLastModified" -> event.created.toDate,
           "assignee" -> resolveAssignee(event, task.getAs[String]("assignee")),
+          "concluder" -> resolveConclusionField(event, _.concluder.map(_.username)),
+          "conclusionType" -> resolveConclusionField(event, _.conclusionType),
           "sort" -> resolveSortOrder(event, status, task.as[Long]("score"))
         )
         tasksCollection.update(query, update)
@@ -125,6 +127,13 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case e: TaskRequeued => None
       case e: TaskStarted => e.assignee.map(_.username)
       case _ => previousAssignee
+    }
+  }
+
+  private def resolveConclusionField(event: Event, fieldValue: TaskConcludedEvent => Any) = {
+    event match {
+      case e: TaskConcludedEvent => fieldValue(e)
+      case _ => None
     }
   }
 

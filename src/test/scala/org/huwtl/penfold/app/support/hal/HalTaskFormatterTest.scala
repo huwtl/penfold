@@ -12,6 +12,7 @@ import org.huwtl.penfold.readstore.TaskRecord
 import scala.Some
 import org.huwtl.penfold.support.TestModel._
 import org.huwtl.penfold.support.TestModel
+import org.huwtl.penfold.domain.model.Status.Ready
 
 class HalTaskFormatterTest extends Specification {
 
@@ -30,11 +31,11 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format started task as hal+json" in {
-    hal(task.copy(status = Status.Started, previousStatus = Some(previousStatus), assignee = Some(assignee))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedStartedTask.json"))
+    hal(task.copy(status = Status.Started, previousStatus = Some(previousStatus.copy(status = Ready)), assignee = Some(assignee))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedStartedTask.json"))
   }
 
   "format completed task as hal+json" in {
-    hal(task.copy(status = Status.Completed, previousStatus = Some(previousStatus))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCompletedTask.json"))
+    hal(completedTask) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCompletedTask.json"))
   }
 
   "format cancelled task as hal+json" in {

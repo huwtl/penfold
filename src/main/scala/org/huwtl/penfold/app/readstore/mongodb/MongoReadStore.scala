@@ -83,11 +83,13 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
       Status.from(document.as[String]("status")).get,
       document.as[DateTime]("statusLastModified"),
       parsePreviousStatus,
-      document.getAs[String]("assignee").map(assignee => Assignee(assignee)),
+      document.getAs[String]("assignee").map(Assignee),
       document.as[DateTime]("triggerDate"),
       document.as[Long]("score"),
       document.as[Long]("sort"),
-      objectSerializer.deserialize[Payload](JSON.serialize(document("payload")))
+      objectSerializer.deserialize[Payload](JSON.serialize(document("payload"))),
+      document.getAs[String]("concluder").map(User),
+      document.getAs[String]("conclusionType")
     )
   }
 

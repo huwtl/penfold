@@ -16,6 +16,8 @@ case class TaskRecord(id: AggregateId,
                       triggerDate: DateTime,
                       score: Long,
                       sort: Long,
-                      payload: Payload)
+                      payload: Payload,
+                      concluder: Option[User] = None,
+                      conclusionType: Option[String] = None)
 
 case class PreviousStatus(status: Status, statusLastModified: DateTime)

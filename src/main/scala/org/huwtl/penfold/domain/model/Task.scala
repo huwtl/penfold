@@ -36,6 +36,8 @@ object Task extends AggregateFactory {
     event.aggregateVersion,
     event.created,
     None,
+    None,
+    None,
     event.queueBinding,
     status,
     event.triggerDate,
@@ -49,6 +51,8 @@ case class Task(uncommittedEvents: List[Event],
                 version: AggregateVersion,
                 created: DateTime,
                 assignee: Option[Assignee],
+                concluder: Option[User],
+                conclusionType: Option[String],
                 queueBinding: QueueBinding,
                 status: Status,
                 triggerDate: DateTime,
@@ -73,13 +77,13 @@ case class Task(uncommittedEvents: List[Event],
     applyTaskStarted(TaskStarted(aggregateId, version.next, now, assignee))
   }
 
-  def cancel: Task = {
-    applyTaskCancelled(TaskCancelled(aggregateId, version.next, now))
+  def cancel(user: Option[User] = None, cancellationType: Option[String] = None): Task = {
+    applyTaskCancelled(TaskCancelled(aggregateId, version.next, now, user, cancellationType))
   }
 
-  def complete: Task = {
+  def complete(user: Option[User] = None, completionType: Option[String] = None): Task = {
     checkConflict(status == Started, s"Can only complete a started task but was $status")
-    applyTaskCompleted(TaskCompleted(aggregateId, version.next, now))
+    applyTaskCompleted(TaskCompleted(aggregateId, version.next, now, user, completionType))
   }
 
   def requeue: Task = {
@@ -109,9 +113,9 @@ case class Task(uncommittedEvents: List[Event],
 
   private def applyTaskStarted(event: TaskStarted) = copy(event :: uncommittedEvents, version = event.aggregateVersion, status = Started, assignee = event.assignee)
 
-  private def applyTaskCancelled(event: TaskCancelled) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Cancelled)
+  private def applyTaskCancelled(event: TaskCancelled) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Cancelled, concluder = event.concluder, conclusionType = event.conclusionType)
 
-  private def applyTaskCompleted(event: TaskCompleted) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Completed)
+  private def applyTaskCompleted(event: TaskCompleted) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Completed, concluder = event.concluder, conclusionType = event.conclusionType)
 
   private def applyTaskPayloadUpdated(event: TaskPayloadUpdated) = copy(
     event :: uncommittedEvents,

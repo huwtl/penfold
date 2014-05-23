@@ -5,7 +5,7 @@
         "requeue": {"href": "http://host/queues/abc/ready"}
     },
     "id": "1",
-    "version": 1,
+    "version": 3,
     "payload": {
         "data": "value",
         "inner": {
@@ -15,9 +15,12 @@
     "status": "completed",
     "statusLastModified": "2014-02-25 13:00:00",
     "previousStatus": {
-        "status": "ready",
-        "statusLastModified": "2014-02-14 12:00:00"
+        "status": "started",
+        "statusLastModified": "2014-02-25 13:00:00"
     },
+    "assignee": "user1",
+    "concluder": "user1",
+    "conclusionType": "type",
     "triggerDate": "2014-02-25 14:00:00",
     "queueBinding": {"id": "abc"}
 }

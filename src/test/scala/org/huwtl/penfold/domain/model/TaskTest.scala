@@ -13,6 +13,10 @@ class TaskTest extends Specification {
 
   val queue = QueueId("abc")
 
+  val concluder = User("user1")
+
+  val conclusionType = "type"
+
   "create new task" in {
     val createdTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
     typesOf(createdTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCreated]))
@@ -50,18 +54,18 @@ class TaskTest extends Specification {
   }
 
   "cancel task" in {
-    val cancelledTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel
+    val cancelledTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel(Some(concluder), Some(conclusionType))
     typesOf(cancelledTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCancelled], classOf[TaskCreated]))
   }
 
   "complete task" in {
-    val completedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).complete
+    val completedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).complete(Some(concluder), Some(conclusionType))
     typesOf(completedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCompleted], classOf[TaskStarted], classOf[TaskCreated]))
   }
 
   "ensure only started tasks can be completed" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete must throwA[AggregateConflictException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).cancel.complete must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete() must throwA[AggregateConflictException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).cancel().complete() must throwA[AggregateConflictException]
   }
 
   "requeue task" in {
@@ -88,8 +92,8 @@ class TaskTest extends Specification {
   }
 
   "ensure completed, cancelled, archived tasks cannot accept updated payload" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).complete.updatePayload(AggregateVersion.init.next.next, Patch(Nil), None, None) must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel.updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).complete().updatePayload(AggregateVersion.init.next.next, Patch(Nil), None, None) must throwA[RuntimeException]
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel().updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive.updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
   }
 

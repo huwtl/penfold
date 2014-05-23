@@ -23,9 +23,13 @@ case class StartTask(id: AggregateId,
 
 case class RequeueTask(id: AggregateId) extends TaskCommand
 
-case class CompleteTask(id: AggregateId) extends TaskCommand
+case class CompleteTask(id: AggregateId,
+                        concluder: Option[User] = None,
+                        conclusionType: Option[String] = None) extends TaskCommand
 
-case class CancelTask(id: AggregateId) extends TaskCommand
+case class CancelTask(id: AggregateId,
+                      concluder: Option[User] = None,
+                      conclusionType: Option[String] = None) extends TaskCommand
 
 case class ArchiveTask(id: AggregateId) extends TaskCommand
 
