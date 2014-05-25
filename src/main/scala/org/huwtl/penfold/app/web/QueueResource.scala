@@ -5,9 +5,9 @@ import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import org.huwtl.penfold.app.support.hal.HalQueueFormatter
 import org.huwtl.penfold.domain.model.{Status, AggregateId, QueueId}
 import org.huwtl.penfold.readstore.ReadStore
-import org.huwtl.penfold.command.{CompleteTask, CommandDispatcher, StartTask}
+import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
-import org.huwtl.penfold.app.web.bean.{CompleteTaskRequest, StartTaskRequest}
+import org.huwtl.penfold.app.web.bean.{RequeueTaskRequest, CompleteTaskRequest, StartTaskRequest}
 import org.huwtl.penfold.app.support.auth.BasicAuthenticationSupport
 import org.huwtl.penfold.app.AuthenticationCredentials
 
@@ -46,13 +46,19 @@ class QueueResource(readStore: ReadStore,
 
   post("/:queue/started") {
     val startTaskRequest = jsonConverter.deserialize[StartTaskRequest](request.body)
-    commandDispatcher.dispatch[StartTask](startTaskRequest.toCommand)
+    commandDispatcher.dispatch(startTaskRequest.toCommand)
     Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(startTaskRequest.id).get))
+  }
+
+  post("/:queue/ready") {
+    val requeueTaskRequest = jsonConverter.deserialize[RequeueTaskRequest](request.body)
+    commandDispatcher.dispatch(requeueTaskRequest.toCommand)
+    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(requeueTaskRequest.id).get))
   }
 
   post("/:queue/completed") {
     val completeTaskRequest = jsonConverter.deserialize[CompleteTaskRequest](request.body)
-    commandDispatcher.dispatch[CompleteTask](completeTaskRequest.toCommand)
+    commandDispatcher.dispatch(completeTaskRequest.toCommand)
     Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(completeTaskRequest.id).get))
   }
 

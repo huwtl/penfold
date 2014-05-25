@@ -3,6 +3,7 @@
         "self": {"href": "http://host/tasks/1"},
         "complete": {"href": "http://host/queues/abc/completed"},
         "queue": {"href": "http://host/queues/abc"},
+        "requeue": {"href": "http://host/queues/abc/ready"},
         "updatePayload": {"href": "http://host/tasks/1/1/payload"}
     },
     "id": "1",
@@ -14,7 +15,12 @@
         }
     },
     "status": "started",
-    "statusLastModified": "2014-02-14 12:00:00",
+    "statusLastModified": "2014-02-25 13:00:00",
+    "previousStatus": {
+      "status": "ready",
+      "statusLastModified": "2014-02-14 12:00:00"
+    },
+    "assignee": "user1",
     "triggerDate": "2014-02-25 14:00:00",
     "queueBinding": {"id": "abc"}
 }

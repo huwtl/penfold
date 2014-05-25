@@ -11,17 +11,19 @@ import org.huwtl.penfold.readstore.EventRecord
 import org.huwtl.penfold.domain.event.TaskCancelled
 import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.event.TaskTriggered
-import scala.Some
 import org.huwtl.penfold.domain.event.TaskStarted
 import com.mongodb.DuplicateKeyException
 import grizzled.slf4j.Logger
 import com.mongodb.util.JSON
 import org.huwtl.penfold.app.support.RegisterBigIntConversionHelpers
+import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
+import org.joda.time.DateTime
 
 class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
 
   RegisterBigIntConversionHelpers()
+  RegisterJodaTimeConversionHelpers()
 
   private val success = true
 
@@ -33,9 +35,11 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case e: FutureTaskCreated => handleCreateEvent(e, Waiting)
       case e: TaskTriggered => handleUpdateStatusEvent(e, Ready)
       case e: TaskStarted => handleUpdateStatusEvent(e, Started)
+      case e: TaskRequeued => handleUpdateStatusEvent(e, Ready)
       case e: TaskCompleted => handleUpdateStatusEvent(e, Completed)
       case e: TaskCancelled => handleUpdateStatusEvent(e, Cancelled)
       case e: TaskPayloadUpdated => handleUpdatePayloadEvent(e)
+      case e: TaskArchived => handleArchiveEvent(e)
       case _ =>
     }
 
@@ -50,11 +54,11 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     val task = MongoDBObject(
       "_id" -> event.aggregateId.value,
       "version" -> event.aggregateVersion.number,
-      "created" -> event.created.toDate,
+      "created" -> event.created,
       "queue" -> queue.value,
       "status" -> status.name,
-      "statusLastModified" -> event.created.toDate,
-      "triggerDate" -> event.triggerDate.toDate,
+      "statusLastModified" -> event.created,
+      "triggerDate" -> event.triggerDate,
       "payload" -> event.payload.content,
       "sort" -> resolveSortOrder(event, status, event.score),
       "score" -> event.score
@@ -76,8 +80,10 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case Some(task) => {
         val update = $set(
           "version" -> event.aggregateVersion.number,
+          "previousStatus" -> Map("status" -> task.as[String]("status"), "statusLastModified" -> task.as[DateTime]("statusLastModified")),
           "status" -> status.name,
           "statusLastModified" -> event.created.toDate,
+          "assignee" -> resolveAssignee(event, task.getAs[String]("assignee")),
           "sort" -> resolveSortOrder(event, status, task.as[Long]("score"))
         )
         tasksCollection.update(query, update)
@@ -107,11 +113,26 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     }
   }
 
+  private def handleArchiveEvent(event: TaskArchived) = {
+    val query = updateByIdVersion(event)
+
+    tasksCollection.remove(query)
+  }
+
+  private def resolveAssignee(event: Event, previousAssignee: Option[String]) = {
+    event match {
+      case e: TaskRequeued => None
+      case e: TaskStarted => e.assignee.map(_.username)
+      case _ => previousAssignee
+    }
+  }
+
   private def resolveSortOrder(event: Event, status: Status, previousScore: Long) = {
     event match {
       case e: TaskCreated => e.score
-      case e: FutureTaskCreated => e.score
+      case e: FutureTaskCreated => e.triggerDate.getMillis
       case e: TaskTriggered => previousScore
+      case e: TaskRequeued => previousScore
       case e: TaskPayloadUpdated if status == Ready => e.score getOrElse previousScore
       case _ => event.created.getMillis
     }

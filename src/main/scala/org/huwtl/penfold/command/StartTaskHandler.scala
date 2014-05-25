@@ -5,7 +5,7 @@ import org.huwtl.penfold.domain.store.DomainRepository
 
 case class StartTaskHandler(eventStore: DomainRepository) extends CommandHandler[StartTask] {
   override def handle(command: StartTask) = {
-    val startedTask = eventStore.getById[Task](command.id).start()
+    val startedTask = eventStore.getById[Task](command.id).start(command.assignee)
     eventStore.add(startedTask)
     startedTask.aggregateId
   }

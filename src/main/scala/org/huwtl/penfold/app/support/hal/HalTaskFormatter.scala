@@ -4,10 +4,12 @@ import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import org.joda.time.format.DateTimeFormat
 import java.net.URI
 import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
-import org.huwtl.penfold.readstore.{PageRequest, Filters, PageResult, TaskRecord}
+import org.huwtl.penfold.readstore._
 import org.huwtl.penfold.domain.model.Status._
 import com.theoryinpractise.halbuilder.api.Representation
 import org.huwtl.penfold.app.support.JavaMapUtil
+import org.huwtl.penfold.readstore.PageRequest
+import org.huwtl.penfold.readstore.TaskRecord
 import org.huwtl.penfold.domain.model.QueueBinding
 
 class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedRepresentationProvider {
@@ -28,8 +30,20 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       .withProperty("queueBinding", JavaMapUtil.deepConvertToJavaMap(bindingToMap(task.queueBinding)))
       .withLink("queue", s"${baseQueueLink.toString}/$queueIdParam")
 
+    if (task.assignee.isDefined) {
+      representation.withProperty("assignee", task.assignee.get.username)
+    }
+
+    if (task.previousStatus.isDefined) {
+      representation.withProperty("previousStatus", JavaMapUtil.deepConvertToJavaMap(previousStatusToMap(task.previousStatus.get)))
+    }
+
     if (task.status != Completed & task.status != Cancelled) {
       representation.withLink("updatePayload", s"${baseTaskLink.toString}/${task.id.value}/${task.version.number}/payload")
+    }
+
+    if (task.status != Waiting & task.status != Ready) {
+      representation.withLink("requeue", s"${baseQueueLink.toString}/$queueIdParam/${Ready.name}")
     }
 
     task.status match {
@@ -63,5 +77,9 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
 
   def bindingToMap(binding: QueueBinding) = {
     Map("id" -> binding.id.value)
+  }
+
+  def previousStatusToMap(previousStatus: PreviousStatus) = {
+    Map("status" -> previousStatus.status.name, "statusLastModified" -> dateFormatter.print(previousStatus.statusLastModified))
   }
 }

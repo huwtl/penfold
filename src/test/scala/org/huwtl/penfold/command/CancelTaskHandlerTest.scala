@@ -15,13 +15,13 @@ class CancelTaskHandlerTest extends Specification with Mockito {
   val readyTask = mock[Task]
   val cancelledTask = mock[Task]
 
-  val handler = new CancelTaskHandler(domainRepository)
+  val commandDispatcher = new CommandDispatcherFactory(domainRepository, null).create
 
   "cancel task" in {
     domainRepository.getById[Task](expectedAggregateId) returns readyTask
-    readyTask.cancel() returns cancelledTask
+    readyTask.cancel returns cancelledTask
 
-    handler.handle(new CancelTask(expectedAggregateId))
+    commandDispatcher.dispatch(CancelTask(expectedAggregateId))
 
     there was one(domainRepository).add(cancelledTask)
   }

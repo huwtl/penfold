@@ -41,7 +41,7 @@ class TaskResource(readStore: ReadStore,
     Created(halFormatter.halFrom(readStore.retrieveBy(aggregateId).get))
   }
 
-  patch("/:id/:version/payload") {
+  put("/:id/:version/payload") {
     val updatePayloadTaskRequest = jsonConverter.deserialize[UpdateTaskPayloadRequest](request.body)
     val aggregateId = commandDispatcher.dispatch(updatePayloadTaskRequest.toCommand(AggregateId(params("id")), AggregateVersion(params("version").toInt)))
     Ok(halFormatter.halFrom(readStore.retrieveBy(aggregateId).get))

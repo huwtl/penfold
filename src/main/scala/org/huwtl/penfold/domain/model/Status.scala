@@ -25,6 +25,10 @@ object Status {
     val name = "completed"
   }
 
+  case object Archived extends Status {
+    val name = "archived"
+  }
+
   def from(str: String): Option[Status] = {
     str.toLowerCase match {
       case Waiting.name => Some(Waiting)

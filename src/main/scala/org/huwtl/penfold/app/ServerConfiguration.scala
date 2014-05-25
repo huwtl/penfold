@@ -11,7 +11,8 @@ case class ServerConfiguration(publicUrl: String,
                                readStoreMongoDatabaseServers: MongoDatabaseServers,
                                readStoreIndexes: List[Index] = Nil,
                                pageSize: Int = 10,
-                               triggeredCheckFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
+                               triggeredCheckFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS),
+                               taskArchiver: Option[TaskArchiverConfiguration] = None)
 
 case class AuthenticationCredentials(username: String, password: String)
 
@@ -19,3 +20,6 @@ case class JdbcConnectionPool(url: String, username: String, password: String, d
 
 case class MongoDatabaseServers(databaseName: String, servers: List[MongoDatabaseServer])
 case class MongoDatabaseServer(host: String, port: Int)
+
+case class TaskArchiverConfiguration(timeoutAttributePath: String,
+                                     checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))

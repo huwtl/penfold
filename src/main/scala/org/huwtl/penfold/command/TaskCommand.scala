@@ -18,11 +18,16 @@ case class CreateFutureTask(queueBinding: QueueBinding,
 
 case class TriggerTask(id: AggregateId) extends TaskCommand
 
-case class StartTask(id: AggregateId) extends TaskCommand
+case class StartTask(id: AggregateId,
+                     assignee: Option[Assignee]) extends TaskCommand
+
+case class RequeueTask(id: AggregateId) extends TaskCommand
 
 case class CompleteTask(id: AggregateId) extends TaskCommand
 
 case class CancelTask(id: AggregateId) extends TaskCommand
+
+case class ArchiveTask(id: AggregateId) extends TaskCommand
 
 case class UpdateTaskPayload(id: AggregateId,
                              version: AggregateVersion,

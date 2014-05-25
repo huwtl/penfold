@@ -16,23 +16,23 @@ case class Indexes(private val customIndexes: List[Index]) {
   val all = queueIndex :: statusIndex :: augmentCustomIndexes
 
   def transformForSuitableIndex(filters: Filters) = {
-    customIndexes.find(_.suitableFor(filters)) match {
-      case Some(suitableIndex) => Filters(suitableIndex.fields.map(field => Filter(field.path, filters.get(field.alias).get.values)))
+    suitableIndex(filters) match {
+      case Some(suitableIndex) => Filters(suitableIndex.excludingSortFields.map(field => {
+        Filter(field.path, filters.get(field.alias).get.values)
+      }))
       case None => filters
     }
   }
 
+  def suitableIndex(filters: Filters) = {
+    all.find(index => Index(index.excludingSortFields).suitableFor(filters))
+  }
+
   private def augmentCustomIndexes = {
-    val customIndexesWithSort = for {
-      customIndex <- customIndexes
-      enhancementFields <- List(sortIndexFields)
-    } yield Index(customIndex.fields ::: enhancementFields)
+    val customIndexesWithSort = customIndexes.map(idx => Index(idx.singleKeyFields ::: sortIndexFields ::: idx.multiKeyFields))
 
-    val customIndexesForSortedQueue = for {
-      customIndex <- customIndexes
-      enhancementFields <- List(queueIndexFields)
-    } yield Index(enhancementFields ::: customIndex.fields ::: sortIndexFields)
+    val customIndexesWithQueueAndSort = customIndexesWithSort.map(idx => Index(queueIndexFields ::: idx.fields))
 
-    customIndexesWithSort ::: customIndexesForSortedQueue
+    customIndexesWithSort ::: customIndexesWithQueueAndSort
   }
 }
