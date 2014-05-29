@@ -81,7 +81,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     task must beEqualTo(Some(TestModel.readyTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, sort = updatedScore, payload = updatedPayload)))
   }
 
-  "update payload of waiting task" in new context {
+  "update payload of non-ready task without changing sort order" in new context {
     val updateTime = new DateTime(2014, 2, 22, 13, 0, 0, 0)
     val updatedPayload = Payload(Map("field1" -> "123", "inner" -> 1))
     val payloadUpdate = Patch(List(Replace("/inner", Value(BigInt(1)))))
@@ -91,7 +91,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.waitingTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, sort = updateTime.getMillis, payload = updatedPayload)))
+    task must beEqualTo(Some(TestModel.waitingTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, payload = updatedPayload)))
   }
 
   "ignore duplicate events" in new context {

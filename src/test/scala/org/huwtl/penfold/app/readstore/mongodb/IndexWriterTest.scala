@@ -21,7 +21,7 @@ class IndexWriterTest extends Specification with Mockito {
     val indexes = mock[Indexes]
     indexes.all returns List(Index(List(IndexField("test", "payload.test"))))
 
-    indexWriter.write(mongo, indexes, new ServerConfiguration(null, 0, None, null, null, null, 0, null, Some(TaskArchiverConfiguration("payload.timeout", null))))
+    indexWriter.write(mongo, indexes, new ServerConfiguration(null, 0, None, null, null, null, 0, null, null, Some(TaskArchiverConfiguration("payload.timeout", null))))
 
     there was one(mongoCollection).ensureIndex(MongoDBObject("payload.test" -> 1), MongoDBObject("background" -> true))
     there was one(mongoCollection).ensureIndex(MongoDBObject("payload.timeout" -> 1), MongoDBObject("background" -> true))

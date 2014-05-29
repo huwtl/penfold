@@ -96,27 +96,27 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
     }
   }
 
-  "return 200 when posting task into started queue" in {
+  "return 201 when posting task into started queue" in {
     readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
 
     post("/queues/abc/started", """{"id": "1", "assignee": "user1"}""", headers = validAuthHeader) {
-      status must beEqualTo(200)
+      status must beEqualTo(201)
     }
   }
 
-  "return 200 when requeuing tasks" in {
+  "return 201 when requeuing tasks" in {
     readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
 
     post("/queues/abc/ready", """{"id": "1"}""", headers = validAuthHeader) {
-      status must beEqualTo(200)
+      status must beEqualTo(201)
     }
   }
 
-  "return 200 when posting task into completed queue" in {
+  "return 201 when posting task into completed queue" in {
     readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
 
     post("/queues/abc/completed", """{"id": "1", "user": "user1", "completionType": "type"}""", headers = validAuthHeader) {
-      status must beEqualTo(200)
+      status must beEqualTo(201)
     }
   }
 

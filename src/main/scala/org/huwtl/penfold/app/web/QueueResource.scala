@@ -47,19 +47,19 @@ class QueueResource(readStore: ReadStore,
   post("/:queue/started") {
     val startTaskRequest = jsonConverter.deserialize[StartTaskRequest](request.body)
     commandDispatcher.dispatch(startTaskRequest.toCommand)
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(startTaskRequest.id).get))
+    Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(startTaskRequest.id).get))
   }
 
   post("/:queue/ready") {
     val requeueTaskRequest = jsonConverter.deserialize[RequeueTaskRequest](request.body)
     commandDispatcher.dispatch(requeueTaskRequest.toCommand)
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(requeueTaskRequest.id).get))
+    Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(requeueTaskRequest.id).get))
   }
 
   post("/:queue/completed") {
     val completeTaskRequest = jsonConverter.deserialize[CompleteTaskRequest](request.body)
     commandDispatcher.dispatch(completeTaskRequest.toCommand)
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(completeTaskRequest.id).get))
+    Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(completeTaskRequest.id).get))
   }
 
   override protected def validCredentials: Option[AuthenticationCredentials] = authenticationCredentials

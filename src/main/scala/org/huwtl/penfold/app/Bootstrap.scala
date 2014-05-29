@@ -12,7 +12,7 @@ import org.huwtl.penfold.readstore.{EventNotifiers, EventNotifier, NewEventsProv
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import org.huwtl.penfold.app.support.{DateTimeSource, UUIDFactory}
-import org.huwtl.penfold.app.schedule.{TaskArchiveScheduler, TaskTriggerScheduler}
+import org.huwtl.penfold.app.schedule.{EventSyncScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
 import com.codahale.metrics.health.HealthCheckRegistry
 import org.huwtl.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
 import org.huwtl.penfold.app.readstore.mongodb._
@@ -42,9 +42,9 @@ class Bootstrap extends LifeCycle {
 
     new IndexWriter().write(readStoreDatabase, indexes, config)
 
-    val eventNotifiers = List(readStoreUpdater)
+    val eventNotifiers = new EventNotifiers(List(readStoreUpdater))
 
-    val domainRepository = new DomainRepository(eventStore, new EventNotifiers(eventNotifiers))
+    val domainRepository = new DomainRepository(eventStore, eventNotifiers)
 
     val commandDispatcher = new CommandDispatcherFactory(domainRepository, aggregateIdFactory).create
 
@@ -68,6 +68,8 @@ class Bootstrap extends LifeCycle {
     context mount(new HealthResource(healthCheckRegistry, objectSerializer), "/healthcheck")
     context mount(new TaskResource(readStore, commandDispatcher, objectSerializer, taskFormatter, config.pageSize, config.authentication), "/tasks/*")
     context mount(new QueueResource(readStore, commandDispatcher, objectSerializer, queueFormatter, config.pageSize, config.authentication), "/queues/*")
+
+    new EventSyncScheduler(eventNotifiers, config.eventSync).start()
 
     new TaskTriggerScheduler(readStore, commandDispatcher, config.triggeredCheckFrequency).start()
 

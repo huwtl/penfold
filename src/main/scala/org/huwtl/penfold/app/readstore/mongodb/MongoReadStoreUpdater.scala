@@ -61,7 +61,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       "statusLastModified" -> event.created,
       "triggerDate" -> event.triggerDate,
       "payload" -> event.payload.content,
-      "sort" -> resolveSortOrder(event, status, event.score),
+      "sort" -> resolveSortOrder(event, status, event.score).get,
       "score" -> event.score
     )
 
@@ -87,7 +87,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
           "assignee" -> resolveAssignee(event, task.getAs[String]("assignee")),
           "concluder" -> resolveConclusionField(event, _.concluder.map(_.username)),
           "conclusionType" -> resolveConclusionField(event, _.conclusionType),
-          "sort" -> resolveSortOrder(event, status, task.as[Long]("score"))
+          "sort" -> resolveSortOrder(event, status, task.as[Long]("score")).get
         )
         tasksCollection.update(query, update)
       }
@@ -101,14 +101,15 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     tasksCollection.findOne(query) match {
       case Some(task) => {
         val status = Status.from(task.as[String]("status")).get
-        val previousScore = task.as[Long]("score")
+        val existingScore = task.as[Long]("score")
+        val existingSort = task.as[Long]("sort")
         val payload = objectSerializer.deserialize[Payload](JSON.serialize(task.as[String]("payload")))
 
         val update = $set(
           "version" -> event.aggregateVersion.number,
           "payload" -> event.payloadUpdate.exec(payload.content),
-          "score" -> event.score.getOrElse(previousScore),
-          "sort" -> resolveSortOrder(event, status, previousScore)
+          "score" -> event.score.getOrElse(existingScore),
+          "sort" -> resolveSortOrder(event, status, existingScore).getOrElse(existingSort)
         )
         tasksCollection.update(query, update)
       }
@@ -137,14 +138,15 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     }
   }
 
-  private def resolveSortOrder(event: Event, status: Status, previousScore: Long) = {
+  private def resolveSortOrder(event: Event, status: Status, existingScore: Long) = {
     event match {
-      case e: TaskCreated => e.score
-      case e: FutureTaskCreated => e.triggerDate.getMillis
-      case e: TaskTriggered => previousScore
-      case e: TaskRequeued => previousScore
-      case e: TaskPayloadUpdated if status == Ready => e.score getOrElse previousScore
-      case _ => event.created.getMillis
+      case e: TaskCreated => Some(e.score)
+      case e: FutureTaskCreated => Some(e.triggerDate.getMillis)
+      case e: TaskTriggered => Some(existingScore)
+      case e: TaskRequeued => Some(existingScore)
+      case e: TaskPayloadUpdated if status == Ready => Some(e.score getOrElse existingScore)
+      case e: TaskPayloadUpdated => None
+      case _ => Some(event.created.getMillis)
     }
   }
 

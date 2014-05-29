@@ -1,6 +1,5 @@
 package org.huwtl.penfold.app.schedule
 
-import java.util.concurrent.Executors._
 import org.huwtl.penfold.command.{ArchiveTask, CommandDispatcher}
 import org.huwtl.penfold.readstore.{TaskRecordReference, ReadStore}
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
@@ -8,24 +7,15 @@ import grizzled.slf4j.Logger
 import scala.util.Try
 import org.huwtl.penfold.app.TaskArchiverConfiguration
 
-class TaskArchiveScheduler(readStore: ReadStore, commandDispatcher: CommandDispatcher, archiverConfig: TaskArchiverConfiguration) {
+class TaskArchiveScheduler(readStore: ReadStore, commandDispatcher: CommandDispatcher, archiverConfig: TaskArchiverConfiguration) extends Scheduler {
   private lazy val logger = Logger(getClass)
 
-  def start() = {
-    newSingleThreadScheduledExecutor.scheduleAtFixedRate(new Runnable() {
-      def run() {
-        try {
-          logger.debug("task archiver started")
+  override val name = "task archiver"
 
-          readStore.retrieveTasksToArchive(archiverConfig.timeoutAttributePath).foreach(archiveTask)
+  override val frequency = archiverConfig.checkFrequency
 
-          logger.debug("task archiver completed")
-
-        } catch {
-          case e: Exception => logger.error("error during scheduled archiver", e)
-        }
-      }
-    }, 0, archiverConfig.checkFrequency.length, archiverConfig.checkFrequency.unit)
+  override def process() {
+    readStore.retrieveTasksToArchive(archiverConfig.timeoutAttributePath).foreach(archiveTask)
   }
 
   private def archiveTask(task: TaskRecordReference) {

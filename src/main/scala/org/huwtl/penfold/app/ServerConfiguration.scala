@@ -11,6 +11,7 @@ case class ServerConfiguration(publicUrl: String,
                                readStoreMongoDatabaseServers: MongoDatabaseServers,
                                readStoreIndexes: List[Index] = Nil,
                                pageSize: Int = 10,
+                               eventSync: FiniteDuration = FiniteDuration(15L, TimeUnit.MINUTES),
                                triggeredCheckFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS),
                                taskArchiver: Option[TaskArchiverConfiguration] = None)
 
