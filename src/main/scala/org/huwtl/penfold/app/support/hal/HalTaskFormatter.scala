@@ -46,7 +46,7 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       representation.withProperty("previousStatus", JavaMapUtil.deepConvertToJavaMap(previousStatusToMap(task.previousStatus.get)))
     }
 
-    if (task.status != Completed & task.status != Cancelled) {
+    if (task.status != Closed) {
       representation.withLink("updatePayload", s"${baseTaskLink.toString}/${task.id.value}/${task.version.number}/payload")
     }
 
@@ -54,14 +54,12 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       representation.withLink("requeue", s"${baseQueueLink.toString}/$queueIdParam/${Ready.name}")
     }
 
-    task.status match {
-      case Ready => {
-        representation.withLink("start", s"${baseQueueLink.toString}/$queueIdParam/${Started.name}")
-      }
-      case Started => {
-        representation.withLink("complete", s"${baseQueueLink.toString}/$queueIdParam/${Completed.name}")
-      }
-      case _ =>
+    if (task.status == Ready) {
+      representation.withLink("start", s"${baseQueueLink.toString}/$queueIdParam/${Started.name}")
+    }
+
+    if (task.status != Closed) {
+      representation.withLink("close", s"${baseQueueLink.toString}/$queueIdParam/${Closed.name}")
     }
 
     representation

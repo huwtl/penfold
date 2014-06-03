@@ -34,12 +34,8 @@ class HalTaskFormatterTest extends Specification {
     hal(task.copy(status = Status.Started, previousStatus = Some(previousStatus.copy(status = Ready)), assignee = Some(assignee))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedStartedTask.json"))
   }
 
-  "format completed task as hal+json" in {
-    hal(completedTask) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCompletedTask.json"))
-  }
-
-  "format cancelled task as hal+json" in {
-    hal(task.copy(status = Status.Cancelled, previousStatus = Some(previousStatus))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCancelledTask.json"))
+  "format closed task as hal+json" in {
+    hal(closedTask) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedClosedTask.json"))
   }
 
   "format filtered tasks hal+json" in {

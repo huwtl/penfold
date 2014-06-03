@@ -7,7 +7,7 @@ import org.huwtl.penfold.domain.model.{Status, AggregateId, QueueId}
 import org.huwtl.penfold.readstore.ReadStore
 import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.app.support.json.ObjectSerializer
-import org.huwtl.penfold.app.web.bean.{RequeueTaskRequest, CompleteTaskRequest, StartTaskRequest}
+import org.huwtl.penfold.app.web.bean.{RequeueTaskRequest, CloseTaskRequest, StartTaskRequest}
 import org.huwtl.penfold.app.support.auth.BasicAuthenticationSupport
 import org.huwtl.penfold.app.AuthenticationCredentials
 
@@ -56,10 +56,10 @@ class QueueResource(readStore: ReadStore,
     Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(requeueTaskRequest.id).get))
   }
 
-  post("/:queue/completed") {
-    val completeTaskRequest = jsonConverter.deserialize[CompleteTaskRequest](request.body)
-    commandDispatcher.dispatch(completeTaskRequest.toCommand)
-    Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(completeTaskRequest.id).get))
+  post("/:queue/closed") {
+    val closeTaskRequest = jsonConverter.deserialize[CloseTaskRequest](request.body)
+    commandDispatcher.dispatch(closeTaskRequest.toCommand)
+    Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(closeTaskRequest.id).get))
   }
 
   override protected def validCredentials: Option[AuthenticationCredentials] = authenticationCredentials

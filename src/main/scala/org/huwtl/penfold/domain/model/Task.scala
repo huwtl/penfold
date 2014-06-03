@@ -68,7 +68,7 @@ case class Task(uncommittedEvents: List[Event],
 
   def updatePayload(expectedVersion: AggregateVersion, payloadUpdate: Patch, updateType: Option[String], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
-    require(status != Completed && status != Cancelled && status != Archived, s"Cannot update payload for completed/cancelled/archived task but was $status")
+    require(status != Closed && status != Archived, s"Cannot update payload for closed/archived task but was $status")
     applyTaskPayloadUpdated(TaskPayloadUpdated(aggregateId, version.next, now, payloadUpdate, updateType, score))
   }
 
@@ -77,13 +77,9 @@ case class Task(uncommittedEvents: List[Event],
     applyTaskStarted(TaskStarted(aggregateId, version.next, now, assignee))
   }
 
-  def cancel(user: Option[User] = None, cancellationType: Option[String] = None): Task = {
-    applyTaskCancelled(TaskCancelled(aggregateId, version.next, now, user, cancellationType))
-  }
-
-  def complete(user: Option[User] = None, completionType: Option[String] = None): Task = {
-    checkConflict(status == Started, s"Can only complete a started task but was $status")
-    applyTaskCompleted(TaskCompleted(aggregateId, version.next, now, user, completionType))
+  def close(user: Option[User] = None, completionType: Option[String] = None): Task = {
+    checkConflict(status != Closed && status != Archived, "Cannot close an archived task")
+    applyTaskClosed(TaskClosed(aggregateId, version.next, now, user, completionType))
   }
 
   def requeue: Task = {
@@ -101,8 +97,7 @@ case class Task(uncommittedEvents: List[Event],
   def applyEvent = {
     case event: TaskTriggered => applyTaskTriggered(event)
     case event: TaskStarted => applyTaskStarted(event)
-    case event: TaskCancelled => applyTaskCancelled(event)
-    case event: TaskCompleted => applyTaskCompleted(event)
+    case event: TaskClosed => applyTaskClosed(event)
     case event: TaskPayloadUpdated => applyTaskPayloadUpdated(event)
     case event: TaskRequeued => applyTaskRequeued(event)
     case event: TaskArchived => applyTaskArchived(event)
@@ -113,9 +108,7 @@ case class Task(uncommittedEvents: List[Event],
 
   private def applyTaskStarted(event: TaskStarted) = copy(event :: uncommittedEvents, version = event.aggregateVersion, status = Started, assignee = event.assignee)
 
-  private def applyTaskCancelled(event: TaskCancelled) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Cancelled, concluder = event.concluder, conclusionType = event.conclusionType)
-
-  private def applyTaskCompleted(event: TaskCompleted) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Completed, concluder = event.concluder, conclusionType = event.conclusionType)
+  private def applyTaskClosed(event: TaskClosed) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Closed, concluder = event.concluder, conclusionType = event.conclusionType)
 
   private def applyTaskPayloadUpdated(event: TaskPayloadUpdated) = copy(
     event :: uncommittedEvents,

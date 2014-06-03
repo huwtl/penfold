@@ -13,6 +13,7 @@
                     "task": {
                         "_links": {
                             "self": {"href": "http://host/tasks/2"},
+                            "close": {"href": "http://host/queues/abc/closed"},
                             "queue": {"href": "http://host/queues/abc"},
                             "start": {"href": "http://host/queues/abc/started"},
                             "updatePayload": {"href": "http://host/tasks/2/1/payload"}
@@ -36,6 +37,7 @@
                     "task": {
                         "_links": {
                             "self": {"href": "http://host/tasks/1"},
+                            "close": {"href": "http://host/queues/abc/closed"},
                             "queue": {"href": "http://host/queues/abc"},
                             "start": {"href": "http://host/queues/abc/started"},
                             "updatePayload": {"href": "http://host/tasks/1/1/payload"}

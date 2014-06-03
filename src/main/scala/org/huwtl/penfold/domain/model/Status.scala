@@ -17,12 +17,8 @@ object Status {
     val name = "started"
   }
 
-  case object Cancelled extends Status {
-    val name = "cancelled"
-  }
-
-  case object Completed extends Status {
-    val name = "completed"
+  case object Closed extends Status {
+    val name = "closed"
   }
 
   case object Archived extends Status {
@@ -34,7 +30,7 @@ object Status {
       case Waiting.name => Some(Waiting)
       case Ready.name => Some(Ready)
       case Started.name => Some(Started)
-      case Completed.name => Some(Completed)
+      case Closed.name => Some(Closed)
       case _ => None
     }
   }

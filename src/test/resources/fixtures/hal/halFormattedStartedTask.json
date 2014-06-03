@@ -1,7 +1,7 @@
 {
     "_links": {
         "self": {"href": "http://host/tasks/1"},
-        "complete": {"href": "http://host/queues/abc/completed"},
+        "close": {"href": "http://host/queues/abc/closed"},
         "queue": {"href": "http://host/queues/abc"},
         "requeue": {"href": "http://host/queues/abc/ready"},
         "updatePayload": {"href": "http://host/tasks/1/1/payload"}

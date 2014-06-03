@@ -112,10 +112,10 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
     }
   }
 
-  "return 201 when posting task into completed queue" in {
+  "return 201 when posting task into closed queue" in {
     readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
 
-    post("/queues/abc/completed", """{"id": "1", "user": "user1", "completionType": "type"}""", headers = validAuthHeader) {
+    post("/queues/abc/closed", """{"id": "1", "concluder": "user1", "conclusionType": "type"}""", headers = validAuthHeader) {
       status must beEqualTo(201)
     }
   }

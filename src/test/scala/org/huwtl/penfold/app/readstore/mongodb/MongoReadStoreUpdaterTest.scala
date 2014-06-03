@@ -23,7 +23,7 @@ import org.huwtl.penfold.domain.model.patch.Value
 import org.huwtl.penfold.domain.model.patch.Patch
 import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.support.TestModel
-import org.huwtl.penfold.domain.model.Status.Completed
+import org.huwtl.penfold.domain.model.Status.Closed
 
 class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
   sequential
@@ -37,7 +37,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     val futureTaskCreatedEvent = FutureTaskCreated(aggregateId, AggregateVersion(1), TestModel.createdDate, QueueBinding(TestModel.queueId), TestModel.triggerDate, payload, TestModel.score)
     val taskStartedEvent = TaskStarted(aggregateId, AggregateVersion(2), TestModel.createdDate, Some(TestModel.assignee))
     val taskRequeuedEvent = TaskRequeued(aggregateId, AggregateVersion(4), TestModel.createdDate)
-    val taskCompletedEvent = TaskCompleted(aggregateId, AggregateVersion(3), TestModel.createdDate, Some(TestModel.concluder), Some(TestModel.conclusionType))
+    val taskClosedEvent = TaskClosed(aggregateId, AggregateVersion(3), TestModel.createdDate, Some(TestModel.concluder), Some(TestModel.conclusionType))
     val archivedEvent = TaskArchived(aggregateId, taskCreatedEvent.aggregateVersion.next, TestModel.createdDate)
 
     val mongoClient = MongoClient("localhost", embedConnectionPort())
@@ -60,12 +60,12 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     task must beEqualTo(Some(TestModel.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
   }
 
-  "complete task" in new context {
-    handleEvents(taskCreatedEvent, taskStartedEvent, taskCompletedEvent)
+  "close task" in new context {
+    handleEvents(taskCreatedEvent, taskStartedEvent, taskClosedEvent)
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.completedTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
+    task must beEqualTo(Some(TestModel.closedTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
   }
 
   "update payload of ready task" in new context {
@@ -109,12 +109,12 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     task must beNone
   }
 
-  "requeue completed task and clear assignee and conclusion fields if present" in new context {
-    handleEvents(taskCreatedEvent, taskStartedEvent, taskCompletedEvent, taskRequeuedEvent)
+  "requeue closed task and clear assignee and conclusion fields if present" in new context {
+    handleEvents(taskCreatedEvent, taskStartedEvent, taskClosedEvent, taskRequeuedEvent)
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.task.copy(id = aggregateId, version = taskRequeuedEvent.aggregateVersion, payload = payload, previousStatus = Some(TestModel.previousStatus.copy(status = Completed)))))
+    task must beEqualTo(Some(TestModel.task.copy(id = aggregateId, version = taskRequeuedEvent.aggregateVersion, payload = payload, previousStatus = Some(TestModel.previousStatus.copy(status = Closed)))))
   }
 
   "ignore events on aggregate version mismatch" in new context {

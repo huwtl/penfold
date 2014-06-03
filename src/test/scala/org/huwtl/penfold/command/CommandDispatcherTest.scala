@@ -8,7 +8,7 @@ class CommandDispatcherTest extends Specification with Mockito {
 
   val triggerTaskCommand = TriggerTask(AggregateId("a1"))
   val startTaskCommand = StartTask(AggregateId("a1"), None)
-  val completeTaskCommand = CompleteTask(AggregateId("a1"))
+  val closeTaskCommand = CloseTask(AggregateId("a1"))
 
   val triggerTaskHandler = mock[TriggerTaskHandler]
   val startTaskHandler = mock[StartTaskHandler]
@@ -26,6 +26,6 @@ class CommandDispatcherTest extends Specification with Mockito {
   }
 
   "throw exception when no suitable handler" in {
-    dispatch.dispatch(completeTaskCommand) must throwA[RuntimeException]
+    dispatch.dispatch(closeTaskCommand) must throwA[RuntimeException]
   }
 }

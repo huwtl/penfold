@@ -6,7 +6,7 @@ import org.json4s.jackson.JsonMethods._
 import org.huwtl.penfold.domain.model._
 import org.joda.time.DateTime
 import org.huwtl.penfold.domain.event._
-import org.huwtl.penfold.domain.event.TaskCompleted
+import org.huwtl.penfold.domain.event.TaskClosed
 import org.huwtl.penfold.domain.model.Payload
 import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.domain.model.QueueId
@@ -28,8 +28,7 @@ class EventSerializerTest extends Specification with DataTables {
   val taskTriggeredEvent = TaskTriggered(AggregateId("a1"), AggregateVersion.init, dateTime)
   val taskStartedEvent = TaskStarted(AggregateId("a1"), AggregateVersion.init, dateTime, Some(Assignee("user1")))
   val taskRequeuedEvent = TaskRequeued(AggregateId("a1"), AggregateVersion.init, dateTime)
-  val taskCancelledEvent = TaskCancelled(AggregateId("a1"), AggregateVersion.init, dateTime, Some(User("user1")), Some("type"))
-  val taskCompletedEvent = TaskCompleted(AggregateId("a1"), AggregateVersion.init, dateTime, Some(User("user1")), Some("type"))
+  val taskClosedEvent = TaskClosed(AggregateId("a1"), AggregateVersion.init, dateTime, Some(User("user1")), Some("type"))
   val taskArchivedEvent = TaskArchived(AggregateId("a1"), AggregateVersion.init, dateTime)
   val serializer = new EventSerializer
 
@@ -41,8 +40,7 @@ class EventSerializerTest extends Specification with DataTables {
     "task_triggered.json"       !! taskTriggeredEvent      |
     "task_started.json"         !! taskStartedEvent        |
     "task_requeued.json"        !! taskRequeuedEvent       |
-    "task_cancelled.json"       !! taskCancelledEvent      |
-    "task_completed.json"       !! taskCompletedEvent      |
+    "task_closed.json"          !! taskClosedEvent      |
     "task_archived.json"        !! taskArchivedEvent       |> {
       (jsonPath, expectedEvent) =>
         val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/$jsonPath")).mkString
@@ -59,8 +57,7 @@ class EventSerializerTest extends Specification with DataTables {
     taskTriggeredEvent      !! "task_triggered.json"       |
     taskStartedEvent        !! "task_started.json"         |
     taskRequeuedEvent       !! "task_requeued.json"        |
-    taskCancelledEvent      !! "task_cancelled.json"       |
-    taskCompletedEvent      !! "task_completed.json"       |
+    taskClosedEvent         !! "task_closed.json"          |
     taskArchivedEvent       !! "task_archived.json"        |> {
       (event, expectedJsonPath) =>
         val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/${expectedJsonPath}")).mkString))

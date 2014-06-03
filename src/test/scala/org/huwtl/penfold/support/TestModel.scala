@@ -5,7 +5,7 @@ import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.{PreviousStatus, TaskRecord}
 import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.domain.model.Status.{Waiting, Started, Ready, Completed}
+import org.huwtl.penfold.domain.model.Status.{Waiting, Started, Ready, Closed}
 
 object TestModel
 {
@@ -41,7 +41,7 @@ object TestModel
 
   val startedTask = task.copy(version = AggregateVersion(2), status = Started, assignee = Some(assignee), previousStatus = Some(PreviousStatus(Ready, createdDate)), sort = createdDate.getMillis)
 
-  val completedTask = startedTask.copy(version = AggregateVersion(3), status = Completed, previousStatus = Some(previousStatus), concluder = Some(concluder), conclusionType = Some(conclusionType))
+  val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), concluder = Some(concluder), conclusionType = Some(conclusionType))
 
   val requeuedTask = task.copy(version = AggregateVersion(2), previousStatus = Some(previousStatus))
 }

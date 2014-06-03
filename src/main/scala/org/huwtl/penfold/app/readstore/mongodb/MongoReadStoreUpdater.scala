@@ -6,9 +6,8 @@ import org.huwtl.penfold.domain.model.Status._
 import org.huwtl.penfold.domain.model.{Payload, Status}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.domain.event._
-import org.huwtl.penfold.domain.event.TaskCompleted
+import org.huwtl.penfold.domain.event.TaskClosed
 import org.huwtl.penfold.readstore.EventRecord
-import org.huwtl.penfold.domain.event.TaskCancelled
 import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.event.TaskTriggered
 import scala.Some
@@ -37,8 +36,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case e: TaskTriggered => handleUpdateStatusEvent(e, Ready)
       case e: TaskStarted => handleUpdateStatusEvent(e, Started)
       case e: TaskRequeued => handleUpdateStatusEvent(e, Ready)
-      case e: TaskCompleted => handleUpdateStatusEvent(e, Completed)
-      case e: TaskCancelled => handleUpdateStatusEvent(e, Cancelled)
+      case e: TaskClosed => handleUpdateStatusEvent(e, Closed)
       case e: TaskPayloadUpdated => handleUpdatePayloadEvent(e)
       case e: TaskArchived => handleArchiveEvent(e)
       case _ =>
@@ -131,9 +129,9 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     }
   }
 
-  private def resolveConclusionField(event: Event, fieldValue: TaskConcludedEvent => Any) = {
+  private def resolveConclusionField(event: Event, fieldValue: TaskClosed => Any) = {
     event match {
-      case e: TaskConcludedEvent => fieldValue(e)
+      case e: TaskClosed => fieldValue(e)
       case _ => None
     }
   }

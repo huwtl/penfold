@@ -5,23 +5,23 @@ import org.specs2.mock.Mockito
 import org.huwtl.penfold.domain.model.{Task, AggregateId}
 import org.huwtl.penfold.domain.store.DomainRepository
 
-class CompleteTaskHandlerTest extends Specification with Mockito {
+class CloseTaskHandlerTest extends Specification with Mockito {
 
   val expectedAggregateId = AggregateId("a1")
 
   val domainRepository = mock[DomainRepository]
 
   val startedTask = mock[Task]
-  val completedTask = mock[Task]
+  val closedTask = mock[Task]
 
   val commandDispatcher = new CommandDispatcherFactory(domainRepository, null).create
 
-  "complete started task" in {
+  "close task" in {
     domainRepository.getById[Task](expectedAggregateId) returns startedTask
-    startedTask.complete(None, None) returns completedTask
+    startedTask.close(None, None) returns closedTask
 
-    commandDispatcher.dispatch(CompleteTask(expectedAggregateId))
+    commandDispatcher.dispatch(CloseTask(expectedAggregateId))
 
-    there was one(domainRepository).add(completedTask)
+    there was one(domainRepository).add(closedTask)
   }
 }

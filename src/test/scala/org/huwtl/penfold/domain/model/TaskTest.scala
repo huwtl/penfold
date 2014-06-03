@@ -53,19 +53,13 @@ class TaskTest extends Specification {
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).start(None) must throwA[AggregateConflictException]
   }
 
-  "cancel task" in {
-    val cancelledTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel(Some(concluder), Some(conclusionType))
-    typesOf(cancelledTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCancelled], classOf[TaskCreated]))
+  "close task" in {
+    val closeTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).close(Some(concluder), Some(conclusionType))
+    typesOf(closeTask.uncommittedEvents) must beEqualTo(List(classOf[TaskClosed], classOf[TaskCreated]))
   }
 
-  "complete task" in {
-    val completedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).complete(Some(concluder), Some(conclusionType))
-    typesOf(completedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCompleted], classOf[TaskStarted], classOf[TaskCreated]))
-  }
-
-  "ensure only started tasks can be completed" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).complete() must throwA[AggregateConflictException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).cancel().complete() must throwA[AggregateConflictException]
+  "ensure archived tasks cannot be closed" in {
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive.close() must throwA[AggregateConflictException]
   }
 
   "requeue task" in {
@@ -91,9 +85,8 @@ class TaskTest extends Specification {
       .updatePayload(AggregateVersion.init, Patch(Nil), None, None) must throwA[AggregateConflictException]
   }
 
-  "ensure completed, cancelled, archived tasks cannot accept updated payload" in {
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).complete().updatePayload(AggregateVersion.init.next.next, Patch(Nil), None, None) must throwA[RuntimeException]
-    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).cancel().updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
+  "ensure closed, archived tasks cannot accept updated payload" in {
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(None).close().updatePayload(AggregateVersion.init.next.next, Patch(Nil), None, None) must throwA[RuntimeException]
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive.updatePayload(AggregateVersion.init.next, Patch(Nil), None, None) must throwA[RuntimeException]
   }
 
