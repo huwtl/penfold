@@ -1,7 +1,0 @@
-package org.huwtl.penfold.readstore
-
-object EventSequenceId {
-  val first = EventSequenceId(0)
-}
-
-case class EventSequenceId(value: Long)
