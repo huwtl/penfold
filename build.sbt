@@ -2,7 +2,7 @@ organization := "com.qmetric"
 
 name := "penfold"
 
-version := "0.1.20-SNAPSHOT"
+version := "0.1.20"
 
 scalaVersion := "2.10.3"
 
