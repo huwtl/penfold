@@ -30,7 +30,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
   lazy private val tasksCollection = database("tasks")
 
   override def handle(eventRecord: EventRecord) = {
-    eventRecord.event match {
+    val result = eventRecord.event match {
       case e: TaskCreated => handleCreateEvent(e, Ready)
       case e: FutureTaskCreated => handleCreateEvent(e, Waiting)
       case e: TaskTriggered => handleUpdateStatusEvent(e, Ready)
@@ -42,7 +42,11 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case _ =>
     }
 
+    logger.info(s"event ${eventRecord.id} handled with result $result")
+
     tracker.trackEvent(eventRecord.id)
+
+    logger.info(s"event ${eventRecord.id} tracked")
 
     success
   }

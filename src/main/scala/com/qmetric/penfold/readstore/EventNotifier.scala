@@ -8,7 +8,10 @@ class EventNotifier(newEventsProvider: NewEventsProvider, eventListener: EventLi
 
   def notifyListener() {
     retry(maxRetries) {
-      newEventsProvider.newEvents foreach eventListener.handle
+      newEventsProvider.newEvents foreach {event =>
+        logger.info(s"handling event ${event}")
+        eventListener.handle(event)
+      }
     } recover {
       case e => logger.error("error by listener while handling events", e)
     }

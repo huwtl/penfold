@@ -19,7 +19,7 @@ class MongoEventTracker(trackerKey: String, database: MongoDB) extends EventTrac
       trackers.update(query, tracking, upsert = true)
     }
     catch {
-      case e: DuplicateKeyException => logger.debug(s"ignoring tracking for already handled event ${eventId.value}")
+      case e: DuplicateKeyException => logger.info(s"ignoring tracking for already handled event ${eventId.value}")
       case e: Exception => throw e
     }
   }
