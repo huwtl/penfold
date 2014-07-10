@@ -52,16 +52,13 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, filters: Filters) = {
-    val filtersWithQueueStatus = new Filters(Filter("queue", Some(queueId.value)) :: Filter("status", Some(status.name)) :: filters.filters)
-    val suitableIndex = indexes.suitableIndex(filtersWithQueueStatus)
-
-    retrievePage(filtersToCriteria(indexes.transformForSuitableIndex(filtersWithQueueStatus)), pageRequest, suitableIndex)
+    val filtersWithQueueStatus = new Filters(Filter("queue", Some(queueId.value)) :: Filter("status", Some(status.name)) :: filters.all)
+    retrieveBy(filtersWithQueueStatus, pageRequest)
   }
 
   override def retrieveBy(filters: Filters, pageRequest: PageRequest) = {
-    val criteria = filtersToCriteria(indexes.transformForSuitableIndex(filters))
-
-    retrievePage(criteria, pageRequest, indexes.suitableIndex(filters))
+    val queryPlan = indexes.buildQueryPlan(filters)
+    retrievePage(queryPlan, pageRequest)
   }
 
   override def retrieveBy(id: AggregateId) = {
@@ -93,15 +90,15 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
     )
   }
 
-  private def filtersToCriteria(filters: Filters) = {
-    val criteria = MongoDBObject.empty
-    filters.filters.foldLeft(criteria)((previousFilters, filter) => {
-      val values = filter.values.map(_ getOrElse null)
-      previousFilters ++ (if (filter.isMulti) filter.key $in values else MongoDBObject(filter.key -> values.head))
-    })
-  }
+  private def retrievePage(queryPlan: QueryPlan, pageRequest: PageRequest) = {
+    def buildCriteria(restrictions: List[RestrictionField]) = {
+      val criteria = MongoDBObject.empty
+      restrictions.foldLeft(criteria)((previousCriteria, restriction) => {
+        val values = restriction.values.map(_ getOrElse null)
+        previousCriteria ++ (if (restriction.isMulti) restriction.name $in values else MongoDBObject(restriction.name -> values.head))
+      })
+    }
 
-  private def retrievePage(criteria: MongoDBObject, pageRequest: PageRequest, suitableIndex: Option[Index]) = {
     def execPageQueryWithOverflow(criteria: MongoDBObject, sort: MongoDBObject, pageSize: Int) = {
       if (pageSize > 0) {
         tasksCollection.find(criteria).sort(sort).limit(pageSize + 1).map(convertDocumentToTask(_)).toList
@@ -118,10 +115,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
     def sortCriteria(direction: NavigationDirection) = {
       val sortDirection = if (direction == Forward) -1 else 1
 
-      suitableIndex match {
-        case Some(index) => MongoDBObject(index.fields.map(_.path -> sortDirection))
-        case None => MongoDBObject("sort" -> sortDirection, "_id" -> sortDirection)
-      }
+      MongoDBObject(queryPlan.sortFields.map(_.name -> sortDirection))
     }
 
     def parseLastKnownPageDetails(pageReference: Option[PageReference]) = {
@@ -147,6 +141,8 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
       }
     }
 
+    val criteria = buildCriteria(queryPlan.restrictionFields)
+    
     val pageSize = pageRequest.pageSize
 
     parseLastKnownPageDetails(pageRequest.pageReference) match {

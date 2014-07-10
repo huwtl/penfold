@@ -33,7 +33,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val score = triggerDate.getMillis
     val dateTimeSource = mock[DateTimeSource]
-    val indexes = Indexes(List(Index(List(IndexField("a", "payload.a", multiKey = true))), Index(List(IndexField("a", "payload.a", multiKey = true), IndexField("b", "payload.b")))))
+    val indexes = Indexes(List(Index(None, List(IndexField("a", "payload.a", multiKey = true))), Index(None, List(IndexField("a", "payload.a", multiKey = true), IndexField("b", "payload.b")))))
 
     val database = getDatabase
     val readStoreUpdater = new MongoReadStoreUpdater(database, new MongoEventTracker("tracker", database), new ObjectSerializer)

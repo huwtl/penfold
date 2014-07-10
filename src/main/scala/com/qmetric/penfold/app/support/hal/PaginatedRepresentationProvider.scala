@@ -44,7 +44,7 @@ trait PaginatedRepresentationProvider {
 
   private def filterParameters(filters: Filters) = {
     for {
-      filter <- filters.filters
+      filter <- filters.all
       filterValue <- SortedSet(filter.values.toList :_*)
     } yield s"_${encode(filter.key)}=${encode(filterValue getOrElse "")}"
   }

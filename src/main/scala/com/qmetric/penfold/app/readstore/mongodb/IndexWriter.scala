@@ -6,7 +6,7 @@ import com.qmetric.penfold.app.ServerConfiguration
 class IndexWriter {
 
   def write(readStoreDatabase: MongoDB, indexes: Indexes, config: ServerConfiguration) {
-    indexes.all.map(index => createReadStoreIndex(readStoreDatabase, index.fields.map(_.path)))
+    indexes.all.foreach(index => createReadStoreIndex(readStoreDatabase, index.name, index.fields.map(_.path)))
 
     if (config.taskArchiver.isDefined) {
       createReadStoreIndex(readStoreDatabase, config.taskArchiver.get.timeoutAttributePath)
@@ -14,10 +14,11 @@ class IndexWriter {
   }
 
   private def createReadStoreIndex(dbConnection: MongoDB, attributePath: String) {
-    createReadStoreIndex(dbConnection, attributePath :: Nil)
+    createReadStoreIndex(dbConnection, None, attributePath :: Nil)
   }
 
-  private def createReadStoreIndex(dbConnection: MongoDB, attributePaths: List[String]) {
-    dbConnection("tasks").ensureIndex(MongoDBObject(attributePaths.map(_ -> 1)), MongoDBObject("background" -> true))
+  private def createReadStoreIndex(dbConnection: MongoDB, name: Option[String], attributePaths: List[String]) {
+    val options = MongoDBObject("background" -> true) ++ (if (name.isDefined) MongoDBObject("name" -> name.get) else MongoDBObject())
+    dbConnection("tasks").ensureIndex(MongoDBObject(attributePaths.map(_ -> 1)), options)
   }
 }
