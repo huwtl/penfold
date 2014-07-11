@@ -2,19 +2,18 @@
 
 [![Build Status](https://travis-ci.org/qmetric/penfold.png)](https://travis-ci.org/qmetric/penfold)
 
-Penfold is responsible for managing queues of user defined tasks. A task is anything that can be represented by valid JSON.
-A queue is an ordered queue of tasks.
-
-Penfold is deployed as a standalone server, or mulitple standalone servers for a clustered environment.
-
-Penfold enforces immutability in its implementation and of its data with [CQRS and event sourcing](http://codebetter.com/gregyoung/2010/02/16/cqrs-task-based-uis-event-sourcing-agh/).
-
-Penfold is spoken to via a Restful API, based on the media type [HAL+JSON](http://stateless.co/hal_specification.html).
+Penfold is responsible for managing queues of tasks. Penfold's understanding of a task is any valid JSON object.
 
 The primary purposes that penfold was built for:
 
 * messaging
 * job scheduling
+
+Penfold is deployed as a standalone server, or mulitple standalone servers for a clustered environment.
+
+Penfold enforces immutability in its implementation, and of its use of data with [CQRS and event sourcing](http://codebetter.com/gregyoung/2010/02/16/cqrs-task-based-uis-event-sourcing-agh/).
+
+Penfold is spoken to via a Restful API, based on the media type [HAL+JSON](http://stateless.co/hal_specification.html).
 
 
 ## Quick start
