@@ -66,7 +66,13 @@ Start penfold
 java -Dconfig.file=<CONFIG_FILE_PATH>/penfold.conf -jar penfold.jar
 ```
 
+## Further documentation
 
+TODO: create these documents
 
+* configuration
+* logging
+* api
+* future features
 
 
