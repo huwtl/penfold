@@ -18,6 +18,8 @@ Penfold is spoken to via a Restful API, based on the media type [HAL+JSON](http:
 
 ## Quick start
 
+### Installation and configuration
+
 Prerequisites:
 
 * [JVM](https://www.java.com/en/download/) 6+
@@ -76,6 +78,87 @@ GET: /healthcheck  HTTP 1.1
 If penfold is healthy, then expect to receive a response with a 200 HTTP status code
 
 
+## Quick play with API
+
+A task has a status:
+* waiting - task has been scheduled in the future and is waiting to become ready in its assigned queue
+* ready - task is available for starting
+* started - the task has been started
+* closed - the task has been closed
+
+You can view all tasks by queue and status. For the purpose of this tutorial we will use a queue named "greenback".
+
+```
+GET: /queues/greenback/waiting  HTTP 1.1
+GET: /queues/greenback/ready  HTTP 1.1
+GET: /queues/greenback/started  HTTP 1.1
+GET: /queues/greenback/closed  HTTP 1.1
+```
+
+At this point, each of the above requests should not respond with any tasks.
+
+Lets create a new task. Post the following data, replacing the "triggerDate" with a date a few minutes into the future:
+
+```
+POST: /tasks  HTTP 1.1
+
+Content-Type: application/json
+    
+{
+    "queueBinding": {
+        "id": "greenback"
+    },
+    "triggerDate": "yyyy-MM-dd HH:mm:ss",
+    "payload": {
+        "customer": { 
+            "id": 1,
+            "name" : "bob",
+            "email": "bob@email.com"
+        }
+    }
+}
+    
+```
+
+You should see a response similar to below:
+
+```
+201 Created
+Content-Type: application/hal+json
+
+{
+    "_links": {
+        "self": {
+            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+        },
+        "close": {
+            "href": "http://localhost:8080/queues/greenback/closed"
+        },
+        "queue": {
+            "href": "http://localhost:8080/queues/greenback"
+        },
+        "updatePayload": {
+            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/1/payload"
+        }
+    },
+    "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+    "payload": {
+        "customer": {
+            "id": 1,
+            "name": "bob",
+            "email": "bob@email.com"
+        }
+    },
+    "queueBinding": {
+        "id": "greenback"
+    },
+    "status": "waiting",
+    "statusLastModified": "2014-07-11 16:01:47",
+    "triggerDate": "2014-07-11 16:05:00",
+    "version": 1
+}
+```
+
 
 ## Further documentation
 
@@ -86,7 +169,7 @@ TODO: create these documents
 * api
 * search
 * scheduling future tasks
+* archiving tasks
 * authentication
-* future features
 
 
