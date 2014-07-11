@@ -78,7 +78,7 @@ GET: /healthcheck  HTTP 1.1
 If penfold is healthy, then expect to receive a response with a 200 HTTP status code
 
 
-## Quick play with API
+### Quick play with API
 
 A task has a status:
 * waiting - task has been scheduled in the future and is waiting to become ready in its assigned queue
