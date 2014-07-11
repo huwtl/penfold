@@ -66,6 +66,17 @@ Start penfold
 java -Dconfig.file=<CONFIG_FILE_PATH>/penfold.conf -jar penfold.jar
 ```
 
+5.
+Check if server running ok
+
+```
+GET: /admin/prioritisation/<QUEUE_NAME>  HTTP 1.1
+```
+
+If penfold is healthy, then expect to receive a response with a 200 HTTP status code
+
+
+
 ## Further documentation
 
 TODO: create these documents
@@ -73,6 +84,8 @@ TODO: create these documents
 * configuration
 * logging
 * api
+* search
+* scheduling future tasks
 * authentication
 * future features
 
