@@ -120,7 +120,12 @@ Content-Type: application/json
     
 ```
 
-You should see a response similar to below:
+You should see a response similar to below. The response lists the attributes of your newly created task, including an auto generated unique task ID.
+
+The links section of the response lists what actions and views are available for this task:
+* self - link to this task resource
+* updatePayload - link where requests should be sent to make changes to the task payload (PUT)
+* close - link to close the task (POST)
 
 ```
 201 Created
@@ -133,9 +138,6 @@ Content-Type: application/hal+json
         },
         "close": {
             "href": "http://localhost:8080/queues/greenback/closed"
-        },
-        "queue": {
-            "href": "http://localhost:8080/queues/greenback"
         },
         "updatePayload": {
             "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/1/payload"
@@ -158,6 +160,19 @@ Content-Type: application/hal+json
     "version": 1
 }
 ```
+
+Like before, send a request to view your task in the queue with waiting status.
+
+```
+GET: /queues/greenback/waiting  HTTP 1.1
+```
+
+Send another request after your task's "triggerDate" has passed to view the task as being ready.
+
+```
+GET: /queues/greenback/ready  HTTP 1.1
+```
+
 
 
 ## Further documentation
