@@ -173,6 +173,171 @@ Send another request after your task's "triggerDate" has passed to view the task
 GET: /queues/greenback/ready  HTTP 1.1
 ```
 
+When your task is "ready", then you should see a response similar to below.
+
+```
+{
+    "_links": {
+        "self": {
+            "href": "http://localhost:8080/queues/greenback/ready"
+        }
+    },
+    "_embedded": {
+        "queue": {
+            "_links": {
+                "self": {
+                    "href": "http://localhost:8080/queues/greenback/ready/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+                }
+            },
+            "taskId": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+            "_embedded": {
+                "task": {
+                    "_links": {
+                        "self": {
+                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+                        },
+                        "close": {
+                            "href": "http://localhost:8080/queues/greenback/closed"
+                        },
+                        "start": {
+                            "href": "http://localhost:8080/queues/greenback/started"
+                        },
+                        "updatePayload": {
+                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2/payload"
+                        }
+                    },
+                    "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+                    "payload": {
+                        "customer": {
+                            "id": 1,
+                            "name": "bob",
+                            "email": "bob@email.com"
+                        }
+                    },
+                    "queueBinding": {
+                        "id": "greenback"
+                    },
+                    "status": "ready",
+                    "statusLastModified": "2014-07-11 16:05:42",
+                    "triggerDate": "2014-07-11 16:05:00",
+                    "version": 2
+                }
+            }
+        }
+    }
+}
+```
+
+Notice the new available action link "start". A task can only be started when it's "ready".
+Lets start the task by sending a POST to the action link. The body of the POST should contain the unique ID of the task:
+
+```
+POST: /queues/greenback/started  HTTP 1.1
+
+Content-Type: application/json
+    
+{
+    "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+}
+```
+
+The task has now been started, you will notice in the POST response that the task's status has changed to "started" and a new action link "requeue" is now available (i.e. for unstarting the task).
+
+```
+{
+    "_links": {
+        "self": {
+            "href": "http://localhost:8080/queues/greenback/started/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+        }
+    },
+    "taskId": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+    "_embedded": {
+        "task": {
+            "_links": {
+                "self": {
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+                },
+                "close": {
+                    "href": "http://localhost:8080/queues/greenback/closed"
+                },
+                "requeue": {
+                    "href": "http://localhost:8080/queues/greenback/ready"
+                },
+                "updatePayload": {
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/3/payload"
+                }
+            },
+            "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+            "payload": {
+                "customer": {
+                    "id": 1,
+                    "name": "bob",
+                    "email": "bob@email.com"
+                }
+            },
+            "queueBinding": {
+                "id": "greenback"
+            },
+            "status": "started",
+            "statusLastModified": "2014-07-11 16:41:29",
+            "triggerDate": "2014-07-11 16:05:00",
+            "version": 3
+        }
+    }
+}
+```
+
+Finally, assuming we've done whatever we wanted to do to the task, lets tell penfold we're done with it and close it (see "close" action link).
+
+```
+POST: /queues/greenback/closed  HTTP 1.1
+
+Content-Type: application/json
+    
+{
+    "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+}
+```
+
+The task should now be closed.
+
+```
+{
+    "_links": {
+        "self": {
+            "href": "http://localhost:8080/queues/greenback/closed/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+        }
+    },
+    "taskId": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+    "_embedded": {
+        "task": {
+            "_links": {
+                "self": {
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+                },
+                "requeue": {
+                    "href": "http://localhost:8080/queues/greenback/ready"
+                }
+            },
+            "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+            "payload": {
+                "customer": {
+                    "id": 1,
+                    "name": "bob",
+                    "email": "bob@email.com"
+                }
+            },
+            "queueBinding": {
+                "id": "greenback"
+            },
+            "status": "closed",
+            "statusLastModified": "2014-07-11 16:50:47",
+            "triggerDate": "2014-07-11 16:05:00",
+            "version": 4
+        }
+    }
+}
+```
 
 
 ## Further documentation
@@ -182,6 +347,8 @@ TODO: create these documents
 * configuration
 * logging
 * api
+* queue ordering
+* optimistic locking
 * search
 * scheduling future tasks
 * archiving tasks
