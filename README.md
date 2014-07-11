@@ -73,6 +73,7 @@ TODO: create these documents
 * configuration
 * logging
 * api
+* authentication
 * future features
 
 
