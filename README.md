@@ -67,10 +67,10 @@ java -Dconfig.file=<CONFIG_FILE_PATH>/penfold.conf -jar penfold.jar
 ```
 
 5.
-Check if server running ok
+Check if penfold server is running ok
 
 ```
-GET: /admin/prioritisation/<QUEUE_NAME>  HTTP 1.1
+GET: /healthcheck  HTTP 1.1
 ```
 
 If penfold is healthy, then expect to receive a response with a 200 HTTP status code
