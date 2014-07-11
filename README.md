@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/qmetric/penfold.png)](https://travis-ci.org/qmetric/penfold)
 
-Penfold is responsible for managing queues of tasks. Penfold's understanding of a task is any valid JSON object.
+Penfold is responsible for managing queues of tasks. Penfold's understanding of a task is anything that's a valid JSON object.
 
 The primary purposes that penfold was built for:
 
