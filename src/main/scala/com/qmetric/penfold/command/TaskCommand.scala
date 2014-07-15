@@ -23,6 +23,11 @@ case class StartTask(id: AggregateId,
 
 case class RequeueTask(id: AggregateId) extends TaskCommand
 
+case class RescheduleTask(id: AggregateId,
+                          triggerDate: DateTime,
+                          assignee: Option[Assignee],
+                          rescheduleType: Option[String]) extends TaskCommand
+
 case class CloseTask(id: AggregateId,
                      concluder: Option[User] = None,
                      conclusionType: Option[String] = None) extends TaskCommand

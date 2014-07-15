@@ -6,18 +6,25 @@ import com.qmetric.penfold.domain.model.Status._
 import com.qmetric.penfold.domain.model.{Payload, Status}
 import com.qmetric.penfold.app.support.json.ObjectSerializer
 import com.qmetric.penfold.domain.event._
-import com.qmetric.penfold.domain.event.TaskClosed
-import com.qmetric.penfold.readstore.EventRecord
-import com.qmetric.penfold.domain.event.TaskCreated
-import com.qmetric.penfold.domain.event.TaskTriggered
-import scala.Some
-import com.qmetric.penfold.domain.event.TaskStarted
 import com.mongodb.DuplicateKeyException
 import grizzled.slf4j.Logger
 import com.mongodb.util.JSON
 import com.qmetric.penfold.app.support.RegisterBigIntConversionHelpers
 import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
 import org.joda.time.DateTime
+import scala.Predef._
+import com.qmetric.penfold.domain.event.TaskRequeued
+import com.qmetric.penfold.readstore.EventRecord
+import com.qmetric.penfold.domain.event.TaskRescheduled
+import com.qmetric.penfold.domain.event.TaskPayloadUpdated
+import com.qmetric.penfold.domain.event.FutureTaskCreated
+import com.qmetric.penfold.domain.event.TaskArchived
+import com.qmetric.penfold.domain.event.TaskTriggered
+import scala.Some
+import com.qmetric.penfold.domain.event.TaskCreated
+import com.qmetric.penfold.domain.event.TaskStarted
+import com.qmetric.penfold.domain.event.TaskClosed
+import scala.reflect.{ClassTag, classTag}
 
 class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
@@ -36,6 +43,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case e: TaskTriggered => handleUpdateStatusEvent(e, Ready)
       case e: TaskStarted => handleUpdateStatusEvent(e, Started)
       case e: TaskRequeued => handleUpdateStatusEvent(e, Ready)
+      case e: TaskRescheduled => handleUpdateStatusEvent(e, Waiting)
       case e: TaskClosed => handleUpdateStatusEvent(e, Closed)
       case e: TaskPayloadUpdated => handleUpdatePayloadEvent(e)
       case e: TaskArchived => handleArchiveEvent(e)
@@ -83,12 +91,14 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case Some(task) => {
         val update = $set(
           "version" -> event.aggregateVersion.number,
+          "triggerDate" -> resolveFieldValue[TaskRescheduled, Option[DateTime]](event, task.getAs[DateTime]("triggerDate"), e => Some(e.triggerDate)),
           "previousStatus" -> Map("status" -> task.as[String]("status"), "statusLastModified" -> task.as[DateTime]("statusLastModified")),
           "status" -> status.name,
           "statusLastModified" -> event.created.toDate,
           "assignee" -> resolveAssignee(event, task.getAs[String]("assignee")),
-          "concluder" -> resolveConclusionField(event, _.concluder.map(_.username)),
-          "conclusionType" -> resolveConclusionField(event, _.conclusionType),
+          "rescheduleType" -> resolveFieldValue[TaskRescheduled, Option[String]](event, task.getAs[String]("rescheduleType"), _.rescheduleType),
+          "concluder" -> resolveFieldValue[TaskClosed, Option[String]](event, None, _.concluder.map(_.username)),
+          "conclusionType" -> resolveFieldValue[TaskClosed, Option[String]](event, None, _.conclusionType),
           "sort" -> resolveSortOrder(event, status, task.as[Long]("score")).get
         )
         tasksCollection.update(query, update)
@@ -127,16 +137,16 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
 
   private def resolveAssignee(event: Event, previousAssignee: Option[String]) = {
     event match {
-      case e: TaskRequeued => None
-      case e: TaskStarted => e.assignee.map(_.username)
+      case e: TaskStarted => e.assignee.map(_.username).orElse(previousAssignee)
+      case e: TaskRescheduled => e.assignee.map(_.username).orElse(previousAssignee)
       case _ => previousAssignee
     }
   }
 
-  private def resolveConclusionField(event: Event, fieldValue: TaskClosed => Any) = {
+  private def resolveFieldValue[E <: Event : ClassTag, F](event: Event, default: F, fieldValue: E => F) = {
     event match {
-      case e: TaskClosed => fieldValue(e)
-      case _ => None
+      case e if classTag[E].runtimeClass.isInstance(e) => fieldValue(e.asInstanceOf[E])
+      case _ => default
     }
   }
 
@@ -146,6 +156,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case e: FutureTaskCreated => Some(e.triggerDate.getMillis)
       case e: TaskTriggered => Some(existingScore)
       case e: TaskRequeued => Some(existingScore)
+      case e: TaskRescheduled => Some(e.triggerDate.getMillis)
       case e: TaskPayloadUpdated if status == Ready => Some(e.score getOrElse existingScore)
       case e: TaskPayloadUpdated => None
       case _ => Some(event.created.getMillis)

@@ -3,6 +3,7 @@
         "self": {"href": "http://host/tasks/1"},
         "close": {"href": "http://host/queues/abc/closed"},
         "queue": {"href": "http://host/queues/abc"},
+        "reschedule": {"href": "http://host/queues/abc/waiting"},
         "updatePayload": {"href": "http://host/tasks/1/1/payload"}
     },
     "id": "1",

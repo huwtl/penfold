@@ -2,7 +2,8 @@
     "_links": {
         "self": {"href": "http://host/tasks/1"},
         "queue": {"href": "http://host/queues/abc"},
-        "requeue": {"href": "http://host/queues/abc/ready"}
+        "requeue": {"href": "http://host/queues/abc/ready"},
+        "reschedule": {"href": "http://host/queues/abc/waiting"}
     },
     "id": "1",
     "version": 3,

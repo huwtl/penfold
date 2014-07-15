@@ -23,6 +23,8 @@ object TestModel
 
   val concluder = User("user1")
 
+  val rescheduleType = "schType"
+
   val conclusionType = "type"
 
   val emptyPayload = Payload.empty
@@ -44,4 +46,6 @@ object TestModel
   val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), concluder = Some(concluder), conclusionType = Some(conclusionType))
 
   val requeuedTask = task.copy(version = AggregateVersion(2), previousStatus = Some(previousStatus))
+
+  val rescheduledTask = task.copy(version = AggregateVersion(3), status = Waiting, previousStatus = Some(previousStatus), assignee = Some(assignee), sort = score, rescheduleType = Some(rescheduleType))
 }

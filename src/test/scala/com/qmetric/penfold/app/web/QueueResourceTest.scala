@@ -112,6 +112,14 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
     }
   }
 
+  "return 201 when rescheduling tasks" in {
+    readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
+
+    post("/queues/abc/waiting", """{"id": "1", "triggerDate": "2014-2-25 14:00:00", "assignee": "user1", "rescheduleType": "schType"}""", headers = validAuthHeader) {
+      status must beEqualTo(201)
+    }
+  }
+
   "return 201 when posting task into closed queue" in {
     readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
 

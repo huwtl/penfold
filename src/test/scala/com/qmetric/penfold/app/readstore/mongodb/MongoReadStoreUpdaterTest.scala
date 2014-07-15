@@ -36,8 +36,9 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     val taskCreatedEvent = TaskCreated(aggregateId, AggregateVersion(1), TestModel.createdDate, QueueBinding(TestModel.queueId), TestModel.triggerDate, payload, TestModel.score)
     val futureTaskCreatedEvent = FutureTaskCreated(aggregateId, AggregateVersion(1), TestModel.createdDate, QueueBinding(TestModel.queueId), TestModel.triggerDate, payload, TestModel.score)
     val taskStartedEvent = TaskStarted(aggregateId, AggregateVersion(2), TestModel.createdDate, Some(TestModel.assignee))
-    val taskRequeuedEvent = TaskRequeued(aggregateId, AggregateVersion(4), TestModel.createdDate)
     val taskClosedEvent = TaskClosed(aggregateId, AggregateVersion(3), TestModel.createdDate, Some(TestModel.concluder), Some(TestModel.conclusionType))
+    val taskRequeuedEvent = TaskRequeued(aggregateId, AggregateVersion(4), TestModel.createdDate)
+    val taskRescheduledEvent = TaskRescheduled(aggregateId, AggregateVersion(3), TestModel.createdDate, TestModel.triggerDate, Some(TestModel.assignee), Some(TestModel.rescheduleType))
     val archivedEvent = TaskArchived(aggregateId, taskCreatedEvent.aggregateVersion.next, TestModel.createdDate)
 
     val mongoClient = MongoClient("localhost", embedConnectionPort())
@@ -66,6 +67,14 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     val task = readStore.retrieveBy(aggregateId)
 
     task must beEqualTo(Some(TestModel.closedTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
+  }
+
+  "reschedule future task" in new context {
+    handleEvents(taskCreatedEvent, taskStartedEvent, taskRescheduledEvent)
+
+    val task = readStore.retrieveBy(aggregateId)
+
+    task must beEqualTo(Some(TestModel.rescheduledTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
   }
 
   "update payload of ready task" in new context {
@@ -109,12 +118,12 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     task must beNone
   }
 
-  "requeue closed task and clear assignee and conclusion fields if present" in new context {
+  "requeue closed task and clear conclusion fields if present" in new context {
     handleEvents(taskCreatedEvent, taskStartedEvent, taskClosedEvent, taskRequeuedEvent)
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.task.copy(id = aggregateId, version = taskRequeuedEvent.aggregateVersion, payload = payload, previousStatus = Some(TestModel.previousStatus.copy(status = Closed)))))
+    task must beEqualTo(Some(TestModel.task.copy(id = aggregateId, version = taskRequeuedEvent.aggregateVersion, payload = payload, previousStatus = Some(TestModel.previousStatus.copy(status = Closed)), assignee = Some(TestModel.assignee))))
   }
 
   "ignore events on aggregate version mismatch" in new context {

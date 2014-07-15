@@ -17,6 +17,7 @@ case class TaskRecord(id: AggregateId,
                       score: Long,
                       sort: Long,
                       payload: Payload,
+                      rescheduleType: Option[String] = None,
                       concluder: Option[User] = None,
                       conclusionType: Option[String] = None)
 

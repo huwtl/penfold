@@ -87,6 +87,11 @@ case class Task(uncommittedEvents: List[Event],
     applyTaskRequeued(TaskRequeued(aggregateId, version.next, now))
   }
 
+  def reschedule(triggerDate: DateTime, assignee: Option[Assignee], rescheduleType: Option[String]): Task = {
+    checkConflict(status != Archived, s"Cannot reschedule task from status $status")
+    applyTaskRescheduled(TaskRescheduled(aggregateId, version.next, now, triggerDate, assignee, rescheduleType))
+  }
+
   def archive: Task = {
     checkConflict(status != Archived, s"Cannot archive task when already archived")
     applyTaskArchived(TaskArchived(aggregateId, version.next, now))
@@ -100,6 +105,7 @@ case class Task(uncommittedEvents: List[Event],
     case event: TaskClosed => applyTaskClosed(event)
     case event: TaskPayloadUpdated => applyTaskPayloadUpdated(event)
     case event: TaskRequeued => applyTaskRequeued(event)
+    case event: TaskRescheduled => applyTaskRescheduled(event)
     case event: TaskArchived => applyTaskArchived(event)
     case event => unhandled(event)
   }
@@ -118,7 +124,9 @@ case class Task(uncommittedEvents: List[Event],
     score = event.score getOrElse score
   )
 
-  private def applyTaskRequeued(event: TaskRequeued) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Ready, assignee = None)
+  private def applyTaskRequeued(event: TaskRequeued) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Ready)
+
+  private def applyTaskRescheduled(event: TaskRescheduled) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Waiting, triggerDate = event.triggerDate, assignee = event.assignee)
 
   private def applyTaskArchived(event: TaskArchived) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Archived)
 }

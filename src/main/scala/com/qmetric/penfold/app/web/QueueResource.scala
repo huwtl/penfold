@@ -7,7 +7,7 @@ import com.qmetric.penfold.domain.model.{Status, AggregateId, QueueId}
 import com.qmetric.penfold.readstore.ReadStore
 import com.qmetric.penfold.command.CommandDispatcher
 import com.qmetric.penfold.app.support.json.ObjectSerializer
-import com.qmetric.penfold.app.web.bean.{RequeueTaskRequest, CloseTaskRequest, StartTaskRequest}
+import com.qmetric.penfold.app.web.bean.{RescheduleTaskRequest, RequeueTaskRequest, CloseTaskRequest, StartTaskRequest}
 import com.qmetric.penfold.app.support.auth.BasicAuthenticationSupport
 import com.qmetric.penfold.app.AuthenticationCredentials
 
@@ -54,6 +54,12 @@ class QueueResource(readStore: ReadStore,
     val requeueTaskRequest = jsonConverter.deserialize[RequeueTaskRequest](request.body)
     commandDispatcher.dispatch(requeueTaskRequest.toCommand)
     Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(requeueTaskRequest.id).get))
+  }
+
+  post("/:queue/waiting") {
+    val rescheduleTaskRequest = jsonConverter.deserialize[RescheduleTaskRequest](request.body)
+    commandDispatcher.dispatch(rescheduleTaskRequest.toCommand)
+    Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(rescheduleTaskRequest.id).get))
   }
 
   post("/:queue/closed") {

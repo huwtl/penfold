@@ -17,6 +17,8 @@ class TaskTest extends Specification {
 
   val conclusionType = "type"
 
+  val assignee = Assignee("user")
+
   "create new task" in {
     val createdTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
     typesOf(createdTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCreated]))
@@ -63,15 +65,23 @@ class TaskTest extends Specification {
   }
 
   "requeue task" in {
-    val requeuedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(Some(Assignee("user"))).requeue
+    val requeuedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(Some(assignee)).requeue
     typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[TaskStarted], classOf[TaskCreated]))
-    requeuedTask.assignee must beNone
   }
 
   "ensure waiting, ready, archived tasks cannot be requeued" in {
     Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue must throwA[AggregateConflictException]
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue must throwA[AggregateConflictException]
     Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive.requeue must throwA[AggregateConflictException]
+  }
+
+  "reschedule task" in {
+    val rescheduleTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(Some(assignee)).reschedule(DateTime.now().plusHours(1), Some(assignee), Some("type"))
+    typesOf(rescheduleTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRescheduled], classOf[TaskStarted], classOf[TaskCreated]))
+  }
+
+  "ensure archived tasks cannot be requeued" in {
+    Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive.reschedule(DateTime.now().plusHours(1), None, None) must throwA[AggregateConflictException]
   }
 
   "update task payload" in {

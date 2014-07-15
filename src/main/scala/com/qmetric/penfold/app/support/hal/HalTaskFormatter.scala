@@ -34,6 +34,10 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       representation.withProperty("assignee", task.assignee.get.username)
     }
 
+    if (task.rescheduleType.isDefined) {
+      representation.withProperty("rescheduleType", task.rescheduleType.get)
+    }
+
     if (task.concluder.isDefined) {
       representation.withProperty("concluder", task.concluder.get.username)
     }
@@ -49,6 +53,8 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
     if (task.status != Closed) {
       representation.withLink("updatePayload", s"${baseTaskLink.toString}/${task.id.value}/${task.version.number}/payload")
     }
+
+    representation.withLink("reschedule", s"${baseQueueLink.toString}/$queueIdParam/${Waiting.name}")
 
     if (task.status != Waiting & task.status != Ready) {
       representation.withLink("requeue", s"${baseQueueLink.toString}/$queueIdParam/${Ready.name}")
