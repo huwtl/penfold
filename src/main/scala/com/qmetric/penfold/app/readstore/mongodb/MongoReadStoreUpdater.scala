@@ -25,9 +25,12 @@ import com.qmetric.penfold.domain.event.TaskCreated
 import com.qmetric.penfold.domain.event.TaskStarted
 import com.qmetric.penfold.domain.event.TaskClosed
 import scala.reflect.{ClassTag, classTag}
+import org.joda.time.format.DateTimeFormat
 
 class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
+
+  private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd")
 
   RegisterBigIntConversionHelpers()
   RegisterJodaTimeConversionHelpers()
@@ -70,6 +73,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       "status" -> status.name,
       "statusLastModified" -> event.created,
       "triggerDate" -> event.triggerDate,
+      "searchableTriggerDay" -> resolveTriggerDaySearchField(event, None),
       "payload" -> event.payload.content,
       "sort" -> resolveSortOrder(event, status, event.score).get,
       "score" -> event.score
@@ -92,6 +96,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
         val update = $set(
           "version" -> event.aggregateVersion.number,
           "triggerDate" -> resolveFieldValue[TaskRescheduled, Option[DateTime]](event, task.getAs[DateTime]("triggerDate"), e => Some(e.triggerDate)),
+          "searchableTriggerDay" -> resolveTriggerDaySearchField(event, task.getAs[String]("searchableTriggerDay")),
           "previousStatus" -> Map("status" -> task.as[String]("status"), "statusLastModified" -> task.as[DateTime]("statusLastModified")),
           "status" -> status.name,
           "statusLastModified" -> event.created.toDate,
@@ -147,6 +152,16 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     event match {
       case e if classTag[E].runtimeClass.isInstance(e) => fieldValue(e.asInstanceOf[E])
       case _ => default
+    }
+  }
+
+  private def resolveTriggerDaySearchField(event: Event, previousTriggerDay: Option[String]) = {
+    def toDaySearchString(triggerDateTime: DateTime) = dateFormatter.print(triggerDateTime)
+
+    event match {
+      case e: TaskCreatedEvent => toDaySearchString(e.triggerDate)
+      case e: TaskRescheduled => toDaySearchString(e.triggerDate)
+      case _ => previousTriggerDay
     }
   }
 
