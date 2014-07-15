@@ -29,7 +29,7 @@ case class RescheduleTask(id: AggregateId,
                           rescheduleType: Option[String]) extends TaskCommand
 
 case class CloseTask(id: AggregateId,
-                     concluder: Option[User] = None,
+                     concluder: Option[Assignee] = None,
                      conclusionType: Option[String] = None) extends TaskCommand
 
 case class ArchiveTask(id: AggregateId) extends TaskCommand

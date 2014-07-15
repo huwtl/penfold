@@ -13,7 +13,7 @@ class TaskTest extends Specification {
 
   val queue = QueueId("abc")
 
-  val concluder = User("user1")
+  val concluder = Assignee("user1")
 
   val conclusionType = "type"
 

@@ -15,8 +15,7 @@ class ObjectSerializer {
     new QueueIdJsonSerializer +
     new PatchOperationJsonSerializer +
     new ValueJsonSerializer +
-    new AssigneeJsonSerializer +
-    new UserJsonSerializer
+    new AssigneeJsonSerializer
 
   def serialize[T](obj: T) = {
     compact(decompose(obj))

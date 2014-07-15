@@ -30,7 +30,7 @@ class EventSerializerTest extends Specification with DataTables {
   val taskStartedEvent = TaskStarted(AggregateId("a1"), AggregateVersion.init, dateTime, Some(assignee))
   val taskRequeuedEvent = TaskRequeued(AggregateId("a1"), AggregateVersion.init, dateTime)
   val taskRescheduledEvent = TaskRescheduled(AggregateId("a1"), AggregateVersion.init, dateTime, triggerDate, Some(assignee), Some("schType"))
-  val taskClosedEvent = TaskClosed(AggregateId("a1"), AggregateVersion.init, dateTime, Some(User("user1")), Some("type"))
+  val taskClosedEvent = TaskClosed(AggregateId("a1"), AggregateVersion.init, dateTime, Some(Assignee("user1")), Some("type"))
   val taskArchivedEvent = TaskArchived(AggregateId("a1"), AggregateVersion.init, dateTime)
   val serializer = new EventSerializer
 

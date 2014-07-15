@@ -20,7 +20,6 @@
         "statusLastModified": "2014-02-25 13:00:00"
     },
     "assignee": "user1",
-    "concluder": "user1",
     "conclusionType": "type",
     "triggerDate": "2014-02-25 14:00:00",
     "queueBinding": {"id": "abc"}

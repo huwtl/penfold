@@ -18,7 +18,6 @@ case class TaskRecord(id: AggregateId,
                       sort: Long,
                       payload: Payload,
                       rescheduleType: Option[String] = None,
-                      concluder: Option[User] = None,
                       conclusionType: Option[String] = None)
 
 case class PreviousStatus(status: Status, statusLastModified: DateTime)

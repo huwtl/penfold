@@ -37,7 +37,6 @@ object Task extends AggregateFactory {
     event.created,
     None,
     None,
-    None,
     event.queueBinding,
     status,
     event.triggerDate,
@@ -51,7 +50,6 @@ case class Task(uncommittedEvents: List[Event],
                 version: AggregateVersion,
                 created: DateTime,
                 assignee: Option[Assignee],
-                concluder: Option[User],
                 conclusionType: Option[String],
                 queueBinding: QueueBinding,
                 status: Status,
@@ -77,7 +75,7 @@ case class Task(uncommittedEvents: List[Event],
     applyTaskStarted(TaskStarted(aggregateId, version.next, now, assignee))
   }
 
-  def close(user: Option[User] = None, completionType: Option[String] = None): Task = {
+  def close(user: Option[Assignee] = None, completionType: Option[String] = None): Task = {
     checkConflict(status != Closed && status != Archived, "Cannot close an archived task")
     applyTaskClosed(TaskClosed(aggregateId, version.next, now, user, completionType))
   }
@@ -114,7 +112,7 @@ case class Task(uncommittedEvents: List[Event],
 
   private def applyTaskStarted(event: TaskStarted) = copy(event :: uncommittedEvents, version = event.aggregateVersion, status = Started, assignee = event.assignee)
 
-  private def applyTaskClosed(event: TaskClosed) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Closed, concluder = event.concluder, conclusionType = event.conclusionType)
+  private def applyTaskClosed(event: TaskClosed) = copy(event :: uncommittedEvents, event.aggregateId, version = event.aggregateVersion, status = Closed, assignee = event.concluder, conclusionType = event.conclusionType)
 
   private def applyTaskPayloadUpdated(event: TaskPayloadUpdated) = copy(
     event :: uncommittedEvents,

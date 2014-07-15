@@ -97,7 +97,6 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
           "statusLastModified" -> event.created.toDate,
           "assignee" -> resolveAssignee(event, task.getAs[String]("assignee")),
           "rescheduleType" -> resolveFieldValue[TaskRescheduled, Option[String]](event, task.getAs[String]("rescheduleType"), _.rescheduleType),
-          "concluder" -> resolveFieldValue[TaskClosed, Option[String]](event, None, _.concluder.map(_.username)),
           "conclusionType" -> resolveFieldValue[TaskClosed, Option[String]](event, None, _.conclusionType),
           "sort" -> resolveSortOrder(event, status, task.as[Long]("score")).get
         )
@@ -137,8 +136,9 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
 
   private def resolveAssignee(event: Event, previousAssignee: Option[String]) = {
     event match {
-      case e: TaskStarted => e.assignee.map(_.username).orElse(previousAssignee)
-      case e: TaskRescheduled => e.assignee.map(_.username).orElse(previousAssignee)
+      case e: TaskStarted => e.assignee.map(_.username)
+      case e: TaskRescheduled => e.assignee.map(_.username)
+      case e: TaskClosed => e.concluder.map(_.username)
       case _ => previousAssignee
     }
   }

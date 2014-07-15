@@ -86,7 +86,6 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
       document.as[Long]("sort"),
       objectSerializer.deserialize[Payload](JSON.serialize(document("payload"))),
       document.getAs[String]("rescheduleType"),
-      document.getAs[String]("concluder").map(User),
       document.getAs[String]("conclusionType")
     )
   }

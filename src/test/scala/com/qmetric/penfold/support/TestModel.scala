@@ -21,7 +21,7 @@ object TestModel
 
   val assignee = Assignee("user1")
 
-  val concluder = User("user1")
+  val concluder = Assignee("user1")
 
   val rescheduleType = "schType"
 
@@ -43,7 +43,7 @@ object TestModel
 
   val startedTask = task.copy(version = AggregateVersion(2), status = Started, assignee = Some(assignee), previousStatus = Some(PreviousStatus(Ready, createdDate)), sort = createdDate.getMillis)
 
-  val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), concluder = Some(concluder), conclusionType = Some(conclusionType))
+  val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), assignee = Some(concluder), conclusionType = Some(conclusionType))
 
   val requeuedTask = task.copy(version = AggregateVersion(2), previousStatus = Some(previousStatus))
 
