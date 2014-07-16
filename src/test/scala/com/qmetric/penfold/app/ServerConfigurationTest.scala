@@ -34,7 +34,7 @@ class ServerConfigurationTest extends Specification {
   "load fully populated config file" in {
     val expectedConfig = ServerConfiguration(publicUrl, httpPort, Some(authCredentials), JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
       MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 12345))),
-      readStoreIndexes = indexes, pageSize = 25, eventSync = FiniteDuration(2L, MINUTES), triggeredCheckFrequency = FiniteDuration(1L, MINUTES),
+      readStoreIndexes = indexes, SortOrderingConfiguration("Desc", "Desc", "Asc", "Asc"), pageSize = 25, eventSync = FiniteDuration(2L, MINUTES), triggeredCheckFrequency = FiniteDuration(1L, MINUTES),
       Some(TaskArchiverConfiguration("payload.timeout", FiniteDuration(1L, MINUTES))))
 
     val config = loadConfig("full")

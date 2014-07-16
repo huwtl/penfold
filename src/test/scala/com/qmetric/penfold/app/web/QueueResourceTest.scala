@@ -27,16 +27,25 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
   val pageSize = 5
 
+  val sortOrderMapping = SortOrderMapping(Map(Status.Waiting -> SortOrder.Desc, Status.Ready -> SortOrder.Desc, Status.Started -> SortOrder.Desc, Status.Closed -> SortOrder.Desc))
+
   val validCredentials = AuthenticationCredentials("user", "secret")
 
   val readStore = mock[ReadStore]
 
   val commandDispatcher = mock[CommandDispatcher]
 
-  addServlet(new QueueResource(readStore, commandDispatcher, new ObjectSerializer, new HalQueueFormatter(new URI("http://host/queues"), new HalTaskFormatter(new URI("http://host/tasks"), new URI("http://host/queues"))), pageSize, Some(validCredentials)), "/queues/*")
+  addServlet(new QueueResource(
+    readStore,
+    commandDispatcher,
+    new ObjectSerializer,
+    new HalQueueFormatter(new URI("http://host/queues"), new HalTaskFormatter(new URI("http://host/tasks"), new URI("http://host/queues"))),
+    sortOrderMapping,
+    pageSize,
+    Some(validCredentials)), "/queues/*")
 
   "return 200 with hal+json formatted queue response" in {
-    readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize), Filters.empty) returns PageResult(List(expectedTask2, expectedTask1), None, None)
+    readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize), SortOrder.Desc, Filters.empty) returns PageResult(List(expectedTask2, expectedTask1), None, None)
 
     get("/queues/abc/ready", headers = validAuthHeader) {
       status must beEqualTo(200)
@@ -46,7 +55,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
   "return 200 with hal+json formatted filtered queue response" in {
     val filters = Filters(List(Filter("data", Some("value"))))
-    readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize), filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
+    readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize), SortOrder.Desc, filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
 
     get("/queues/abc/ready?_data=value", headers = validAuthHeader) {
       status must beEqualTo(200)
@@ -56,7 +65,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
   "return 200 with hal+json formatted filtered queue response with multparams" in {
     val filters = Filters(List(Filter("data", Set(Some("value1"), Some("value2"), None))))
-    readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize), filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
+    readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize), SortOrder.Desc, filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
 
     get("/queues/abc/ready?_data=value1&_data=value1&_data=value2&_data=", headers = validAuthHeader) {
       status must beEqualTo(200)
@@ -65,7 +74,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
   }
 
   "return 200 with hal+json formatted queue response with pagination links" in {
-    readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize, Some(PageReference("3~1393336800000~0"))), Filters.empty) returns PageResult(List(expectedTask2, expectedTask1), Some(PageReference("2~1393336800000~0")), Some(PageReference("1~1393336800000~1")))
+    readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize, Some(PageReference("3~1393336800000~0"))), SortOrder.Desc, Filters.empty) returns PageResult(List(expectedTask2, expectedTask1), Some(PageReference("2~1393336800000~0")), Some(PageReference("1~1393336800000~1")))
 
     get(s"/queues/abc/ready?page=3~1393336800000~0", headers = validAuthHeader) {
       status must beEqualTo(200)

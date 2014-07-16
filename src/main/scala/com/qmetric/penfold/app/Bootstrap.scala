@@ -67,7 +67,7 @@ class Bootstrap extends LifeCycle {
     context mount(new PingResource, "/ping")
     context mount(new HealthResource(healthCheckRegistry, objectSerializer), "/healthcheck")
     context mount(new TaskResource(readStore, commandDispatcher, objectSerializer, taskFormatter, config.pageSize, config.authentication), "/tasks/*")
-    context mount(new QueueResource(readStore, commandDispatcher, objectSerializer, queueFormatter, config.pageSize, config.authentication), "/queues/*")
+    context mount(new QueueResource(readStore, commandDispatcher, objectSerializer, queueFormatter, config.sortOrdering.mapping, config.pageSize, config.authentication), "/queues/*")
 
     new EventSyncScheduler(eventNotifiers, config.eventSync).start()
 

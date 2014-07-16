@@ -7,18 +7,22 @@ import org.joda.time.DateTime
 import org.specs2.specification.Scope
 import com.qmetric.penfold.readstore._
 import com.mongodb.casbah.Imports._
-import com.qmetric.penfold.readstore.EventRecord
-import com.qmetric.penfold.domain.model.QueueId
-import com.qmetric.penfold.domain.event.{TaskCreated, TaskCreatedEvent, FutureTaskCreated, Event}
-import com.qmetric.penfold.domain.model.AggregateId
-import com.qmetric.penfold.readstore.PageRequest
-import com.qmetric.penfold.domain.model.QueueBinding
+import com.qmetric.penfold.domain.event.{TaskCreatedEvent, Event}
 import org.specs2.matcher.DataTables
 import com.qmetric.penfold.app.support.json.ObjectSerializer
 import scala.util.Random
 import com.qmetric.penfold.domain.model.Status.{Ready, Waiting}
 import org.specs2.mock.Mockito
 import com.qmetric.penfold.app.support.DateTimeSource
+import com.qmetric.penfold.readstore.EventRecord
+import com.qmetric.penfold.domain.model.QueueId
+import com.qmetric.penfold.domain.event.FutureTaskCreated
+import com.qmetric.penfold.domain.model.AggregateId
+import scala.Some
+import com.qmetric.penfold.readstore.PageReference
+import com.qmetric.penfold.domain.event.TaskCreated
+import com.qmetric.penfold.readstore.PageRequest
+import com.qmetric.penfold.domain.model.QueueBinding
 
 class MongoReadStoreTest extends Specification with DataTables with Mockito with EmbedConnection {
   sequential
@@ -135,14 +139,14 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
         PageRequest(5)  ! Filter("a", Set(Option("")))                   ! List("4")           |
         PageRequest(5)  ! Filter("a", Set(Option("ABC")))                ! List("2", "1")      |> {(page, filter, expected) =>
 
-        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, Filters(List(filter)))
+        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(filter)))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
       }
     }
   }
 
   "pagination" should {
-    "retrieve tasks by next page" in new context {
+    "retrieve tasks by next page in descending order" in new context {
       val entries = setupEntries()
 
       "page"                                  | "expected"                         | "hasPrev" | "hasNext" |
@@ -159,25 +163,65 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       PageRequest(2, forwardFrom(entries(4))) ! List("a")                          ! true      ! false     |
       PageRequest(2, forwardFrom(entries(3))) ! List("b", "a")                     ! true      ! false     |> {(page, expected, hasPrev, hasNext) =>
 
-        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page)
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Desc)
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
         pageResult.previousPage.isDefined must beEqualTo(hasPrev)
         pageResult.nextPage.isDefined must beEqualTo(hasNext)
       }
     }
 
-    "retrieve tasks by previous page" in new context {
+    "retrieve tasks by next page in ascending order" in new context {
+      val entries = setupEntries()
+
+      "page"                                    | "expected"                         | "hasPrev" | "hasNext" |
+        PageRequest(10)                         ! List("a", "b", "c", "d", "e", "f") ! false     ! false     |
+        PageRequest(6)                          ! List("a", "b", "c", "d", "e", "f") ! false     ! false     |
+        PageRequest(5)                          ! List("a", "b", "c", "d", "e")      ! false     ! true      |
+        PageRequest(1)                          ! List("a")                          ! false     ! true      |
+        PageRequest(0)                          ! Nil                                ! false     ! false     |
+        PageRequest(0, forwardFrom(entries(5))) ! Nil                                ! false     ! false     |
+        PageRequest(2, forwardFrom(entries(5))) ! List("b", "c")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(3))) ! List("d", "e")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(4))) ! List("c", "d")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(0))) ! Nil                                ! false     ! false     |
+        PageRequest(2, forwardFrom(entries(1))) ! List("f")                          ! true      ! false     |
+        PageRequest(2, forwardFrom(entries(2))) ! List("e", "f")                     ! true      ! false     |> {(page, expected, hasPrev, hasNext) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Asc)
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+        pageResult.previousPage.isDefined must beEqualTo(hasPrev)
+        pageResult.nextPage.isDefined must beEqualTo(hasNext)
+      }
+    }
+
+    "retrieve tasks by previous page in descending order" in new context {
       val entries = setupEntries()
 
       "page"                                 | "expected"                         | "hasPrev" | "hasNext" |
         PageRequest(2, backFrom(entries(5))) ! List("c", "b")                     ! true      ! true      |
         PageRequest(0, backFrom(entries(5))) ! Nil                                ! false     ! false     |
         PageRequest(2, backFrom(entries(2))) ! List("f", "e")                     ! false     ! true      |
-        PageRequest(2, backFrom(entries(3))) ! List("e", "d")                     ! true      ! true      |
         PageRequest(2, backFrom(entries(0))) ! Nil                                ! false     ! false     |
         PageRequest(2, backFrom(entries(3))) ! List("e", "d")                     ! true      ! true      |> {(page, expected, hasPrev, hasNext) =>
 
-        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page)
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Desc)
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+        pageResult.previousPage.isDefined must beEqualTo(hasPrev)
+        pageResult.nextPage.isDefined must beEqualTo(hasNext)
+      }
+    }
+
+    "retrieve tasks by previous page in ascending order" in new context {
+      val entries = setupEntries()
+
+      "page"                                 | "expected"                         | "hasPrev" | "hasNext" |
+        PageRequest(2, backFrom(entries(0))) ! List("d", "e")                     ! true      ! true      |
+        PageRequest(0, backFrom(entries(0))) ! Nil                                ! false     ! false     |
+        PageRequest(2, backFrom(entries(3))) ! List("a", "b")                     ! false     ! true      |
+        PageRequest(2, backFrom(entries(5))) ! Nil                                ! false     ! false     |
+        PageRequest(2, backFrom(entries(2))) ! List("b", "c")                     ! true      ! true      |> {(page, expected, hasPrev, hasNext) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Asc)
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
         pageResult.previousPage.isDefined must beEqualTo(hasPrev)
         pageResult.nextPage.isDefined must beEqualTo(hasNext)
@@ -194,7 +238,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
         PageRequest(2)  ! List("2", "1")   ! false     ! false     |
         PageRequest(1)  ! List("2")        ! false     ! true      |> {(page, expected, hasPrev, hasNext) =>
 
-        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, Filters(List(Filter("a", Some("ABC")))))
+        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(Filter("a", Some("ABC")))))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
         pageResult.previousExists must beEqualTo(hasPrev)
         pageResult.nextExists must beEqualTo(hasNext)

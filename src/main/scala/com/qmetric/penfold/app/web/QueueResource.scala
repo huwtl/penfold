@@ -4,7 +4,7 @@ import org.scalatra._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import com.qmetric.penfold.app.support.hal.HalQueueFormatter
 import com.qmetric.penfold.domain.model.{Status, AggregateId, QueueId}
-import com.qmetric.penfold.readstore.ReadStore
+import com.qmetric.penfold.readstore.{SortOrderMapping, ReadStore}
 import com.qmetric.penfold.command.CommandDispatcher
 import com.qmetric.penfold.app.support.json.ObjectSerializer
 import com.qmetric.penfold.app.web.bean.{RescheduleTaskRequest, RequeueTaskRequest, CloseTaskRequest, StartTaskRequest}
@@ -15,6 +15,7 @@ class QueueResource(readStore: ReadStore,
                     commandDispatcher: CommandDispatcher,
                     jsonConverter: ObjectSerializer,
                     halFormatter: HalQueueFormatter,
+                    sortOrderMapping: SortOrderMapping,
                     pageSize: Int,
                     authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport {
 
@@ -28,7 +29,8 @@ class QueueResource(readStore: ReadStore,
         val queue = QueueId(params("queue"))
         val page = parsePageRequestParams(params, pageSize)
         val filters = parseFilters(multiParams)
-        Ok(halFormatter.halFrom(queue, status, page, readStore.retrieveByQueue(queue, status, page, filters), filters))
+        val sortOrder = sortOrderMapping.sortOrderFor(status)
+        Ok(halFormatter.halFrom(queue, status, page, readStore.retrieveByQueue(queue, status, page, sortOrder, filters), filters))
       }
     }
   }
