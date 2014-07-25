@@ -5,15 +5,10 @@ import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import com.qmetric.penfold.app.support.hal.HalQueueFormatter
 import com.qmetric.penfold.domain.model.{Status, AggregateId, QueueId}
 import com.qmetric.penfold.readstore.{SortOrderMapping, ReadStore}
-import com.qmetric.penfold.command.CommandDispatcher
-import com.qmetric.penfold.app.support.json.ObjectSerializer
-import com.qmetric.penfold.app.web.bean.{RescheduleTaskRequest, RequeueTaskRequest, CloseTaskRequest, StartTaskRequest}
 import com.qmetric.penfold.app.support.auth.BasicAuthenticationSupport
 import com.qmetric.penfold.app.AuthenticationCredentials
 
 class QueueResource(readStore: ReadStore,
-                    commandDispatcher: CommandDispatcher,
-                    jsonConverter: ObjectSerializer,
                     halFormatter: HalQueueFormatter,
                     sortOrderMapping: SortOrderMapping,
                     pageSize: Int,
@@ -44,30 +39,6 @@ class QueueResource(readStore: ReadStore,
         }
       }
     }
-  }
-
-  post("/:queue/started") {
-    val startTaskRequest = jsonConverter.deserialize[StartTaskRequest](request.body)
-    commandDispatcher.dispatch(startTaskRequest.toCommand)
-    Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(startTaskRequest.id).get))
-  }
-
-  post("/:queue/ready") {
-    val requeueTaskRequest = jsonConverter.deserialize[RequeueTaskRequest](request.body)
-    commandDispatcher.dispatch(requeueTaskRequest.toCommand)
-    Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(requeueTaskRequest.id).get))
-  }
-
-  post("/:queue/waiting") {
-    val rescheduleTaskRequest = jsonConverter.deserialize[RescheduleTaskRequest](request.body)
-    commandDispatcher.dispatch(rescheduleTaskRequest.toCommand)
-    Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(rescheduleTaskRequest.id).get))
-  }
-
-  post("/:queue/closed") {
-    val closeTaskRequest = jsonConverter.deserialize[CloseTaskRequest](request.body)
-    commandDispatcher.dispatch(closeTaskRequest.toCommand)
-    Created(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(closeTaskRequest.id).get))
   }
 
   override protected def validCredentials: Option[AuthenticationCredentials] = authenticationCredentials

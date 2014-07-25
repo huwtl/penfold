@@ -22,9 +22,9 @@ class HalQueueFormatterTest extends Specification {
 
   val status = Status.Ready
 
-  val task1 = TestModel.task.copy(id = AggregateId("1"))
+  val task1 = TestModel.readModels.task.copy(id = AggregateId("1"))
 
-  val task2 = TestModel.task.copy(id = AggregateId("2"))
+  val task2 = TestModel.readModels.task.copy(id = AggregateId("2"))
 
   val queueFormatter = new HalQueueFormatter(new URI("http://host/queues"), new HalTaskFormatter(new URI("http://host/tasks"), new URI("http://host/queues")))
 

@@ -2,13 +2,13 @@ package com.qmetric.penfold.command
 
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
-import com.qmetric.penfold.domain.model.AggregateId
+import com.qmetric.penfold.domain.model.{AggregateVersion, AggregateId}
 
 class CommandDispatcherTest extends Specification with Mockito {
 
-  val triggerTaskCommand = TriggerTask(AggregateId("a1"))
-  val startTaskCommand = StartTask(AggregateId("a1"), None)
-  val closeTaskCommand = CloseTask(AggregateId("a1"))
+  val triggerTaskCommand = TriggerTask(AggregateId("a1"), AggregateVersion.init)
+  val startTaskCommand = StartTask(AggregateId("a1"), AggregateVersion.init, None, None)
+  val closeTaskCommand = CloseTask(AggregateId("a1"), AggregateVersion.init, None, None, None, None)
 
   val triggerTaskHandler = mock[TriggerTaskHandler]
   val startTaskHandler = mock[StartTaskHandler]

@@ -11,6 +11,7 @@ import com.qmetric.penfold.readstore.Filter
 import com.qmetric.penfold.readstore.TaskRecord
 import scala.Some
 import com.qmetric.penfold.support.TestModel._
+import com.qmetric.penfold.support.TestModel.readModels._
 import com.qmetric.penfold.support.TestModel
 import com.qmetric.penfold.domain.model.Status.Ready
 
@@ -24,10 +25,12 @@ class HalTaskFormatterTest extends Specification {
 
   "format waiting task as hal+json" in {
     hal(task.copy(status = Status.Waiting)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingTask.json"))
+    hal(task.copy(status = Status.Waiting, assignee = Some(TestModel.assignee))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingTaskWithAssignee.json"))
   }
 
   "format ready task as hal+json" in {
     hal(task.copy(status = Status.Ready)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedReadyTask.json"))
+    hal(task.copy(status = Status.Ready, assignee = Some(TestModel.assignee))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedReadyTaskWithAssignee.json"))
   }
 
   "format started task as hal+json" in {
@@ -52,13 +55,13 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format task as hal+json with complex payload" in {
-    val task = TestModel.task.copy(status = Status.Waiting, payload = complexPayload)
+    val task = TestModel.readModels.task.copy(status = Status.Waiting, payload = complexPayload)
     hal(task) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedTaskWithComplexPayload.json"))
   }
 
   private def halTasks(filters: Filters, pageNumber: Int = 0, previousPage: Option[PageReference] = None, nextPage: Option[PageReference] = None) = {
     parse(taskFormatter.halFrom(pageRequest,
-      PageResult(List(TestModel.task.copy(status = Status.Waiting)), previousPage, nextPage), filters
+      PageResult(List(TestModel.readModels.task.copy(status = Status.Waiting)), previousPage, nextPage), filters
     ))
   }
 

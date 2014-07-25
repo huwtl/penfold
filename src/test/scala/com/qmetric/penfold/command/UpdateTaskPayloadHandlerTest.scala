@@ -18,7 +18,7 @@ class UpdateTaskPayloadHandlerTest extends Specification with Mockito {
   "update task payload" in {
     val command = new UpdateTaskPayload(expectedAggregateId, AggregateVersion.init, Some("update_type_1"), Patch(Nil), Some(100))
     domainRepository.getById[Task](expectedAggregateId) returns originalTask
-    originalTask.updatePayload(command.version, command.payloadUpdate, command.updateType, command.score) returns updatedTask
+    originalTask.updatePayload(command.version, command.payloadUpdate, command.updateType, command.scoreUpdate) returns updatedTask
 
     commandDispatcher.dispatch(UpdateTaskPayload(expectedAggregateId, AggregateVersion.init, Some("update_type_1"), Patch(Nil), Some(100)))
 

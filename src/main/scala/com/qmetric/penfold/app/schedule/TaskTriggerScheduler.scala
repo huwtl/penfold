@@ -17,7 +17,7 @@ class TaskTriggerScheduler(readStore: ReadStore, commandDispatcher: CommandDispa
   }
 
   private def triggerTask(task: TaskRecordReference) {
-    Try(commandDispatcher.dispatch(TriggerTask(task.id))) recover {
+    Try(commandDispatcher.dispatch(TriggerTask(task.id, task.version))) recover {
       case e: AggregateConflictException => logger.info("conflict triggering task", e)
       case e: Exception => logger.error("error triggering task", e)
     }

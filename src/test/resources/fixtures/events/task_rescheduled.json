@@ -1,10 +1,12 @@
 {
     "type" : "TaskRescheduled",
-    "aggregateId" : "a1",
-    "aggregateVersion" : 1,
-    "created" : "2014-02-03 12:47:54",
-    "triggerDate" : "2014-02-03 14:30:01",
+    "aggregateId" : "1",
+    "aggregateVersion" : 3,
+    "created" : "2014-02-25 13:00:00",
+    "triggerDate" : "2014-02-25 14:00:00",
     "assignee": "user1",
     "rescheduleType": "schType",
+    "payloadUpdate": {"operations": []},
+    "score": 1393336800000,
     "aggregateType" : "Task"
 }

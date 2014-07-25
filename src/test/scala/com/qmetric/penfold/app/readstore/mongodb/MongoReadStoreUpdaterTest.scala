@@ -14,14 +14,10 @@ import com.qmetric.penfold.domain.event._
 import com.qmetric.penfold.readstore.EventRecord
 import com.qmetric.penfold.domain.model.patch.Replace
 import com.qmetric.penfold.domain.event.TaskPayloadUpdated
-import com.qmetric.penfold.domain.event.FutureTaskCreated
 import com.qmetric.penfold.domain.model.AggregateId
 import scala.Some
-import com.qmetric.penfold.domain.event.TaskCreated
-import com.qmetric.penfold.domain.event.TaskStarted
 import com.qmetric.penfold.domain.model.patch.Value
 import com.qmetric.penfold.domain.model.patch.Patch
-import com.qmetric.penfold.domain.model.QueueBinding
 import com.qmetric.penfold.support.TestModel
 import com.qmetric.penfold.domain.model.Status.Closed
 
@@ -33,13 +29,15 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     val payload = Payload(Map("field1" -> "123", "inner" -> Map("field2" -> 1)))
     val lastVersion = AggregateVersion(2)
     val serializer = new EventSerializer
-    val taskCreatedEvent = TaskCreated(aggregateId, AggregateVersion(1), TestModel.createdDate, QueueBinding(TestModel.queueId), TestModel.triggerDate, payload, TestModel.score)
-    val futureTaskCreatedEvent = FutureTaskCreated(aggregateId, AggregateVersion(1), TestModel.createdDate, QueueBinding(TestModel.queueId), TestModel.triggerDate, payload, TestModel.score)
-    val taskStartedEvent = TaskStarted(aggregateId, AggregateVersion(2), TestModel.createdDate, Some(TestModel.assignee))
-    val taskClosedEvent = TaskClosed(aggregateId, AggregateVersion(3), TestModel.createdDate, Some(TestModel.concluder), Some(TestModel.conclusionType))
-    val taskRequeuedEvent = TaskRequeued(aggregateId, AggregateVersion(4), TestModel.createdDate)
-    val taskRescheduledEvent = TaskRescheduled(aggregateId, AggregateVersion(3), TestModel.createdDate, TestModel.triggerDate, Some(TestModel.assignee), Some(TestModel.rescheduleType))
-    val archivedEvent = TaskArchived(aggregateId, taskCreatedEvent.aggregateVersion.next, TestModel.createdDate)
+    val taskCreatedEvent = TestModel.events.createdEvent.copy(aggregateId = aggregateId, payload = payload)
+    val futureTaskCreatedEvent = TestModel.events.futureCreatedEvent.copy(aggregateId = aggregateId, payload = payload)
+    val taskStartedEvent = TestModel.events.startedEvent.copy(aggregateId = aggregateId)
+    val taskTriggeredEvent = TestModel.events.triggeredEvent.copy(aggregateId = aggregateId)
+    val taskUnassignedEvent = TestModel.events.unassignedEvent.copy(aggregateId = aggregateId, aggregateVersion = AggregateVersion(5))
+    val taskClosedEvent = TestModel.events.closedEvent.copy(aggregateId = aggregateId)
+    val taskRequeuedEvent = TestModel.events.requeuedEvent.copy(aggregateId = aggregateId)
+    val taskRescheduledEvent = TestModel.events.rescheduledEvent.copy(aggregateId = aggregateId)
+    val archivedEvent = TestModel.events.archivedEvent.copy(aggregateId = aggregateId)
 
     val mongoClient = MongoClient("localhost", embedConnectionPort())
     val database = mongoClient("penfoldtest")
@@ -58,7 +56,28 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
+    task must beEqualTo(Some(TestModel.readModels.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
+  }
+
+  "trigger future task" in new context {
+    handleEvents(futureTaskCreatedEvent, taskTriggeredEvent)
+
+    val task = readStore.retrieveBy(aggregateId)
+
+    task must beEqualTo(Some(TestModel.readModels.triggeredTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
+  }
+
+  "unassign task" in new context {
+    handleEvents(taskCreatedEvent, taskStartedEvent, taskClosedEvent, taskRequeuedEvent, taskUnassignedEvent)
+
+    val task = readStore.retrieveBy(aggregateId)
+
+    task must beEqualTo(Some(TestModel.readModels.readyTask.copy(
+      id = aggregateId,
+      version = taskUnassignedEvent.aggregateVersion,
+      payload = payload,
+      previousStatus = Some(TestModel.previousStatus.copy(status = Closed)),
+      assignee = None)))
   }
 
   "close task" in new context {
@@ -66,7 +85,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.closedTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
+    task must beEqualTo(Some(TestModel.readModels.closedTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
   }
 
   "reschedule future task" in new context {
@@ -74,7 +93,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.rescheduledTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
+    task must beEqualTo(Some(TestModel.readModels.rescheduledTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
   }
 
   "update payload of ready task" in new context {
@@ -87,7 +106,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.readyTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, sort = updatedScore, payload = updatedPayload)))
+    task must beEqualTo(Some(TestModel.readModels.readyTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, sort = updatedScore, payload = updatedPayload)))
   }
 
   "update payload of non-ready task without changing sort order" in new context {
@@ -100,7 +119,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.waitingTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, payload = updatedPayload)))
+    task must beEqualTo(Some(TestModel.readModels.waitingTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, payload = updatedPayload)))
   }
 
   "ignore duplicate events" in new context {
@@ -108,7 +127,7 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
+    task must beEqualTo(Some(TestModel.readModels.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
   }
 
   "remove task on archive" in new context {
@@ -118,12 +137,17 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     task must beNone
   }
 
-  "requeue closed task and clear conclusion fields if present" in new context {
+  "requeue task" in new context {
     handleEvents(taskCreatedEvent, taskStartedEvent, taskClosedEvent, taskRequeuedEvent)
 
     val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.task.copy(id = aggregateId, version = taskRequeuedEvent.aggregateVersion, payload = payload, previousStatus = Some(TestModel.previousStatus.copy(status = Closed)), assignee = Some(TestModel.assignee))))
+    task must beEqualTo(Some(TestModel.readModels.readyTask.copy(
+      id = aggregateId,
+      version = taskRequeuedEvent.aggregateVersion,
+      payload = payload,
+      previousStatus = Some(TestModel.previousStatus.copy(status = Closed)),
+      assignee = Some(TestModel.assignee))))
   }
 
   "ignore events on aggregate version mismatch" in new context {
@@ -131,6 +155,6 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
     handleEvents(taskCreatedEvent, taskStartedEvent, archivedEvent.copy(aggregateVersion = unexpectedVersion))
 
     val task = readStore.retrieveBy(aggregateId)
-    task must beSome(TestModel.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload))
+    task must beSome(TestModel.readModels.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload))
   }
 }

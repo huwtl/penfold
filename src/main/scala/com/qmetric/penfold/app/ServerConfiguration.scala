@@ -16,7 +16,8 @@ case class ServerConfiguration(publicUrl: String,
                                pageSize: Int = 10,
                                eventSync: FiniteDuration = FiniteDuration(15L, TimeUnit.MINUTES),
                                triggeredCheckFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS),
-                               taskArchiver: Option[TaskArchiverConfiguration] = None)
+                               taskArchiver: Option[TaskArchiverConfiguration] = None,
+                               readyTaskAssignmentTimeout: Option[TaskAssignmentTimeoutConfiguration] = None)
 
 case class AuthenticationCredentials(username: String, password: String)
 
@@ -28,6 +29,9 @@ case class MongoDatabaseServer(host: String, port: Int)
 
 case class TaskArchiverConfiguration(timeoutAttributePath: String,
                                      checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
+
+case class TaskAssignmentTimeoutConfiguration(timeoutAttributePath: String,
+                                                       checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
 
 case class SortOrderingConfiguration(private val waiting: String = "Asc",
                                      private val ready: String = "Asc",

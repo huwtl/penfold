@@ -10,10 +10,10 @@ class TaskTriggerSchedulerTest extends Specification with Mockito {
   "periodically trigger future tasks" in {
     val readStore = mock[ReadStore]
     val commandDispatcher = mock[CommandDispatcher]
-    readStore.retrieveTasksToTrigger returns List(TaskRecordReference(TestModel.aggregateId)).toIterator
+    readStore.retrieveTasksToTrigger returns List(TaskRecordReference(TestModel.aggregateId, TestModel.version)).toIterator
 
     new TaskTriggerScheduler(readStore, commandDispatcher, null).process()
 
-    there was one(commandDispatcher).dispatch(TriggerTask(TestModel.aggregateId))
+    there was one(commandDispatcher).dispatch(TriggerTask(TestModel.aggregateId, TestModel.version))
   }
 }

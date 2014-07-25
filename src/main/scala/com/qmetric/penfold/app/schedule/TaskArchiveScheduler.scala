@@ -15,11 +15,11 @@ class TaskArchiveScheduler(readStore: ReadStore, commandDispatcher: CommandDispa
   override val frequency = archiverConfig.checkFrequency
 
   override def process() {
-    readStore.retrieveTasksToArchive(archiverConfig.timeoutAttributePath).foreach(archiveTask)
+    readStore.retrieveTasksToTimeout(archiverConfig.timeoutAttributePath).foreach(archiveTask)
   }
 
   private def archiveTask(task: TaskRecordReference) {
-    Try(commandDispatcher.dispatch(ArchiveTask(task.id))) recover {
+    Try(commandDispatcher.dispatch(ArchiveTask(task.id, task.version))) recover {
       case e: AggregateConflictException => logger.info("conflict archiving task", e)
       case e: Exception => logger.error("error archiving task", e)
     }

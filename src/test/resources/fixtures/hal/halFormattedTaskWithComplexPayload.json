@@ -1,10 +1,10 @@
 {
     "_links": {
         "self": {"href": "http://host/tasks/1"},
-        "close": {"href": "http://host/queues/abc/closed"},
-        "queue": {"href": "http://host/queues/abc"},
-        "reschedule": {"href": "http://host/queues/abc/waiting"},
-        "updatePayload": {"href": "http://host/tasks/1/1/payload"}
+        "CloseTask": {"href": "http://host/tasks/1/1"},
+        "RescheduleTask": {"href": "http://host/tasks/1/1"},
+        "UpdateTaskPayload": {"href": "http://host/tasks/1/1"},
+        "queue": {"href": "http://host/queues/abc/waiting"}
     },
     "id": "1",
     "version": 1,
@@ -27,5 +27,6 @@
     "status": "waiting",
     "statusLastModified": "2014-02-25 13:00:00",
     "triggerDate": "2014-02-25 14:00:00",
-    "queueBinding": {"id": "abc"}
+    "queueBinding": {"id": "abc"},
+    "score": 1393336800000
 }

@@ -1,7 +1,11 @@
 {
     "type" : "TaskRequeued",
-    "aggregateId" : "a1",
-    "aggregateVersion" : 1,
-    "created" : "2014-02-03 12:47:54",
+    "aggregateId" : "1",
+    "aggregateVersion" : 4,
+    "created" : "2014-02-25 13:00:00",
+    "requeueType": "reqType",
+    "assignee": "user1",
+    "payloadUpdate": {"operations": []},
+    "score": 1393336800000,
     "aggregateType" : "Task"
 }

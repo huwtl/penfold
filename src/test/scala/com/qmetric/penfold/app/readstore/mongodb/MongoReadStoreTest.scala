@@ -99,7 +99,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     val task3 = createTask("a3", timeout = archiveThreshold.plusSeconds(1).getMillis)
     persist(task1 :: task2 :: task3 :: Nil)
 
-    readStore.retrieveTasksToArchive("payload.timeout").toList.map(_.id.value) must containTheSameElementsAs(List("a1", "a2"))
+    readStore.retrieveTasksToTimeout("payload.timeout").toList.map(_.id.value) must containTheSameElementsAs(List("a1", "a2"))
   }
 
   "retrieve task by id" in new context {

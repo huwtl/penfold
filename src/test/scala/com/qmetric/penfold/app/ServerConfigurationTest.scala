@@ -23,8 +23,13 @@ class ServerConfigurationTest extends Specification {
     Index(Some("index2"), List(IndexField("field1", "payload.field1"), IndexField("field2", "payload.field2", multiKey = true))))
 
   "load minimally populated config file" in {
-    val expectedConfig = ServerConfiguration(publicUrl, httpPort, None, JdbcConnectionPool(jdbcUrl, "user", "", "org.hsqldb.jdbcDriver"),
-      MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 12345))))
+    val expectedConfig = ServerConfiguration(
+      publicUrl,
+      httpPort,
+      None,
+      JdbcConnectionPool(jdbcUrl, "user", "", "org.hsqldb.jdbcDriver"),
+      MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 12345)))
+    )
 
     val config = loadConfig("minimal")
 
@@ -32,10 +37,20 @@ class ServerConfigurationTest extends Specification {
   }
 
   "load fully populated config file" in {
-    val expectedConfig = ServerConfiguration(publicUrl, httpPort, Some(authCredentials), JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
+    val expectedConfig = ServerConfiguration(
+      publicUrl,
+      httpPort,
+      Some(authCredentials),
+      JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
       MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 12345))),
-      readStoreIndexes = indexes, SortOrderingConfiguration("Desc", "Desc", "Asc", "Asc"), pageSize = 25, eventSync = FiniteDuration(2L, MINUTES), triggeredCheckFrequency = FiniteDuration(1L, MINUTES),
-      Some(TaskArchiverConfiguration("payload.timeout", FiniteDuration(1L, MINUTES))))
+      readStoreIndexes = indexes,
+      sortOrdering = SortOrderingConfiguration("Desc", "Desc", "Asc", "Asc"),
+      pageSize = 25,
+      eventSync = FiniteDuration(2L, MINUTES),
+      triggeredCheckFrequency = FiniteDuration(1L, MINUTES),
+      taskArchiver = Some(TaskArchiverConfiguration("payload.timeout", FiniteDuration(1L, MINUTES))),
+      readyTaskAssignmentTimeout = Some(TaskAssignmentTimeoutConfiguration("payload.assignmentTimeout", FiniteDuration(2L, MINUTES)))
+    )
 
     val config = loadConfig("full")
 

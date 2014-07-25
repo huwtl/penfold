@@ -17,6 +17,7 @@ import scala.util.{Failure, Try, Success}
 import com.qmetric.penfold.app.support.DateTimeSource
 import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
 import com.mongodb.casbah.commons.Imports
+import com.mongodb.casbah
 
 class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource) extends ReadStore {
   private val connectionSuccess = true
@@ -41,15 +42,15 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
     val query = MongoDBObject("status" -> Waiting.name) ++ ("sort" $lte currentTime.getMillis)
     val sort = MongoDBObject("sort" -> 1)
 
-    tasksCollection.find(query).sort(sort).map(doc => TaskRecordReference(AggregateId(doc.as[String]("_id"))))
+    tasksCollection.find(query).sort(sort).map(doc => TaskRecordReference(idFrom(doc), versionFrom(doc)))
   }
 
-  override def retrieveTasksToArchive(timeoutAttributePath: String): Iterator[TaskRecordReference] = {
+  override def retrieveTasksToTimeout(timeoutAttributePath: String, status: Option[Status] = None): Iterator[TaskRecordReference] = {
     val currentTime = dateTimeSource.now
 
-    val query = MongoDBObject.empty ++ (timeoutAttributePath $lte currentTime.getMillis)
+    val query = status.map(status => MongoDBObject("status" -> status)).getOrElse(MongoDBObject.empty) ++ (timeoutAttributePath $lte currentTime.getMillis)
 
-    tasksCollection.find(query).map(doc => TaskRecordReference(AggregateId(doc.as[String]("_id"))))
+    tasksCollection.find(query).map((doc: casbah.Imports.DBObject) => TaskRecordReference(idFrom(doc), versionFrom(doc)))
   }
 
   override def retrieveBy(id: AggregateId) = {
@@ -71,6 +72,10 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
     retrievePage(queryPlan, pageRequest, sortOrder)
   }
 
+  private def idFrom(document: casbah.Imports.DBObject) = AggregateId(document.as[String]("_id"))
+
+  private def versionFrom(document: casbah.Imports.DBObject) = AggregateVersion(document.as[Int]("version"))
+
   private def convertDocumentToTask(document: MongoDBObject) = {
     def parsePreviousStatus = document.getAs[Map[String, Any]]("previousStatus") match {
       case Some(previousStatus) => objectSerializer.deserialize[Option[PreviousStatus]](objectSerializer.serialize(previousStatus))
@@ -85,7 +90,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
       Status.from(document.as[String]("status")).get,
       document.as[DateTime]("statusLastModified"),
       parsePreviousStatus,
-      document.getAs[String]("assignee").map(Assignee),
+      document.getAs[String]("assignee").map(User),
       document.as[DateTime]("triggerDate"),
       document.as[Long]("score"),
       document.as[Long]("sort"),

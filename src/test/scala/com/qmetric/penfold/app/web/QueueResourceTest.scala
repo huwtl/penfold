@@ -9,7 +9,6 @@ import org.specs2.mock.Mockito
 import com.qmetric.penfold.domain.model._
 import com.qmetric.penfold.readstore._
 import com.qmetric.penfold.command.CommandDispatcher
-import com.qmetric.penfold.app.support.json.ObjectSerializer
 import com.qmetric.penfold.readstore.Filter
 import com.qmetric.penfold.domain.model.AggregateId
 import scala.Some
@@ -21,9 +20,9 @@ import com.qmetric.penfold.support.TestModel
 class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification {
   sequential
 
-  val expectedTask1 = TestModel.task.copy(id = AggregateId("1"))
+  val expectedTask1 = TestModel.readModels.task.copy(id = AggregateId("1"))
 
-  val expectedTask2 = TestModel.task.copy(id = AggregateId("2"))
+  val expectedTask2 = TestModel.readModels.task.copy(id = AggregateId("2"))
 
   val pageSize = 5
 
@@ -37,8 +36,6 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
   addServlet(new QueueResource(
     readStore,
-    commandDispatcher,
-    new ObjectSerializer,
     new HalQueueFormatter(new URI("http://host/queues"), new HalTaskFormatter(new URI("http://host/tasks"), new URI("http://host/queues"))),
     sortOrderMapping,
     pageSize,
@@ -102,38 +99,6 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
     get("/queues/abc/ready/5", headers = validAuthHeader) {
       status must beEqualTo(404)
-    }
-  }
-
-  "return 201 when posting task into started queue" in {
-    readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
-
-    post("/queues/abc/started", """{"id": "1", "assignee": "user1"}""", headers = validAuthHeader) {
-      status must beEqualTo(201)
-    }
-  }
-
-  "return 201 when requeuing tasks" in {
-    readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
-
-    post("/queues/abc/ready", """{"id": "1"}""", headers = validAuthHeader) {
-      status must beEqualTo(201)
-    }
-  }
-
-  "return 201 when rescheduling tasks" in {
-    readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
-
-    post("/queues/abc/waiting", """{"id": "1", "triggerDate": "2014-2-25 14:00:00", "assignee": "user1", "rescheduleType": "schType"}""", headers = validAuthHeader) {
-      status must beEqualTo(201)
-    }
-  }
-
-  "return 201 when posting task into closed queue" in {
-    readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
-
-    post("/queues/abc/closed", """{"id": "1", "concluder": "user1", "conclusionType": "type"}""", headers = validAuthHeader) {
-      status must beEqualTo(201)
     }
   }
 

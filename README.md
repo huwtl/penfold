@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/qmetric/penfold.png)](https://travis-ci.org/qmetric/penfold)
 
-Penfold is responsible for managing queues of tasks. Penfold's understanding of a task is anything that's a valid JSON object.
+Penfold is responsible for managing queues of tasks. A task contains a payload of any valid JSON.
 
 The primary purposes that penfold was built for:
 
@@ -102,7 +102,7 @@ Lets create a new task. Post the following data, replacing the "triggerDate" wit
 ```
 POST: /tasks  HTTP 1.1
 
-Content-Type: application/json
+Content-Type: application/json;domain-command=CreateFutureTask
     
 {
     "queueBinding": {
@@ -121,11 +121,12 @@ Content-Type: application/json
 ```
 
 You should see a response similar to below. The response lists the attributes of your newly created task, including an auto generated unique task ID.
+Notice, at this point, the "status" of the task is "waiting".
 
 The links section of the response lists what actions and views are available for this task:
 * self - link to this task resource
-* updatePayload - link where requests should be sent to make changes to the task payload (PUT)
-* close - link to close the task (POST)
+* UpdateTaskPayload - link where requests should be sent to make changes to the task payload (POST)
+* CloseTask - link where requests should be sent to close the task (POST)
 
 ```
 201 Created
@@ -136,11 +137,11 @@ Content-Type: application/hal+json
         "self": {
             "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
         },
-        "close": {
-            "href": "http://localhost:8080/queues/greenback/closed"
+        "CloseTask": {
+            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/1"
         },
-        "updatePayload": {
-            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/1/payload"
+        "UpdateTaskPayload": {
+            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/1"
         }
     },
     "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
@@ -155,13 +156,12 @@ Content-Type: application/hal+json
         "id": "greenback"
     },
     "status": "waiting",
-    "statusLastModified": "2014-07-11 16:01:47",
     "triggerDate": "2014-07-11 16:05:00",
     "version": 1
 }
 ```
 
-Like before, send a request to view your task in the queue with waiting status.
+Like before, send a GET request to view your task in the queue with "waiting" status.
 
 ```
 GET: /queues/greenback/waiting  HTTP 1.1
@@ -196,14 +196,14 @@ When your task is "ready", then you should see a response similar to below.
                         "self": {
                             "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
                         },
-                        "close": {
-                            "href": "http://localhost:8080/queues/greenback/closed"
+                        "CloseTask": {
+                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
                         },
-                        "start": {
-                            "href": "http://localhost:8080/queues/greenback/started"
+                        "StartTask": {
+                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
                         },
-                        "updatePayload": {
-                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2/payload"
+                        "UpdateTaskPayload": {
+                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
                         }
                     },
                     "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
@@ -218,7 +218,6 @@ When your task is "ready", then you should see a response similar to below.
                         "id": "greenback"
                     },
                     "status": "ready",
-                    "statusLastModified": "2014-07-11 16:05:42",
                     "triggerDate": "2014-07-11 16:05:00",
                     "version": 2
                 }
@@ -228,75 +227,62 @@ When your task is "ready", then you should see a response similar to below.
 }
 ```
 
-Notice the new available action link "start". A task can only be started when it's "ready".
-Lets start the task by sending a POST to the action link. The body of the POST should contain the unique ID of the task:
+Notice the new available action link "StartTask". A task can only be started when it's "ready".
+
+Lets start the task by sending a POST to the action link.
+For any task command (such as creating or starting a task), the Content-Type header MUST always include the command type (the command type is stored as the action link relation name).
+In this example, since a "StartTask" command has no mandatory properties the command represented in the body of the request is an empty JSON object.
 
 ```
-POST: /queues/greenback/started  HTTP 1.1
+POST: /tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2  HTTP 1.1
 
-Content-Type: application/json
-    
-{
-    "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02"
-}
+Content-Type: application/json;domain-command=StartTask
+
+{}
 ```
 
-The task has now been started, you will notice in the POST response that the task's status has changed to "started" and a new action link "requeue" is now available (i.e. for unstarting the task).
+
+The task has now been started, you will notice in the POST response that the task's status has changed to "started".
 
 ```
 {
     "_links": {
         "self": {
-            "href": "http://localhost:8080/queues/greenback/started/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+        },
+        "CloseTask": {
+            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/3"
+        },
+        "UpdateTaskPayload": {
+            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/3"
         }
     },
-    "taskId": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
-    "_embedded": {
-        "task": {
-            "_links": {
-                "self": {
-                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
-                },
-                "close": {
-                    "href": "http://localhost:8080/queues/greenback/closed"
-                },
-                "requeue": {
-                    "href": "http://localhost:8080/queues/greenback/ready"
-                },
-                "updatePayload": {
-                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/3/payload"
-                }
-            },
-            "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
-            "payload": {
-                "customer": {
-                    "id": 1,
-                    "name": "bob",
-                    "email": "bob@email.com"
-                }
-            },
-            "queueBinding": {
-                "id": "greenback"
-            },
-            "status": "started",
-            "statusLastModified": "2014-07-11 16:41:29",
-            "triggerDate": "2014-07-11 16:05:00",
-            "version": 3
+    "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+    "payload": {
+        "customer": {
+            "id": 1,
+            "name": "bob",
+            "email": "bob@email.com"
         }
-    }
+    },
+    "queueBinding": {
+        "id": "greenback"
+    },
+    "status": "started",
+    "triggerDate": "2014-07-11 16:05:00",
+    "version": 3
 }
 ```
 
-Finally, assuming we've done whatever we wanted to do to the task, lets tell penfold we're done with it and close it (see "close" action link).
+Finally, assuming we've done whatever we wanted to do to the task, lets tell Penfold we're done with it and close it (see "CloseTask" action link).
+Notice the updated Content-Type header in the request below.
 
 ```
-POST: /queues/greenback/closed  HTTP 1.1
+POST: /tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/3  HTTP 1.1
 
-Content-Type: application/json
+Content-Type: application/json;domain-command=CloseTask
     
-{
-    "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02"
-}
+{}
 ```
 
 The task should now be closed.
@@ -305,37 +291,23 @@ The task should now be closed.
 {
     "_links": {
         "self": {
-            "href": "http://localhost:8080/queues/greenback/closed/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
         }
     },
-    "taskId": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
-    "_embedded": {
-        "task": {
-            "_links": {
-                "self": {
-                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
-                },
-                "requeue": {
-                    "href": "http://localhost:8080/queues/greenback/ready"
-                }
-            },
-            "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
-            "payload": {
-                "customer": {
-                    "id": 1,
-                    "name": "bob",
-                    "email": "bob@email.com"
-                }
-            },
-            "queueBinding": {
-                "id": "greenback"
-            },
-            "status": "closed",
-            "statusLastModified": "2014-07-11 16:50:47",
-            "triggerDate": "2014-07-11 16:05:00",
-            "version": 4
+    "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+    "payload": {
+        "customer": {
+            "id": 1,
+            "name": "bob",
+            "email": "bob@email.com"
         }
-    }
+    },
+    "queueBinding": {
+        "id": "greenback"
+    },
+    "status": "closed",
+    "triggerDate": "2014-07-11 16:05:00",
+    "version": 4
 }
 ```
 

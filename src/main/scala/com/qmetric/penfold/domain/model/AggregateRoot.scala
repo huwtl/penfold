@@ -20,9 +20,13 @@ trait AggregateRoot extends EventSourced {
 
   def markCommitted: AggregateRoot
 
-  def checkVersion(expectedVersion: AggregateVersion) = checkConflict(expectedVersion == version, s"aggregate conflict ${aggregateId}")
+  def checkVersion(expectedVersion: AggregateVersion) = {
+    def checkConflict(requirement: Boolean, message: => Any) = if (!requirement) throw new AggregateConflictException("conflict: " + message)
 
-  def checkConflict(requirement: Boolean, message: => Any) = if (!requirement) throw new AggregateConflictException("Conflict: " + message)
+    checkConflict(expectedVersion == version, s"aggregate conflict ${aggregateId}")
+  }
+
+  def checkState(requirement: Boolean, message: => Any) = if (!requirement) throw new IllegalStateException("invalid state: " + message)
 }
 
 trait AggregateFactory extends EventSourced {

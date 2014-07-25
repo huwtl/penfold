@@ -15,5 +15,5 @@ trait ReadStore {
 
   def retrieveTasksToTrigger: Iterator[TaskRecordReference]
 
-  def retrieveTasksToArchive(timeoutAttributePath: String): Iterator[TaskRecordReference]
+  def retrieveTasksToTimeout(timeoutAttributePath: String, status: Option[Status] = None): Iterator[TaskRecordReference]
 }

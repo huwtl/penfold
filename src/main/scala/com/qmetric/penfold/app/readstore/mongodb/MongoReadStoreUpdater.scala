@@ -1,6 +1,6 @@
 package com.qmetric.penfold.app.readstore.mongodb
 
-import com.qmetric.penfold.readstore.{EventTracker, EventListener}
+import com.qmetric.penfold.readstore.{EventTracker, EventListener, EventRecord}
 import com.mongodb.casbah.Imports._
 import com.qmetric.penfold.domain.model.Status._
 import com.qmetric.penfold.domain.model.{Payload, Status}
@@ -14,7 +14,6 @@ import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHe
 import org.joda.time.DateTime
 import scala.Predef._
 import com.qmetric.penfold.domain.event.TaskRequeued
-import com.qmetric.penfold.readstore.EventRecord
 import com.qmetric.penfold.domain.event.TaskRescheduled
 import com.qmetric.penfold.domain.event.TaskPayloadUpdated
 import com.qmetric.penfold.domain.event.FutureTaskCreated
@@ -24,8 +23,8 @@ import scala.Some
 import com.qmetric.penfold.domain.event.TaskCreated
 import com.qmetric.penfold.domain.event.TaskStarted
 import com.qmetric.penfold.domain.event.TaskClosed
-import scala.reflect.{ClassTag, classTag}
 import org.joda.time.format.DateTimeFormat
+import com.qmetric.penfold.domain.model.patch.Patch
 
 class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
@@ -43,11 +42,12 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     val result = eventRecord.event match {
       case e: TaskCreated => handleCreateEvent(e, Ready)
       case e: FutureTaskCreated => handleCreateEvent(e, Waiting)
-      case e: TaskTriggered => handleUpdateStatusEvent(e, Ready)
-      case e: TaskStarted => handleUpdateStatusEvent(e, Started)
-      case e: TaskRequeued => handleUpdateStatusEvent(e, Ready)
-      case e: TaskRescheduled => handleUpdateStatusEvent(e, Waiting)
-      case e: TaskClosed => handleUpdateStatusEvent(e, Closed)
+      case e: TaskTriggered => handleTaskTriggeredEvent(e)
+      case e: TaskStarted => handleTaskStartedEvent(e)
+      case e: TaskRequeued => handleTaskRequeuedEvent(e)
+      case e: TaskRescheduled => handleTaskRescheduledEvent(e)
+      case e: TaskClosed => handleTaskClosedEvent(e)
+      case e: TaskUnassigned => handleUnassignedEvent(e)
       case e: TaskPayloadUpdated => handleUpdatePayloadEvent(e)
       case e: TaskArchived => handleArchiveEvent(e)
       case _ =>
@@ -73,7 +73,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       "status" -> status.name,
       "statusLastModified" -> event.created,
       "triggerDate" -> event.triggerDate,
-      "searchableTriggerDay" -> resolveTriggerDaySearchField(event, None),
+      "searchableTriggerDay" -> triggerDaySearchField(event.triggerDate),
       "payload" -> event.payload.content,
       "sort" -> resolveSortOrder(event, status, event.score).get,
       "score" -> event.score
@@ -88,48 +88,97 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     }
   }
 
-  private def handleUpdateStatusEvent(event: Event, status: Status) = {
-    val query = updateByIdVersion(event)
+  private def handleTaskTriggeredEvent(event: TaskTriggered) = {
+    handleTaskUpdate(event) {task =>
+      val existingScore = task.as[Long]("score")
+      Map(
+        "previousStatus" -> updatePreviousStatus(task),
+        "status" -> Ready.name,
+        "statusLastModified" -> event.created.toDate,
+        "sort" -> existingScore
+      )
+    }
+  }
 
-    tasksCollection.findOne(query) match {
-      case Some(task) => {
-        val update = $set(
-          "version" -> event.aggregateVersion.number,
-          "triggerDate" -> resolveFieldValue[TaskRescheduled, Option[DateTime]](event, task.getAs[DateTime]("triggerDate"), e => Some(e.triggerDate)),
-          "searchableTriggerDay" -> resolveTriggerDaySearchField(event, task.getAs[String]("searchableTriggerDay")),
-          "previousStatus" -> Map("status" -> task.as[String]("status"), "statusLastModified" -> task.as[DateTime]("statusLastModified")),
-          "status" -> status.name,
-          "statusLastModified" -> event.created.toDate,
-          "assignee" -> resolveAssignee(event, task.getAs[String]("assignee")),
-          "rescheduleType" -> resolveFieldValue[TaskRescheduled, Option[String]](event, task.getAs[String]("rescheduleType"), _.rescheduleType),
-          "conclusionType" -> resolveFieldValue[TaskClosed, Option[String]](event, None, _.conclusionType),
-          "sort" -> resolveSortOrder(event, status, task.as[Long]("score")).get
-        )
-        tasksCollection.update(query, update)
-      }
-      case None =>
+  private def handleTaskStartedEvent(event: TaskStarted) = {
+    handleTaskUpdate(event) {task =>
+      Map(
+        "previousStatus" -> updatePreviousStatus(task),
+        "status" -> Started.name,
+        "statusLastModified" -> event.created.toDate,
+        "sort" -> event.created.getMillis,
+        "assignee" -> event.assignee.map(_.username),
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate)
+      )
+    }
+  }
+
+  private def handleTaskRequeuedEvent(event: TaskRequeued) = {
+    handleTaskUpdate(event) {task =>
+      val score = event.score.getOrElse(task.as[Long]("score"))
+      Map(
+        "previousStatus" -> updatePreviousStatus(task),
+        "status" -> Ready.name,
+        "statusLastModified" -> event.created.toDate,
+        "sort" -> score,
+        "assignee" -> event.assignee.map(_.username),
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate),
+        "score" -> score
+      )
+    }
+  }
+
+  private def handleTaskRescheduledEvent(event: TaskRescheduled) = {
+    handleTaskUpdate(event) {task =>
+      val score = event.score.getOrElse(task.as[Long]("score"))
+      Map(
+        "previousStatus" -> updatePreviousStatus(task),
+        "status" -> Waiting.name,
+        "statusLastModified" -> event.created.toDate,
+        "sort" -> event.triggerDate.getMillis,
+        "triggerDate" -> event.triggerDate,
+        "searchableTriggerDay" -> triggerDaySearchField(event.triggerDate),
+        "rescheduleType" -> event.rescheduleType,
+        "assignee" -> event.assignee.map(_.username),
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate),
+        "score" -> score
+      )
+    }
+  }
+
+  private def handleTaskClosedEvent(event: TaskClosed) = {
+    handleTaskUpdate(event) {task =>
+      Map(
+        "previousStatus" -> updatePreviousStatus(task),
+        "status" -> Closed.name,
+        "statusLastModified" -> event.created.toDate,
+        "sort" -> event.created.getMillis,
+        "conclusionType" -> event.conclusionType,
+        "assignee" -> event.assignee.map(_.username),
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate)
+      )
+    }
+  }
+
+  private def handleUnassignedEvent(event: TaskUnassigned) = {
+    handleTaskUpdate(event) {task =>
+      Map(
+        "assignee" -> None,
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate)
+      )
     }
   }
 
   private def handleUpdatePayloadEvent(event: TaskPayloadUpdated) = {
-    val query = updateByIdVersion(event)
-
-    tasksCollection.findOne(query) match {
-      case Some(task) => {
-        val status = Status.from(task.as[String]("status")).get
-        val existingScore = task.as[Long]("score")
-        val existingSort = task.as[Long]("sort")
-        val payload = objectSerializer.deserialize[Payload](JSON.serialize(task.as[String]("payload")))
-
-        val update = $set(
-          "version" -> event.aggregateVersion.number,
-          "payload" -> event.payloadUpdate.exec(payload.content),
-          "score" -> event.score.getOrElse(existingScore),
-          "sort" -> resolveSortOrder(event, status, existingScore).getOrElse(existingSort)
-        )
-        tasksCollection.update(query, update)
-      }
-      case None =>
+    handleTaskUpdate(event) {task =>
+      val status = Status.from(task.as[String]("status")).get
+      val existingScore = task.as[Long]("score")
+      val existingSort = task.as[Long]("sort")
+      Map(
+        "payload" -> patchPayloadIfExists(task, Some(event.payloadUpdate)),
+        "score" -> event.score.getOrElse(existingScore),
+        "sort" -> resolveSortOrder(event, status, existingScore).getOrElse(existingSort)
+      )
     }
   }
 
@@ -139,39 +188,36 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     tasksCollection.remove(query)
   }
 
-  private def resolveAssignee(event: Event, previousAssignee: Option[String]) = {
-    event match {
-      case e: TaskStarted => e.assignee.map(_.username)
-      case e: TaskRescheduled => e.assignee.map(_.username)
-      case e: TaskClosed => e.concluder.map(_.username)
-      case _ => previousAssignee
+  private def handleTaskUpdate(event: Event)(updatedFields: MongoDBObject => Map[String, Any]) = {
+    val query = updateByIdVersion(event)
+
+    tasksCollection.findOne(query) match {
+      case Some(task) => {
+        val defaults = Map("version" -> event.aggregateVersion.number, "rescheduleType" -> None, "conclusionType" -> None)
+        val updated = updatedFields(task)
+        val update = $set((defaults ++ updated).toSeq: _*)
+        tasksCollection.update(query, update)
+      }
+      case None =>
     }
   }
 
-  private def resolveFieldValue[E <: Event : ClassTag, F](event: Event, default: F, fieldValue: E => F) = {
-    event match {
-      case e if classTag[E].runtimeClass.isInstance(e) => fieldValue(e.asInstanceOf[E])
-      case _ => default
-    }
+  private def updatePreviousStatus(existingTaskRecord: MongoDBObject) = {
+    Map("status" -> existingTaskRecord.as[String]("status"), "statusLastModified" -> existingTaskRecord.as[DateTime]("statusLastModified"))
   }
 
-  private def resolveTriggerDaySearchField(event: Event, previousTriggerDay: Option[String]) = {
-    def toDaySearchString(triggerDateTime: DateTime) = dateFormatter.print(triggerDateTime)
-
-    event match {
-      case e: TaskCreatedEvent => toDaySearchString(e.triggerDate)
-      case e: TaskRescheduled => toDaySearchString(e.triggerDate)
-      case _ => previousTriggerDay
-    }
+  private def patchPayloadIfExists(existingTaskRecord: MongoDBObject, payloadUpdate: Option[Patch]) = {
+    val payload = objectSerializer.deserialize[Payload](JSON.serialize(existingTaskRecord.as[String]("payload")))
+    payloadUpdate.map(_.exec(payload.content)).getOrElse(payload.content)
   }
+
+  private def triggerDaySearchField(triggerDate: DateTime) = dateFormatter.print(triggerDate)
+
 
   private def resolveSortOrder(event: Event, status: Status, existingScore: Long) = {
     event match {
       case e: TaskCreated => Some(e.score)
       case e: FutureTaskCreated => Some(e.triggerDate.getMillis)
-      case e: TaskTriggered => Some(existingScore)
-      case e: TaskRequeued => Some(existingScore)
-      case e: TaskRescheduled => Some(e.triggerDate.getMillis)
       case e: TaskPayloadUpdated if status == Ready => Some(e.score getOrElse existingScore)
       case e: TaskPayloadUpdated => None
       case _ => Some(event.created.getMillis)

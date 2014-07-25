@@ -5,7 +5,7 @@ import com.qmetric.penfold.domain.store.DomainRepository
 
 case class TriggerTaskHandler(eventStore: DomainRepository) extends CommandHandler[TriggerTask] {
   override def handle(command: TriggerTask) = {
-    val readyTask = eventStore.getById[Task](command.id).trigger
+    val readyTask = eventStore.getById[Task](command.id).trigger(command.version)
     eventStore.add(readyTask)
     readyTask.aggregateId
   }

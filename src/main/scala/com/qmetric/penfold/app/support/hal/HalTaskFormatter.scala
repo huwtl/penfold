@@ -18,17 +18,15 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
   private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
   def halRepresentationFrom(task: TaskRecord) = {
-    val queueIdParam = task.queueBinding.id.value
-
-    val representation: Representation = representationFactory.newRepresentation(s"${baseTaskLink.toString}/${task.id.value}")
+    val representation = representationFactory.newRepresentation(s"${baseTaskLink.toString}/${task.id.value}")
       .withProperty("id", task.id.value)
       .withProperty("version", task.version.number)
       .withProperty("status", task.status.name)
       .withProperty("statusLastModified", dateFormatter.print(task.statusLastModified))
       .withProperty("triggerDate", dateFormatter.print(task.triggerDate))
+      .withProperty("score", task.score)
       .withProperty("payload", JavaMapUtil.deepConvertToJavaMap(task.payload.content))
       .withProperty("queueBinding", JavaMapUtil.deepConvertToJavaMap(bindingToMap(task.queueBinding)))
-      .withLink("queue", s"${baseQueueLink.toString}/$queueIdParam")
 
     if (task.assignee.isDefined) {
       representation.withProperty("assignee", task.assignee.get.username)
@@ -46,25 +44,36 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       representation.withProperty("previousStatus", JavaMapUtil.deepConvertToJavaMap(previousStatusToMap(task.previousStatus.get)))
     }
 
+    addLinks(task, representation)
+
+    representation
+  }
+
+  def addLinks(task : TaskRecord, representation: Representation) = {
+    val queueIdParam = task.queueBinding.id.value
+
+    val taskUpdateUrl = s"${baseTaskLink.toString}/${task.id.value}/${task.version.number}"
+
+    representation.withLink("queue", s"${baseQueueLink.toString}/$queueIdParam/${task.status.name}")
+
     if (task.status != Closed) {
-      representation.withLink("updatePayload", s"${baseTaskLink.toString}/${task.id.value}/${task.version.number}/payload")
+      representation.withLink("UpdateTaskPayload", taskUpdateUrl)
+      representation.withLink("CloseTask", taskUpdateUrl)
     }
 
-    representation.withLink("reschedule", s"${baseQueueLink.toString}/$queueIdParam/${Waiting.name}")
+    representation.withLink("RescheduleTask", taskUpdateUrl)
 
     if (task.status != Waiting & task.status != Ready) {
-      representation.withLink("requeue", s"${baseQueueLink.toString}/$queueIdParam/${Ready.name}")
+      representation.withLink("RequeueTask", taskUpdateUrl)
+    }
+
+    if (task.assignee.isDefined && (task.status == Waiting || task.status == Ready)) {
+      representation.withLink("UnassignTask", taskUpdateUrl)
     }
 
     if (task.status == Ready) {
-      representation.withLink("start", s"${baseQueueLink.toString}/$queueIdParam/${Started.name}")
+      representation.withLink("StartTask", taskUpdateUrl)
     }
-
-    if (task.status != Closed) {
-      representation.withLink("close", s"${baseQueueLink.toString}/$queueIdParam/${Closed.name}")
-    }
-
-    representation
   }
 
   def halFrom(task: TaskRecord) = {

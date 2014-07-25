@@ -1,3 +1,3 @@
 package com.qmetric.penfold.domain.model
 
-case class Assignee(username: String)
+case class User(username: String)

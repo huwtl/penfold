@@ -1,9 +1,0 @@
-{
-    "payloadUpdate": {
-        "operations": [
-            {"op": "Add", "path": "/a/b", "value": "1"}
-        ]
-    },
-    "updateType": "update_type_1",
-    "score": 100
-}

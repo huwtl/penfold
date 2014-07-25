@@ -1,0 +1,10 @@
+{
+    "queueBinding": {"id": "abc"},
+    "payload" : {
+        "data" : "value",
+        "inner" : {
+            "bool" : true
+        }
+    },
+    "score" : 1393336800000
+}
