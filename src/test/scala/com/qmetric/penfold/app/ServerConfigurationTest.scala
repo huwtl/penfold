@@ -48,8 +48,8 @@ class ServerConfigurationTest extends Specification {
       pageSize = 25,
       eventSync = FiniteDuration(2L, MINUTES),
       triggeredCheckFrequency = FiniteDuration(1L, MINUTES),
-      taskArchiver = Some(TaskArchiverConfiguration("payload.timeout", FiniteDuration(1L, MINUTES))),
-      readyTaskAssignmentTimeout = Some(TaskAssignmentTimeoutConfiguration("payload.assignmentTimeout", FiniteDuration(2L, MINUTES)))
+      taskArchiver = Some(TaskArchiverConfiguration("archiveTimeout", FiniteDuration(1L, MINUTES))),
+      readyTaskAssignmentTimeout = Some(TaskAssignmentTimeoutConfiguration("assignmentTimeout", FiniteDuration(2L, MINUTES)))
     )
 
     val config = loadConfig("full")

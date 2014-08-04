@@ -12,7 +12,7 @@ import com.qmetric.penfold.readstore.{EventNotifiers, EventNotifier, NewEventsPr
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import com.qmetric.penfold.app.support.{DateTimeSource, UUIDFactory}
-import com.qmetric.penfold.app.schedule.{EventSyncScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
+import com.qmetric.penfold.app.schedule.{ReadyTaskAssignmentTimeoutScheduler, EventSyncScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
 import com.codahale.metrics.health.HealthCheckRegistry
 import com.qmetric.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
 import com.qmetric.penfold.app.readstore.mongodb._
@@ -72,6 +72,10 @@ class Bootstrap extends LifeCycle {
     new EventSyncScheduler(eventNotifiers, config.eventSync).start()
 
     new TaskTriggerScheduler(readStore, commandDispatcher, config.triggeredCheckFrequency).start()
+
+    if (config.readyTaskAssignmentTimeout.isDefined) {
+      new ReadyTaskAssignmentTimeoutScheduler(readStore, commandDispatcher, config.readyTaskAssignmentTimeout.get).start()
+    }
 
     if (config.taskArchiver.isDefined) {
       new TaskArchiveScheduler(readStore, commandDispatcher, config.taskArchiver.get).start()

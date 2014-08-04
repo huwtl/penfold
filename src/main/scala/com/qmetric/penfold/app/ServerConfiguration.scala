@@ -27,11 +27,11 @@ case class MongoDatabaseServers(databaseName: String, servers: List[MongoDatabas
 
 case class MongoDatabaseServer(host: String, port: Int)
 
-case class TaskArchiverConfiguration(timeoutAttributePath: String,
+case class TaskArchiverConfiguration(timeoutPayloadPath: String,
                                      checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
 
-case class TaskAssignmentTimeoutConfiguration(timeoutAttributePath: String,
-                                                       checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
+case class TaskAssignmentTimeoutConfiguration(timeoutPayloadPath: String,
+                                              checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
 
 case class SortOrderingConfiguration(private val waiting: String = "Asc",
                                      private val ready: String = "Asc",

@@ -9,7 +9,11 @@ class IndexWriter {
     indexes.all.foreach(index => createReadStoreIndex(readStoreDatabase, index.name, index.fields.map(_.path)))
 
     if (config.taskArchiver.isDefined) {
-      createReadStoreIndex(readStoreDatabase, config.taskArchiver.get.timeoutAttributePath)
+      createReadStoreIndex(readStoreDatabase, s"payload.${config.taskArchiver.get.timeoutPayloadPath}")
+    }
+
+    if (config.readyTaskAssignmentTimeout.isDefined) {
+      createReadStoreIndex(readStoreDatabase, None, List("status", s"payload.${config.readyTaskAssignmentTimeout.get.timeoutPayloadPath}"))
     }
   }
 

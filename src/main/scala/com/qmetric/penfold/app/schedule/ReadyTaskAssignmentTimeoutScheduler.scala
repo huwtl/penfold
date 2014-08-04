@@ -14,14 +14,14 @@ class ReadyTaskAssignmentTimeoutScheduler(readStore: ReadStore, commandDispatche
 
   private val unassignType = "TIMEOUT"
 
-  private val removeTimeoutPatch = Patch(List(Remove(config.timeoutAttributePath)))
+  private val removeTimeoutPatch = Patch(List(Remove(config.timeoutPayloadPath)))
 
   override val name = "ready task assignment timeout"
 
   override val frequency = config.checkFrequency
 
   override def process() {
-    readStore.retrieveTasksToTimeout(config.timeoutAttributePath, Some(Ready)).foreach(unassignTask)
+    readStore.retrieveTasksToTimeout(absolutePayloadPath(config.timeoutPayloadPath), Some(Ready)).foreach(unassignTask)
   }
 
   private def unassignTask(task: TaskRecordReference) {

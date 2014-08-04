@@ -15,7 +15,7 @@ class TaskArchiveScheduler(readStore: ReadStore, commandDispatcher: CommandDispa
   override val frequency = archiverConfig.checkFrequency
 
   override def process() {
-    readStore.retrieveTasksToTimeout(archiverConfig.timeoutAttributePath).foreach(archiveTask)
+    readStore.retrieveTasksToTimeout(absolutePayloadPath(archiverConfig.timeoutPayloadPath)).foreach(archiveTask)
   }
 
   private def archiveTask(task: TaskRecordReference) {

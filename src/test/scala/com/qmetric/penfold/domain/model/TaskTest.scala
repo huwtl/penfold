@@ -45,9 +45,9 @@ class TaskTest extends Specification {
     }
 
     "ensure only waiting tasks can be triggered" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).trigger(TestModel.version) must throwA[IllegalStateException]
-      Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).trigger(TestModel.version).trigger(TestModel.version.next) must throwA[IllegalStateException]
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, None, None).trigger(TestModel.version.next) must throwA[IllegalStateException]
+      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).trigger(TestModel.version) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).trigger(TestModel.version).trigger(TestModel.version.next) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, None, None).trigger(TestModel.version.next) must throwA[AggregateConflictException]
     }
   }
 
@@ -58,8 +58,8 @@ class TaskTest extends Specification {
     }
 
     "ensure only ready tasks can be started" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).start(TestModel.version, None, None) must throwA[IllegalStateException]
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, None, None).start(TestModel.version.next, None, None) must throwA[IllegalStateException]
+      Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).start(TestModel.version, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, None, None).start(TestModel.version.next, None, None) must throwA[AggregateConflictException]
     }
   }
 
@@ -70,7 +70,7 @@ class TaskTest extends Specification {
     }
 
     "ensure archived tasks cannot be closed" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).close(TestModel.version.next, None, None, None, None) must throwA[IllegalStateException]
+      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).close(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
@@ -81,9 +81,9 @@ class TaskTest extends Specification {
     }
 
     "ensure waiting, ready, archived tasks cannot be requeued" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue(TestModel.version, None, None, None, None) must throwA[IllegalStateException]
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue(TestModel.version, None, None, None, None) must throwA[IllegalStateException]
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).requeue(TestModel.version.next, None, None, None, None) must throwA[IllegalStateException]
+      Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue(TestModel.version, None, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue(TestModel.version, None, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).requeue(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
@@ -94,7 +94,7 @@ class TaskTest extends Specification {
     }
 
     "ensure archived tasks cannot be rescheduled" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).reschedule(TestModel.version.next, DateTime.now().plusHours(1), None, None, None, None) must throwA[IllegalStateException]
+      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).reschedule(TestModel.version.next, DateTime.now().plusHours(1), None, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
@@ -115,11 +115,11 @@ class TaskTest extends Specification {
     "ensure closed, archived tasks cannot accept updated payload" in {
       readyTask
         .close(TestModel.version, None, None, None, None)
-        .updatePayload(TestModel.version.next, Patch(Nil), None, None) must throwA[IllegalStateException]
+        .updatePayload(TestModel.version.next, Patch(Nil), None, None) must throwA[AggregateConflictException]
 
       readyTask
         .archive(TestModel.version)
-        .updatePayload(TestModel.version.next, Patch(Nil), None, None) must throwA[IllegalStateException]
+        .updatePayload(TestModel.version.next, Patch(Nil), None, None) must throwA[AggregateConflictException]
     }
   }
 
@@ -130,7 +130,7 @@ class TaskTest extends Specification {
     }
 
     "ensure cannot archive an already archived task" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).archive(TestModel.version.next) must throwA[IllegalStateException]
+      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).archive(TestModel.version.next) must throwA[AggregateConflictException]
     }
   }
 
@@ -155,9 +155,16 @@ class TaskTest extends Specification {
 
     "only ready and waiting tasks can be unassigned" in {
       val task = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
-      task.archive(TestModel.version).unassign(TestModel.version.next, None, None) must throwA[IllegalStateException]
-      task.start(TestModel.version, None, None).unassign(TestModel.version.next, None, None) must throwA[IllegalStateException]
-      task.close(TestModel.version, None, None, None, None).unassign(TestModel.version.next, None, None) must throwA[IllegalStateException]
+      task.archive(TestModel.version).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
+      task.start(TestModel.version, None, None).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
+      task.close(TestModel.version, None, None, None, None).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
+    }
+
+    "only assigned tasks can be unassigned" in {
+      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
+        .start(TestModel.version, None, None)
+        .reschedule(TestModel.version.next, TestModel.triggerDate, None, None, None, None)
+        .unassign(TestModel.version.next.next, None, None) must throwA[AggregateConflictException]
     }
   }
 

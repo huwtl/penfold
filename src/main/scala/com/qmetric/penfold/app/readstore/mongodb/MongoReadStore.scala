@@ -48,7 +48,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, objectSerializer: Obje
   override def retrieveTasksToTimeout(timeoutAttributePath: String, status: Option[Status] = None): Iterator[TaskRecordReference] = {
     val currentTime = dateTimeSource.now
 
-    val query = status.map(status => MongoDBObject("status" -> status)).getOrElse(MongoDBObject.empty) ++ (timeoutAttributePath $lte currentTime.getMillis)
+    val query = status.map(status => MongoDBObject("status" -> status.name)).getOrElse(MongoDBObject.empty) ++ (timeoutAttributePath $lte currentTime.getMillis)
 
     tasksCollection.find(query).map((doc: casbah.Imports.DBObject) => TaskRecordReference(idFrom(doc), versionFrom(doc)))
   }

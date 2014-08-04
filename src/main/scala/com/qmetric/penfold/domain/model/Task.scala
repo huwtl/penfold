@@ -59,49 +59,50 @@ case class Task(uncommittedEvents: List[Event],
 
   def trigger(expectedVersion: AggregateVersion): Task = {
     checkVersion(expectedVersion)
-    checkState(status == Waiting, s"Can only trigger a waiting task but was $status")
+    checkConflict(status == Waiting, s"Can only trigger a waiting task ($aggregateId), but was $status")
     applyTaskTriggered(TaskTriggered(aggregateId, version.next, now))
   }
 
   def updatePayload(expectedVersion: AggregateVersion, payloadUpdate: Patch, updateType: Option[String], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
-    checkState(status != Closed && status != Archived, s"Cannot update payload for closed/archived task but was $status")
+    checkConflict(status != Closed && status != Archived, s"Cannot update payload for a closed/archived task ($aggregateId), but was $status")
     applyTaskPayloadUpdated(TaskPayloadUpdated(aggregateId, version.next, now, payloadUpdate, updateType, score))
   }
 
   def start(expectedVersion: AggregateVersion, assignee: Option[User], payloadUpdate: Option[Patch]): Task = {
     checkVersion(expectedVersion)
-    checkState(status == Ready, s"Can only start a task that is ready but was $status")
+    checkConflict(status == Ready, s"Can only start a task ($aggregateId) that is ready, but was $status")
     applyTaskStarted(TaskStarted(aggregateId, version.next, now, assignee, payloadUpdate))
   }
 
   def close(expectedVersion: AggregateVersion, user: Option[User], completionType: Option[String], assignee: Option[User], payloadUpdate: Option[Patch]): Task = {
     checkVersion(expectedVersion)
-    checkState(status != Closed && status != Archived, s"Cannot close an archived or already closed task, but was $status")
+    checkConflict(status != Closed && status != Archived, s"Cannot close an archived or already closed task ($aggregateId), but was $status")
     applyTaskClosed(TaskClosed(aggregateId, version.next, now, user, completionType, assignee, payloadUpdate))
   }
 
   def requeue(expectedVersion: AggregateVersion, requeueType: Option[String], assignee: Option[User], payloadUpdate: Option[Patch], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
-    checkState(status == Started || status == Closed, s"Can only requeue a started or closed task, but was $status")
+    checkConflict(status == Started || status == Closed, s"Can only requeue a started or closed task ($aggregateId), but was $status")
     applyTaskRequeued(TaskRequeued(aggregateId, version.next, now, requeueType, assignee, payloadUpdate, score))
   }
 
   def reschedule(expectedVersion: AggregateVersion, triggerDate: DateTime, assignee: Option[User], rescheduleType: Option[String], payloadUpdate: Option[Patch], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
-    checkState(status != Archived, "Cannot reschedule an archived task")
+    checkConflict(status != Archived, s"Cannot reschedule an archived task ($aggregateId)")
     applyTaskRescheduled(TaskRescheduled(aggregateId, version.next, now, triggerDate, assignee, rescheduleType, payloadUpdate, score))
   }
 
   def unassign(expectedVersion: AggregateVersion, unassignType: Option[String], payloadUpdate: Option[Patch]): Task = {
     checkVersion(expectedVersion)
-    checkState(status == Waiting || status == Ready, s"Can only unassign waiting or ready task, but was $status")
+    checkConflict(status == Waiting || status == Ready, s"Can only unassign a waiting or ready task ($aggregateId), but was $status")
+    checkConflict(assignee.isDefined, s"Cannot unassign a task ($aggregateId) that is already unassigned")
     applyTaskUnassigned(TaskUnassigned(aggregateId, version.next, now, unassignType, payloadUpdate))
   }
 
   def archive(expectedVersion: AggregateVersion): Task = {
     checkVersion(expectedVersion)
-    checkState(status != Archived, s"Cannot archive task when already archived")
+    checkConflict(status != Archived, s"Cannot archive a task ($aggregateId) when already archived")
     applyTaskArchived(TaskArchived(aggregateId, version.next, now))
   }
 

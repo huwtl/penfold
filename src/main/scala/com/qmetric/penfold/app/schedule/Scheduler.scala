@@ -34,4 +34,6 @@ trait Scheduler {
   def shutdown() = {
     executorService.shutdown()
   }
+
+  protected def absolutePayloadPath(relativePayloadPath: String) = s"payload.$relativePayloadPath"
 }

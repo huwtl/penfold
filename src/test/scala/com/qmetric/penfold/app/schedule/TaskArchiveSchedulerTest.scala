@@ -12,8 +12,8 @@ class TaskArchiveSchedulerTest extends Specification with Mockito {
   "periodically archive old tasks" in {
     val readStore = mock[ReadStore]
     val commandDispatcher = mock[CommandDispatcher]
-    val archiverConfig = TaskArchiverConfiguration("payload.timeout")
-    readStore.retrieveTasksToTimeout(archiverConfig.timeoutAttributePath) returns List(TaskRecordReference(TestModel.aggregateId, TestModel.version)).toIterator
+    val archiverConfig = TaskArchiverConfiguration("timeout")
+    readStore.retrieveTasksToTimeout("payload.timeout") returns List(TaskRecordReference(TestModel.aggregateId, TestModel.version)).toIterator
 
     new TaskArchiveScheduler(readStore, commandDispatcher, archiverConfig).process()
 

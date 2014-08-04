@@ -15,11 +15,11 @@ class ReadyTaskAssignmentTimeoutSchedulerTest extends Specification with Mockito
   "periodically timeout assigned ready tasks" in {
     val readStore = mock[ReadStore]
     val commandDispatcher = mock[CommandDispatcher]
-    val config = TaskAssignmentTimeoutConfiguration("payload.assignmentTimeout")
-    readStore.retrieveTasksToTimeout(config.timeoutAttributePath, Some(Ready)) returns List(TaskRecordReference(TestModel.aggregateId, AggregateVersion.init)).toIterator
+    val config = TaskAssignmentTimeoutConfiguration("assignmentTimeout")
+    readStore.retrieveTasksToTimeout("payload.assignmentTimeout", Some(Ready)) returns List(TaskRecordReference(TestModel.aggregateId, AggregateVersion.init)).toIterator
 
     new ReadyTaskAssignmentTimeoutScheduler(readStore, commandDispatcher, config).process()
 
-    there was one(commandDispatcher).dispatch(UnassignTask(TestModel.aggregateId, AggregateVersion.init, Some("TIMEOUT"), Some(Patch(List(Remove(config.timeoutAttributePath))))))
+    there was one(commandDispatcher).dispatch(UnassignTask(TestModel.aggregateId, AggregateVersion.init, Some("TIMEOUT"), Some(Patch(List(Remove(config.timeoutPayloadPath))))))
   }
 }
