@@ -7,6 +7,7 @@
             "_links": {
                 "self": {"href": "http://host/tasks/1"},
                 "CloseTask": {"href": "http://host/tasks/1/1"},
+                "RequeueTask": {"href": "http://host/tasks/1/1"},
                 "RescheduleTask": {"href": "http://host/tasks/1/1"},
                 "UpdateTaskPayload": {"href": "http://host/tasks/1/1"},
                 "queue": {"href": "http://host/queues/abc/waiting"}

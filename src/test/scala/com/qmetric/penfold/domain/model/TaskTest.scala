@@ -80,8 +80,12 @@ class TaskTest extends Specification {
       typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[TaskStarted], classOf[TaskCreated]))
     }
 
-    "ensure waiting, ready, archived tasks cannot be requeued" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue(TestModel.version, None, None, None, None) must throwA[AggregateConflictException]
+    "requeue waiting task" in {
+      val requeuedTask = Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue(TestModel.version, None, None, None, None)
+      typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[FutureTaskCreated]))
+    }
+
+    "ensure ready, archived tasks cannot be requeued" in {
       Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue(TestModel.version, None, None, None, None) must throwA[AggregateConflictException]
       Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).requeue(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
     }

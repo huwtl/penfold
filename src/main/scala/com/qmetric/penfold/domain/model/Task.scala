@@ -83,7 +83,7 @@ case class Task(uncommittedEvents: List[Event],
 
   def requeue(expectedVersion: AggregateVersion, requeueType: Option[String], assignee: Option[User], payloadUpdate: Option[Patch], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
-    checkConflict(status == Started || status == Closed, s"Can only requeue a started or closed task ($aggregateId), but was $status")
+    checkConflict(status != Ready && status != Archived, s"Cannot requeue a ready or archived task ($aggregateId), but was $status")
     applyTaskRequeued(TaskRequeued(aggregateId, version.next, now, requeueType, assignee, payloadUpdate, score))
   }
 
