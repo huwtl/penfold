@@ -35,6 +35,12 @@ class TaskResource(readStore: ReadStore,
     Ok(halFormatter.halFrom(page, readStore.retrieveBy(filters, page), filters))
   }
 
+  get("/expired/:timeoutId") {
+    val filters = parseFilters(multiParams)
+    val page = parsePageRequestParams(params, pageSize)
+    Ok(halFormatter.halFrom(page, readStore.retrieveBy(filters, page), filters))
+  }
+
   post("/") {
     val command = commandParser.parse(commandTypeFromRequest, request.body)
     val aggregateId = commandDispatcher.dispatch(command)

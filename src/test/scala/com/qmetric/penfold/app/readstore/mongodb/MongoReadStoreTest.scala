@@ -41,7 +41,8 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
 
     val database = getDatabase
     val readStoreUpdater = new MongoReadStoreUpdater(database, new MongoEventTracker("tracker", database), new ObjectSerializer)
-    val readStore = new MongoReadStore(database, indexes, new ObjectSerializer, dateTimeSource)
+    val taskMapper = new MongoTaskMapper(new ObjectSerializer)
+    val readStore = new MongoReadStore(database, indexes, taskMapper, new PaginatedQueryService(database, taskMapper), dateTimeSource)
 
     def clearDownExistingDatabase() = getDatabase.dropDatabase()
 

@@ -41,7 +41,8 @@ class MongoReadStoreUpdaterTest extends Specification with EmbedConnection {
 
     val mongoClient = MongoClient("localhost", embedConnectionPort())
     val database = mongoClient("penfoldtest")
-    val readStore = new MongoReadStore(database, Indexes(Nil), new ObjectSerializer, new DateTimeSource)
+    val taskMapper = new MongoTaskMapper(new ObjectSerializer)
+    val readStore = new MongoReadStore(database, Indexes(Nil), taskMapper, new PaginatedQueryService(database, taskMapper), new DateTimeSource)
     val readStoreUpdater = new MongoReadStoreUpdater(database, new MongoEventTracker("tracking", database), new ObjectSerializer)
 
     def handleEvents(events: Event*) = {

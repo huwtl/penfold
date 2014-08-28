@@ -48,7 +48,9 @@ class Bootstrap extends LifeCycle {
 
     val commandDispatcher = new CommandDispatcherFactory(domainRepository, aggregateIdFactory).create
 
-    val readStore = new MongoReadStore(readStoreDatabase, indexes, objectSerializer, new DateTimeSource)
+    val mongoTaskParser = new MongoTaskMapper(objectSerializer)
+
+    val readStore = new MongoReadStore(readStoreDatabase, indexes, mongoTaskParser, new PaginatedQueryService(readStoreDatabase, mongoTaskParser), new DateTimeSource)
 
     val baseUrl = URI.create(config.publicUrl)
 
