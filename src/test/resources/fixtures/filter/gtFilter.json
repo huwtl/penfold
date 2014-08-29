@@ -1,6 +1,6 @@
 {
-  "op": "GreaterThan",
+  "op": "GT",
   "key": "name",
   "value": "100",
-  "dataType": "numeric"
+  "dataType": "NUMERIC"
 }

@@ -16,7 +16,7 @@ import com.qmetric.penfold.domain.model.Status.Ready
 
 class HalTaskFormatterTest extends Specification {
 
-  val filters = Filters(List(Equals("data", "a value")))
+  val filters = Filters(List(EQ("data", "a value")))
 
   val pageRequest = PageRequest(10, Some(PageReference("1~1393336800000~1")))
 
@@ -45,7 +45,7 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format filtered tasks hal+json with encoded filter value" in {
-    val filters = Filters(List(Equals("data", "zzz%^&*ee$")))
+    val filters = Filters(List(EQ("data", "zzz%^&*ee$")))
     halTasks(filters) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredTasksWithEncodedFilterValue.json"))
   }
 

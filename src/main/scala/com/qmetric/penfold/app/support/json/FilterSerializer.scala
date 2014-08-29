@@ -4,17 +4,16 @@ import org.json4s._
 import org.json4s.Extraction._
 import org.json4s.jackson.JsonMethods._
 import com.qmetric.penfold.readstore._
-import com.qmetric.penfold.readstore.LessThan
-import com.qmetric.penfold.readstore.In
-import com.qmetric.penfold.readstore.GreaterThan
-import com.qmetric.penfold.readstore.Equals
+import com.qmetric.penfold.readstore.LT
+import com.qmetric.penfold.readstore.IN
+import com.qmetric.penfold.readstore.GT
+import com.qmetric.penfold.readstore.EQ
 import org.json4s.ShortTypeHints
-import com.qmetric.penfold.domain.event.Event
 
 class FilterSerializer {
   implicit val formats = new Formats {
     val dateFormat = DefaultFormats.lossless.dateFormat
-    override val typeHints = ShortTypeHints(classOf[Equals] :: classOf[LessThan] :: classOf[GreaterThan]:: classOf[In] :: Nil)
+    override val typeHints = ShortTypeHints(classOf[EQ] :: classOf[LT] :: classOf[GT]:: classOf[IN] :: Nil)
     override val typeHintFieldName = "op"
   } +
     new QueryParamTypeJsonSerializer +

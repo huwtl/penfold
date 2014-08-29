@@ -5,24 +5,24 @@ import org.specs2.matcher.DataTables
 import scala.io.Source._
 import com.qmetric.penfold.readstore._
 import org.json4s.jackson.JsonMethods._
-import com.qmetric.penfold.readstore.GreaterThan
-import com.qmetric.penfold.readstore.In
-import com.qmetric.penfold.readstore.Equals
-import com.qmetric.penfold.readstore.LessThan
+import com.qmetric.penfold.readstore.GT
+import com.qmetric.penfold.readstore.IN
+import com.qmetric.penfold.readstore.EQ
+import com.qmetric.penfold.readstore.LT
 
 class ObjectSerializerTest extends Specification with DataTables {
   val serializer = new ObjectSerializer
 
   "deserialise filter" in {
     "jsonPath"                || "expected"                                              |
-      "eqFilter.json"         !! Equals("name", "val", QueryParamType.StringType)        |
-      "eqFilterMinimal.json"  !! Equals("name", null, QueryParamType.StringType)         |
-      "inFilter.json"         !! In("name", Set("val", null), QueryParamType.StringType) |
-      "inFilterMinimal.json"  !! In("name", Set(), QueryParamType.StringType)            |
-      "ltFilter.json"         !! LessThan("name", "100", QueryParamType.NumericType)     |
-      "ltFilterMinimal.json"  !! LessThan("name", null, QueryParamType.NumericType)      |
-      "gtFilter.json"         !! GreaterThan("name", "100", QueryParamType.NumericType)  |
-      "gtFilterMinimal.json"  !! GreaterThan("name", null, QueryParamType.NumericType)   |> {
+      "eqFilter.json"         !! EQ("name", "val", QueryParamType.StringType)            |
+      "eqFilterMinimal.json"  !! EQ("name", null, QueryParamType.StringType)             |
+      "inFilter.json"         !! IN("name", Set("val", null), QueryParamType.StringType) |
+      "inFilterMinimal.json"  !! IN("name", Set(), QueryParamType.StringType)            |
+      "ltFilter.json"         !! LT("name", "100", QueryParamType.NumericType)           |
+      "ltFilterMinimal.json"  !! LT("name", null, QueryParamType.NumericType)            |
+      "gtFilter.json"         !! GT("name", "100", QueryParamType.NumericType)           |
+      "gtFilterMinimal.json"  !! GT("name", null, QueryParamType.NumericType)            |> {
       (jsonPath, expected) =>
         val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/filter/$jsonPath")).mkString
         val actualFilter = serializer.deserialize[Filter](json)
@@ -32,10 +32,10 @@ class ObjectSerializerTest extends Specification with DataTables {
 
   "serialise filter" in {
     "filter"                                                  || "expected"        |
-      Equals("name", "val", QueryParamType.StringType)        !! "eqFilter.json"   |
-      In("name", Set("val", null), QueryParamType.StringType) !! "inFilter.json"   |
-      LessThan("name", "100", QueryParamType.NumericType)     !! "ltFilter.json"   |
-      GreaterThan("name", "100", QueryParamType.NumericType)  !! "gtFilter.json"   |> {
+      EQ("name", "val", QueryParamType.StringType)            !! "eqFilter.json"   |
+      IN("name", Set("val", null), QueryParamType.StringType) !! "inFilter.json"   |
+      LT("name", "100", QueryParamType.NumericType)           !! "ltFilter.json"   |
+      GT("name", "100", QueryParamType.NumericType)           !! "gtFilter.json"   |> {
       (filter, expected) =>
         val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/filter/$expected")).mkString))
         val actualJson = serializer.serialize(filter)

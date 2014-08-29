@@ -1,5 +1,5 @@
 {
-  "op": "In",
+  "op": "IN",
   "key": "name",
   "values": []
 }

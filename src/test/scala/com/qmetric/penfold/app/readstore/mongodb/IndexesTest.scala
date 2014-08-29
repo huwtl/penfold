@@ -1,7 +1,7 @@
 package com.qmetric.penfold.app.readstore.mongodb
 
 import org.specs2.mutable.Specification
-import com.qmetric.penfold.readstore.{Equals, Filters}
+import com.qmetric.penfold.readstore.{EQ, Filters}
 
 class IndexesTest extends Specification {
   val queueField = IndexField("queue", "queue")
@@ -62,9 +62,9 @@ class IndexesTest extends Specification {
     indexes.buildQueryPlan(Filters(List(filter("queue"), filter("status"), filter("f3")))) must beEqualTo(expectedQueryPlan3)
   }
 
-  private def filter(key: String) = Equals(key, null)
+  private def filter(key: String) = EQ(key, null)
 
-  private def restriction(path: String, key: String) = RestrictionField(path, Equals(key, null))
+  private def restriction(path: String, key: String) = RestrictionField(path, EQ(key, null))
 
   private def sortField(path: String) = SortField(path)
 }

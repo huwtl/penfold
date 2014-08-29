@@ -1,6 +1,6 @@
 {
-  "op": "LessThan",
+  "op": "LT",
   "key": "name",
   "value": "100",
-  "dataType": "numeric"
+  "dataType": "NUMERIC"
 }

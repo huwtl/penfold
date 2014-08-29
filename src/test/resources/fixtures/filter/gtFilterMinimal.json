@@ -1,5 +1,5 @@
 {
-  "op": "GreaterThan",
+  "op": "GT",
   "key": "name",
   "value": null
 }

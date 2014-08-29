@@ -1,5 +1,5 @@
 {
-  "op": "Equals",
+  "op": "EQ",
   "key": "name",
   "value": null
 }

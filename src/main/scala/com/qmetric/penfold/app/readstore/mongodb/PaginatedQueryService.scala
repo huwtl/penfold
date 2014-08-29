@@ -43,10 +43,10 @@ class PaginatedQueryService(database: MongoDB, taskMapper: MongoTaskMapper) {
     val criteria = MongoDBObject.empty
     restrictions.foldLeft(criteria)((previousCriteria, restriction) => {
       restriction.filter match {
-        case Equals(key, value, dataType) => previousCriteria ++ MongoDBObject(restriction.path -> value)
-        case In(key, values, dataType) => previousCriteria ++ (restriction.path $in values)
-        case LessThan(key, value, dataType) => previousCriteria ++ (restriction.path $lt Option(value).map(_.toLong).getOrElse(Long.MinValue))
-        case GreaterThan(key, value, dataType) => previousCriteria ++ (restriction.path $gt Option(value).map(_.toLong).getOrElse(Long.MaxValue))
+        case EQ(key, value, dataType) => previousCriteria ++ MongoDBObject(restriction.path -> value)
+        case IN(key, values, dataType) => previousCriteria ++ (restriction.path $in values)
+        case LT(key, value, dataType) => previousCriteria ++ (restriction.path $lt Option(value).map(_.toLong).getOrElse(Long.MinValue))
+        case GT(key, value, dataType) => previousCriteria ++ (restriction.path $gt Option(value).map(_.toLong).getOrElse(Long.MaxValue))
         case _ => throw new IllegalStateException("unsupported filter type")
       }
     })

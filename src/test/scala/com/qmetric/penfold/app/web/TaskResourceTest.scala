@@ -42,10 +42,10 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
   }
 
   "return 200 with hal+json formatted filtered tasks response" in {
-    val filters = Filters(List(Equals("data", "a value")))
+    val filters = Filters(List(EQ("data", "a value")))
     readStore.retrieveBy(filters, PageRequest(pageSize)) returns PageResult(List(expectedTask), None, None)
 
-    get("""/tasks?q=%5B%7B%22op%22%3A%22Equals%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%20%7D%5D""", headers = validAuthHeader) {
+    get("""/tasks?q=%5B%7B%22op%22%3A%22EQ%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%20%7D%5D""", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredTasks.json"))
     }

@@ -49,7 +49,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, taskMapper: MongoTaskM
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, sortOrder: SortOrder, filters: Filters) = {
-    val filtersWithQueueStatus = new Filters(Equals("queue", queueId.value) :: Equals("status", status.name) :: filters.all)
+    val filtersWithQueueStatus = new Filters(EQ("queue", queueId.value) :: EQ("status", status.name) :: filters.all)
     retrieveByPage(filtersWithQueueStatus, pageRequest, sortOrder)
   }
 

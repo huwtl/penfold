@@ -1,6 +1,6 @@
 {
     "_links": {
-        "self": {"href": "http://host/tasks?q=%5B%7B%22op%22%3A%22Equals%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22zzz%25%5E%26*ee$%22%2C%22dataType%22%3A%22string%22%7D%5D"}
+        "self": {"href": "http://host/tasks?q=%5B%7B%22op%22%3A%22EQ%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22zzz%25%5E%26*ee$%22%2C%22dataType%22%3A%22STRING%22%7D%5D"}
     },
     "_embedded": {
         "tasks": {

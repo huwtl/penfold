@@ -120,41 +120,41 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      readStore.retrieveBy(Filters(List(Equals("a", "123"), Equals("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(Equals("a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(Equals("payload.a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(Equals("unknown", null))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(Equals("unknown", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      readStore.retrieveBy(Filters(List(Equals("a", "mismatch"), Equals("b", "1"))), pageRequest).entries.map(_.id.value) must beEmpty
-      readStore.retrieveBy(Filters(List(Equals("a", "123"), Equals("b", "mismatch"))), pageRequest).entries.map(_.id.value) must beEmpty
+      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("payload.a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("unknown", null))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("unknown", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(EQ("a", "mismatch"), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEmpty
+      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("b", "mismatch"))), pageRequest).entries.map(_.id.value) must beEmpty
     }
 
     "filter tasks with less than comparison" in new context {
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      readStore.retrieveBy(Filters(List(LessThan("c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(LessThan("c", "100", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(LessThan("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
-      readStore.retrieveBy(Filters(List(LessThan("c", "2", NumericType), Equals("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
-      readStore.retrieveBy(Filters(List(LessThan("c", "2", NumericType), Equals("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      readStore.retrieveBy(Filters(List(LessThan("c", "1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      readStore.retrieveBy(Filters(List(LessThan("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      readStore.retrieveBy(Filters(List(LessThan("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(LT("c", "100", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", "1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
     }
 
     "filter tasks with greater than comparison" in new context {
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      readStore.retrieveBy(Filters(List(GreaterThan("c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("c", "b"))
-      readStore.retrieveBy(Filters(List(GreaterThan("c", "0", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(GreaterThan("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(GreaterThan("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("d", "c"))
-      readStore.retrieveBy(Filters(List(GreaterThan("c", "5", NumericType), Equals("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("a"))
-      readStore.retrieveBy(Filters(List(GreaterThan("c", "5", NumericType), Equals("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      readStore.retrieveBy(Filters(List(GreaterThan("c", "6", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      readStore.retrieveBy(Filters(List(GreaterThan("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(GT("c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("c", "b"))
+      readStore.retrieveBy(Filters(List(GT("c", "0", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(GT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(GT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("d", "c"))
+      readStore.retrieveBy(Filters(List(GT("c", "5", NumericType), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("a"))
+      readStore.retrieveBy(Filters(List(GT("c", "5", NumericType), EQ("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(GT("c", "6", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(GT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
     }
 
     "apply or operator for multi value filters" in new context {
@@ -166,12 +166,12 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       persist(List(event1, event2, event3, event4, event5))
 
       "page"            | "filter"                   | "expected"          |
-        PageRequest(5)  ! In("a", Set("ABC", "DEF")) ! List("3", "2", "1") |
-        PageRequest(5)  ! In("a", Set("DEF"))        ! List("3")           |
-        PageRequest(5)  ! In("a", Set("DEF", null))  ! List("5", "3")      |
-        PageRequest(5)  ! In("a", Set(null))         ! List("5")           |
-        PageRequest(5)  ! In("a", Set(""))           ! List("4")           |
-        PageRequest(5)  ! In("a", Set("ABC"))        ! List("2", "1")      |> {(page, filter, expected) =>
+        PageRequest(5)  ! IN("a", Set("ABC", "DEF")) ! List("3", "2", "1") |
+        PageRequest(5)  ! IN("a", Set("DEF"))        ! List("3")           |
+        PageRequest(5)  ! IN("a", Set("DEF", null))  ! List("5", "3")      |
+        PageRequest(5)  ! IN("a", Set(null))         ! List("5")           |
+        PageRequest(5)  ! IN("a", Set(""))           ! List("4")           |
+        PageRequest(5)  ! IN("a", Set("ABC"))        ! List("2", "1")      |> {(page, filter, expected) =>
 
         val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(filter)))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
@@ -272,7 +272,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
         PageRequest(2)  ! List("2", "1")   ! false     ! false     |
         PageRequest(1)  ! List("2")        ! false     ! true      |> {(page, expected, hasPrev, hasNext) =>
 
-        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(Equals("a", "ABC"))))
+        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(EQ("a", "ABC"))))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
         pageResult.previousExists must beEqualTo(hasPrev)
         pageResult.nextExists must beEqualTo(hasNext)
@@ -280,5 +280,5 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     }
   }
 
-  private def filter(key: String) = Equals(key, null)
+  private def filter(key: String) = EQ(key, null)
 }

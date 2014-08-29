@@ -50,20 +50,20 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
   }
 
   "return 200 with hal+json formatted filtered queue response" in {
-    val filters = Filters(List(Equals("data", "a value")))
+    val filters = Filters(List(EQ("data", "a value")))
     readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize), SortOrder.Desc, filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
 
-    get("/queues/abc/ready?q=%5B%7B%22op%22%3A%22Equals%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%2C%22dataType%22%3A%22string%22%7D%5D", headers = validAuthHeader) {
+    get("/queues/abc/ready?q=%5B%7B%22op%22%3A%22EQ%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%2C%22dataType%22%3A%22STRING%22%7D%5D", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueue.json"))
     }
   }
 
   "return 200 with hal+json formatted filtered queue response with multparams" in {
-    val filters = Filters(List(In("data", Set("value1", "value2", null))))
+    val filters = Filters(List(IN("data", Set("value1", "value2", null))))
     readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize), SortOrder.Desc, filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
 
-    get("/queues/abc/ready?q=%5B%7B%22op%22%3A%22In%22%2C%22key%22%3A%22data%22%2C%22values%22%3A%5Bnull%2C%22value1%22%2C%22value2%22%5D%2C%22dataType%22%3A%22string%22%7D%5D", headers = validAuthHeader) {
+    get("/queues/abc/ready?q=%5B%7B%22op%22%3A%22IN%22%2C%22key%22%3A%22data%22%2C%22values%22%3A%5Bnull%2C%22value1%22%2C%22value2%22%5D%2C%22dataType%22%3A%22STRING%22%7D%5D", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedMultiParamFilteredQueue.json"))
     }

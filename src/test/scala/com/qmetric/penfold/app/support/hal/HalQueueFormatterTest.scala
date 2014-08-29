@@ -13,7 +13,7 @@ import com.qmetric.penfold.support.TestModel
 
 class HalQueueFormatterTest extends Specification {
 
-  val filters = Filters(List(Equals("data", "a value")))
+  val filters = Filters(List(EQ("data", "a value")))
 
   val pageRequest = PageRequest(10, Some(PageReference("3~1393336800000~0")))
 
@@ -46,7 +46,7 @@ class HalQueueFormatterTest extends Specification {
   }
 
   "format filtered queue as hal+json with encoded filter value" in {
-    val filters = Filters(List(Equals("data", "zzz%^&*ee$")))
+    val filters = Filters(List(EQ("data", "zzz%^&*ee$")))
     val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task2, task1), None, None), filters)
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueueWithEncodedFilterValue.json"))
   }
