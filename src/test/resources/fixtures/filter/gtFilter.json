@@ -1,0 +1,6 @@
+{
+  "op": "GreaterThan",
+  "key": "name",
+  "value": "100",
+  "dataType": "numeric"
+}

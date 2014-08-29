@@ -7,7 +7,6 @@ import org.json4s.jackson.JsonMethods._
 import org.specs2.mutable.Specification
 import com.qmetric.penfold.domain.model._
 import com.qmetric.penfold.readstore._
-import com.qmetric.penfold.readstore.Filter
 import com.qmetric.penfold.readstore.TaskRecord
 import scala.Some
 import com.qmetric.penfold.support.TestModel._
@@ -17,7 +16,7 @@ import com.qmetric.penfold.domain.model.Status.Ready
 
 class HalTaskFormatterTest extends Specification {
 
-  val filters = Filters(List(Filter("data", Some("value"))))
+  val filters = Filters(List(Equals("data", "a value")))
 
   val pageRequest = PageRequest(10, Some(PageReference("1~1393336800000~1")))
 
@@ -46,7 +45,7 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format filtered tasks hal+json with encoded filter value" in {
-    val filters = Filters(List(Filter("data", Some("zzz%^&*ee$"))))
+    val filters = Filters(List(Equals("data", "zzz%^&*ee$")))
     halTasks(filters) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredTasksWithEncodedFilterValue.json"))
   }
 

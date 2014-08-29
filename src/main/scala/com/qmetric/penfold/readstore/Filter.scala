@@ -1,9 +1,16 @@
 package com.qmetric.penfold.readstore
 
-object Filter {
-  def apply(key: String, value: Option[String]): Filter = Filter(key, Set(value))
+import com.qmetric.penfold.readstore.QueryParamType.{NumericType, StringType}
+
+trait Filter {
+  val key: String
+  val dataType: QueryParamType = StringType
 }
 
-case class Filter(key: String, values: Set[Option[String]]) {
-  def isMulti = values.size > 1
-}
+case class Equals(key: String, value: String, override val dataType: QueryParamType = StringType) extends Filter
+
+case class LessThan(key: String, value: String, override val dataType: QueryParamType = NumericType) extends Filter
+
+case class GreaterThan(key: String, value: String, override val dataType: QueryParamType = NumericType) extends Filter
+
+case class In(key: String, values: Set[String], override val dataType: QueryParamType = StringType) extends Filter

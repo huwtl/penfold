@@ -1,6 +1,6 @@
 {
     "_links": {
-        "self": {"href": "http://host/queues/abc/ready?_data=value"}
+        "self": {"href": "http://host/queues/abc/ready?q=%5B%7B%22op%22%3A%22Equals%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%2C%22dataType%22%3A%22string%22%7D%5D"}
     },
     "_embedded": {
         "queue": [

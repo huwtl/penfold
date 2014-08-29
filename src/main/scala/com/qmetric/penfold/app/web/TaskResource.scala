@@ -16,8 +16,6 @@ class TaskResource(readStore: ReadStore,
                    pageSize: Int,
                    authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport {
 
-
-
   before() {
     contentType = HAL_JSON
   }
@@ -30,12 +28,6 @@ class TaskResource(readStore: ReadStore,
   }
 
   get("/") {
-    val filters = parseFilters(multiParams)
-    val page = parsePageRequestParams(params, pageSize)
-    Ok(halFormatter.halFrom(page, readStore.retrieveBy(filters, page), filters))
-  }
-
-  get("/expired/:timeoutId") {
     val filters = parseFilters(multiParams)
     val page = parsePageRequestParams(params, pageSize)
     Ok(halFormatter.halFrom(page, readStore.retrieveBy(filters, page), filters))

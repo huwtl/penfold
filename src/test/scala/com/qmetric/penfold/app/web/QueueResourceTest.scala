@@ -9,7 +9,6 @@ import org.specs2.mock.Mockito
 import com.qmetric.penfold.domain.model._
 import com.qmetric.penfold.readstore._
 import com.qmetric.penfold.command.CommandDispatcher
-import com.qmetric.penfold.readstore.Filter
 import com.qmetric.penfold.domain.model.AggregateId
 import scala.Some
 import com.qmetric.penfold.readstore.PageRequest
@@ -51,20 +50,20 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
   }
 
   "return 200 with hal+json formatted filtered queue response" in {
-    val filters = Filters(List(Filter("data", Some("value"))))
+    val filters = Filters(List(Equals("data", "a value")))
     readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize), SortOrder.Desc, filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
 
-    get("/queues/abc/ready?_data=value", headers = validAuthHeader) {
+    get("/queues/abc/ready?q=%5B%7B%22op%22%3A%22Equals%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%2C%22dataType%22%3A%22string%22%7D%5D", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueue.json"))
     }
   }
 
   "return 200 with hal+json formatted filtered queue response with multparams" in {
-    val filters = Filters(List(Filter("data", Set(Some("value1"), Some("value2"), None))))
+    val filters = Filters(List(In("data", Set("value1", "value2", null))))
     readStore.retrieveByQueue(TestModel.queueId, Status.Ready, PageRequest(pageSize), SortOrder.Desc, filters) returns PageResult(List(expectedTask2, expectedTask1), None, None)
 
-    get("/queues/abc/ready?_data=value1&_data=value1&_data=value2&_data=", headers = validAuthHeader) {
+    get("/queues/abc/ready?q=%5B%7B%22op%22%3A%22In%22%2C%22key%22%3A%22data%22%2C%22values%22%3A%5Bnull%2C%22value1%22%2C%22value2%22%5D%2C%22dataType%22%3A%22string%22%7D%5D", headers = validAuthHeader) {
       status must beEqualTo(200)
       parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedMultiParamFilteredQueue.json"))
     }

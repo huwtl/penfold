@@ -1,0 +1,5 @@
+{
+  "op": "GreaterThan",
+  "key": "name",
+  "value": null
+}

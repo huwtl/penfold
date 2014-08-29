@@ -7,14 +7,13 @@ import org.json4s.jackson.JsonMethods._
 import org.specs2.mutable.Specification
 import com.qmetric.penfold.domain.model._
 import com.qmetric.penfold.readstore._
-import com.qmetric.penfold.readstore.Filter
 import com.qmetric.penfold.domain.model.AggregateId
 import com.qmetric.penfold.readstore.PageResult
 import com.qmetric.penfold.support.TestModel
 
 class HalQueueFormatterTest extends Specification {
 
-  val filters = Filters(List(Filter("data", Some("value"))))
+  val filters = Filters(List(Equals("data", "a value")))
 
   val pageRequest = PageRequest(10, Some(PageReference("3~1393336800000~0")))
 
@@ -47,7 +46,7 @@ class HalQueueFormatterTest extends Specification {
   }
 
   "format filtered queue as hal+json with encoded filter value" in {
-    val filters = Filters(List(Filter("data", Some("zzz%^&*ee$"))))
+    val filters = Filters(List(Equals("data", "zzz%^&*ee$")))
     val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task2, task1), None, None), filters)
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueueWithEncodedFilterValue.json"))
   }

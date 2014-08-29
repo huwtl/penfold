@@ -11,7 +11,7 @@ import scala.util.{Failure, Try, Success}
 import com.qmetric.penfold.app.support.DateTimeSource
 import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
 
-class MongoReadStore(database: MongoDB, indexes: Indexes, taskMapper: MongoTaskMapper, paginationQueryService: PaginatedQueryService, dateTimeSource: DateTimeSource) extends ReadStore {
+class MongoReadStore(database: MongoDB, indexes: Indexes, taskMapper: MongoTaskMapper, paginatedQueryService: PaginatedQueryService, dateTimeSource: DateTimeSource) extends ReadStore {
   private val connectionSuccess = true
 
   lazy private val tasksCollection = database("tasks")
@@ -49,7 +49,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, taskMapper: MongoTaskM
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, sortOrder: SortOrder, filters: Filters) = {
-    val filtersWithQueueStatus = new Filters(Filter("queue", Some(queueId.value)) :: Filter("status", Some(status.name)) :: filters.all)
+    val filtersWithQueueStatus = new Filters(Equals("queue", queueId.value) :: Equals("status", status.name) :: filters.all)
     retrieveByPage(filtersWithQueueStatus, pageRequest, sortOrder)
   }
 
@@ -58,20 +58,8 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, taskMapper: MongoTaskM
   }
 
   private def retrieveByPage(filters: Filters, pageRequest: PageRequest, sortOrder: SortOrder) = {
-    def buildCriteria(restrictions: List[RestrictionField]) = {
-      val criteria = MongoDBObject.empty
-      restrictions.foldLeft(criteria)((previousCriteria, restriction) => {
-        val values = restriction.values.map(_ getOrElse null)
-        previousCriteria ++ (if (restriction.isMulti) restriction.name $in values else MongoDBObject(restriction.name -> values.head))
-      })
-    }
-
     val queryPlan = indexes.buildQueryPlan(filters)
 
-    val criteria = buildCriteria(queryPlan.restrictionFields)
-
-    paginationQueryService.execQuery(queryPlan, criteria, pageRequest, sortOrder)
+    paginatedQueryService.execQuery(queryPlan, pageRequest, sortOrder)
   }
-
-
 }

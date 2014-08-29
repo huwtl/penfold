@@ -25,7 +25,10 @@ case class Indexes(private val customIndexes: List[Index]) {
       case Some(suitableIndex) => {
         val restrictionFields = suitableIndex.excludingSortFields
           .filter(idx => filters.keys.contains(idx.alias))
-          .map(field => RestrictionField(field.path, filters.get(field.alias).get.values))
+          .map(field => {
+            val filter = filters.get(field.alias).get
+            RestrictionField(field.path, filter)
+          })
 
         val sortFields = suitableIndex.fields
           .filter(field => sortIndexFields.contains(field) || filters.keys.contains(field.alias))
@@ -34,7 +37,7 @@ case class Indexes(private val customIndexes: List[Index]) {
         QueryPlan(restrictionFields, sortFields)
       }
       case None => {
-        val restrictionFields = filters.all.map(f => RestrictionField(filterIndexFieldLookup.getOrElse(f.key, f.key), f.values))
+        val restrictionFields = filters.all.map(f => RestrictionField(filterIndexFieldLookup.getOrElse(f.key, f.key), f))
         val sortFields = sortIndexFields.map(field => SortField(field.path))
         QueryPlan(restrictionFields, sortFields)
       }

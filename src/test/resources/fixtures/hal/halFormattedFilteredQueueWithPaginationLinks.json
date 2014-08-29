@@ -1,8 +1,8 @@
 {
     "_links": {
-        "self": {"href": "http://host/queues/abc/ready?page=3~1393336800000~0&_data=value"},
-        "previous": {"href": "http://host/queues/abc/ready?page=2~1393336800000~0&_data=value", "name": "2~1393336800000~0"},
-        "next": {"href": "http://host/queues/abc/ready?page=1~1393336800000~1&_data=value", "name": "1~1393336800000~1"}
+        "self": {"href": "http://host/queues/abc/ready?page=3~1393336800000~0&q=%5B%7B%22op%22%3A%22Equals%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%2C%22dataType%22%3A%22string%22%7D%5D"},
+        "previous": {"href": "http://host/queues/abc/ready?page=2~1393336800000~0&q=%5B%7B%22op%22%3A%22Equals%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%2C%22dataType%22%3A%22string%22%7D%5D", "name": "2~1393336800000~0"},
+        "next": {"href": "http://host/queues/abc/ready?page=1~1393336800000~1&q=%5B%7B%22op%22%3A%22Equals%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%2C%22dataType%22%3A%22string%22%7D%5D", "name": "1~1393336800000~1"}
     },
     "_embedded": {
         "queue": [

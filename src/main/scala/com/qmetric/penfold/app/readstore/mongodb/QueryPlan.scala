@@ -1,9 +1,9 @@
 package com.qmetric.penfold.app.readstore.mongodb
 
+import com.qmetric.penfold.readstore.Filter
+
 case class QueryPlan(restrictionFields: List[RestrictionField], sortFields: List[SortField])
 
-case class RestrictionField(name: String, values: Set[Option[String]]) {
-  val isMulti = values.size > 1
-}
+case class RestrictionField(path: String, filter: Filter)
 
-case class SortField(name: String)
+case class SortField(path: String)

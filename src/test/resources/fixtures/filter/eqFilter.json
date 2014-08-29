@@ -1,0 +1,6 @@
+{
+  "op": "Equals",
+  "key": "name",
+  "value": "val",
+  "dataType": "string"
+}

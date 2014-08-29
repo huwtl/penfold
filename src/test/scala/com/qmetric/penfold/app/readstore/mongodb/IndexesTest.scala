@@ -1,7 +1,7 @@
 package com.qmetric.penfold.app.readstore.mongodb
 
 import org.specs2.mutable.Specification
-import com.qmetric.penfold.readstore.{Filter, Filters}
+import com.qmetric.penfold.readstore.{Equals, Filters}
 
 class IndexesTest extends Specification {
   val queueField = IndexField("queue", "queue")
@@ -45,15 +45,15 @@ class IndexesTest extends Specification {
   "transform filters into a query plan by resolving index aliases and index field order" in {
     val indexes = new Indexes(List(Index(None, List(customIndexField, customMultiIndexField))))
     val expectedQueryPlan = QueryPlan(
-      List(restriction("queue"), restriction("status"), restriction("payload.idx1"), restriction("payload.idxs1")),
+      List(restriction("queue", "queue"), restriction("status", "status"), restriction("payload.idx1", "f1"), restriction("payload.idxs1", "f2")),
       List(sortField("queue"), sortField("status"), sortField("payload.idx1"), sortField("sort"), sortField("_id"), sortField("payload.idxs1"))
     )
     val expectedQueryPlan2 = QueryPlan(
-      List(restriction("queue"), restriction("status"), restriction("payload.idx1")),
+      List(restriction("queue", "queue"), restriction("status", "status"), restriction("payload.idx1", "f1")),
       List(sortField("queue"), sortField("status"), sortField("payload.idx1"), sortField("sort"), sortField("_id"))
     )
     val expectedQueryPlan3 = QueryPlan(
-      List(restriction("queue"), restriction("status"), restriction("f3")),
+      List(restriction("queue", "queue"), restriction("status", "status"), restriction("f3", "f3")),
       List(sortField("sort"), sortField("_id"))
     )
 
@@ -62,9 +62,9 @@ class IndexesTest extends Specification {
     indexes.buildQueryPlan(Filters(List(filter("queue"), filter("status"), filter("f3")))) must beEqualTo(expectedQueryPlan3)
   }
 
-  private def filter(key: String) = Filter(key, None)
+  private def filter(key: String) = Equals(key, null)
 
-  private def restriction(key: String) = RestrictionField(key, Set(None))
+  private def restriction(path: String, key: String) = RestrictionField(path, Equals(key, null))
 
-  private def sortField(key: String) = SortField(key)
+  private def sortField(path: String) = SortField(path)
 }

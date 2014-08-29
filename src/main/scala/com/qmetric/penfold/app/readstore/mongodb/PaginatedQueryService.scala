@@ -15,8 +15,10 @@ class PaginatedQueryService(database: MongoDB, taskMapper: MongoTaskMapper) {
 
   lazy private val tasksCollection = database("tasks")
 
-  def execQuery(queryPlan: QueryPlan, criteria: MongoDBObject, pageRequest: PageRequest, sortOrder: SortOrder): PageResult = {
+  def execQuery(queryPlan: QueryPlan, pageRequest: PageRequest, sortOrder: SortOrder): PageResult = {
     val pageSize = pageRequest.pageSize
+
+    val criteria = buildPageQueryCriteria(queryPlan.restrictionFields)
 
     parseLastKnownPageDetails(pageRequest.pageReference) match {
       case Some(lastKnownPageDetails) => {
@@ -35,6 +37,19 @@ class PaginatedQueryService(database: MongoDB, taskMapper: MongoTaskMapper) {
         PageResult(results, previousPage = None, nextPage = nextPage)
       }
     }
+  }
+
+  private def buildPageQueryCriteria(restrictions: List[RestrictionField]) = {
+    val criteria = MongoDBObject.empty
+    restrictions.foldLeft(criteria)((previousCriteria, restriction) => {
+      restriction.filter match {
+        case Equals(key, value, dataType) => previousCriteria ++ MongoDBObject(restriction.path -> value)
+        case In(key, values, dataType) => previousCriteria ++ (restriction.path $in values)
+        case LessThan(key, value, dataType) => previousCriteria ++ (restriction.path $lt Option(value).map(_.toLong).getOrElse(Long.MinValue))
+        case GreaterThan(key, value, dataType) => previousCriteria ++ (restriction.path $gt Option(value).map(_.toLong).getOrElse(Long.MaxValue))
+        case _ => throw new IllegalStateException("unsupported filter type")
+      }
+    })
   }
 
   private def execPageQueryWithOverflow(criteria: MongoDBObject, sort: MongoDBObject, pageSize: Int) = {
@@ -60,7 +75,7 @@ class PaginatedQueryService(database: MongoDB, taskMapper: MongoTaskMapper) {
   private def sortCriteria(queryPlan: QueryPlan, sortOrder: SortOrder) = {
     val sortDirection = if (sortOrder == SortOrder.Desc) -1 else 1
 
-    MongoDBObject(queryPlan.sortFields.map(_.name -> sortDirection))
+    MongoDBObject(queryPlan.sortFields.map(_.path -> sortDirection))
   }
 
   private def parseLastKnownPageDetails(pageReference: Option[PageReference]) = {
