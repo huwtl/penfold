@@ -12,7 +12,7 @@ import grizzled.slf4j.Logger
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
-class JdbcDomainEventQueryService(database: Database, serializer: EventSerializer, eventRetrievalRetries: Int = 100) extends DomainEventQueryService {
+class JdbcDomainEventQueryService(database: Database, serializer: EventSerializer, eventRetrievalRetries: Int = 50) extends DomainEventQueryService {
   private lazy val logger = Logger(getClass)
 
   implicit val getEventFromRow = GetResult(row => EventRecord(EventSequenceId(row.nextLong()), serializer.deserialize(row.nextString())))

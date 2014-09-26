@@ -8,7 +8,7 @@ import com.qmetric.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import com.qmetric.penfold.command._
 import com.qmetric.penfold.domain.store.DomainRepository
 import com.qmetric.penfold.app.support.json.{ObjectSerializer, EventSerializer}
-import com.qmetric.penfold.readstore.{EventNotifiers, EventNotifier, NewEventsProvider}
+import com.qmetric.penfold.readstore.{EventNotifiersImpl, EventNotifier, NewEventsProvider}
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import com.qmetric.penfold.app.support.{DateTimeSource, UUIDFactory}
@@ -42,7 +42,7 @@ class Bootstrap extends LifeCycle {
 
     new IndexWriter().write(readStoreDatabase, indexes, config)
 
-    val eventNotifiers = new EventNotifiers(List(readStoreUpdater))
+    val eventNotifiers = new ActorBasedEventNotifiers(new EventNotifiersImpl(List(readStoreUpdater)), noOfWorkers = 3)
 
     val domainRepository = new DomainRepository(eventStore, eventNotifiers)
 
