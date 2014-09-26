@@ -16,7 +16,7 @@ class JdbcDomainEventQueryServiceTest extends Specification with JdbcSpecificati
     val created = new DateTime(2014, 3, 1, 12, 0, 0, 0)
     val database = newDatabase()
     val store = new JdbcEventStore(database, new EventSerializer)
-    val queryService = new JdbcDomainEventQueryService(database, new EventSerializer, eventRetrievalRetries = 1000)
+    val queryService = new JdbcDomainEventQueryService(database, new EventSerializer, eventRetrievalRetries = 2)
     val event1 = TaskTriggered(AggregateId("a1"), AggregateVersion.init, created)
     val event2 = TaskTriggered(AggregateId("a2"), AggregateVersion.init, created)
   }
