@@ -1,14 +1,19 @@
 package org.huwtl.penfold.readstore
 
+import org.huwtl.penfold.support.Retry.retry
 import grizzled.slf4j.Logger
-import scala.util.Try
 
-class EventNotifier(newEventsProvider: NewEventsProvider, eventListener: EventListener) {
+class EventNotifier(newEventsProvider: NewEventsProvider, eventListener: EventListener, maxRetries: Int = 10) {
   private lazy val logger = Logger(getClass)
 
   def notifyListener() {
-    Try(newEventsProvider.newEvents foreach eventListener.handle) recover {
-      case e: Exception => logger.error("error by listener while handling events", e)
+    retry(maxRetries) {
+      newEventsProvider.newEvents foreach {event =>
+        logger.info(s"handling event ${event}")
+        eventListener.handle(event)
+      }
+    } recover {
+      case e => logger.error("error by listener while handling events", e)
     }
   }
 }

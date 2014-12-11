@@ -7,14 +7,16 @@ import org.json4s.jackson.JsonMethods._
 import org.specs2.mutable.Specification
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.readstore._
-import org.huwtl.penfold.readstore.Filter
 import org.huwtl.penfold.readstore.TaskRecord
+import scala.Some
 import org.huwtl.penfold.support.TestModel._
+import org.huwtl.penfold.support.TestModel.readModels._
 import org.huwtl.penfold.support.TestModel
+import org.huwtl.penfold.domain.model.Status.Ready
 
 class HalTaskFormatterTest extends Specification {
 
-  val filters = Filters(List(Filter("data", Some("value"))))
+  val filters = Filters(List(EQ("data", "a value")))
 
   val pageRequest = PageRequest(10, Some(PageReference("1~1393336800000~1")))
 
@@ -22,22 +24,20 @@ class HalTaskFormatterTest extends Specification {
 
   "format waiting task as hal+json" in {
     hal(task.copy(status = Status.Waiting)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingTask.json"))
+    hal(task.copy(status = Status.Waiting, assignee = Some(TestModel.assignee))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingTaskWithAssignee.json"))
   }
 
   "format ready task as hal+json" in {
     hal(task.copy(status = Status.Ready)) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedReadyTask.json"))
+    hal(task.copy(status = Status.Ready, assignee = Some(TestModel.assignee))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedReadyTaskWithAssignee.json"))
   }
 
   "format started task as hal+json" in {
-    hal(task.copy(status = Status.Started, previousStatus = Some(previousStatus), assignee = Some(assignee))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedStartedTask.json"))
+    hal(task.copy(status = Status.Started, previousStatus = Some(previousStatus.copy(status = Ready)), assignee = Some(assignee))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedStartedTask.json"))
   }
 
-  "format completed task as hal+json" in {
-    hal(task.copy(status = Status.Completed, previousStatus = Some(previousStatus))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCompletedTask.json"))
-  }
-
-  "format cancelled task as hal+json" in {
-    hal(task.copy(status = Status.Cancelled, previousStatus = Some(previousStatus))) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCancelledTask.json"))
+  "format closed task as hal+json" in {
+    hal(closedTask) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedClosedTask.json"))
   }
 
   "format filtered tasks hal+json" in {
@@ -45,7 +45,7 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format filtered tasks hal+json with encoded filter value" in {
-    val filters = Filters(List(Filter("data", Some("zzz%^&*ee$"))))
+    val filters = Filters(List(EQ("data", "zzz%^&*ee$")))
     halTasks(filters) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredTasksWithEncodedFilterValue.json"))
   }
 
@@ -54,13 +54,13 @@ class HalTaskFormatterTest extends Specification {
   }
 
   "format task as hal+json with complex payload" in {
-    val task = TestModel.task.copy(status = Status.Waiting, payload = complexPayload)
+    val task = TestModel.readModels.task.copy(status = Status.Waiting, payload = complexPayload)
     hal(task) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedTaskWithComplexPayload.json"))
   }
 
   private def halTasks(filters: Filters, pageNumber: Int = 0, previousPage: Option[PageReference] = None, nextPage: Option[PageReference] = None) = {
     parse(taskFormatter.halFrom(pageRequest,
-      PageResult(List(TestModel.task.copy(status = Status.Waiting)), previousPage, nextPage), filters
+      PageResult(List(TestModel.readModels.task.copy(status = Status.Waiting)), previousPage, nextPage), filters
     ))
   }
 

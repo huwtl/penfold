@@ -1,16 +1,16 @@
 {
     "type" : "TaskCreated",
-    "aggregateId" : "a1",
+    "aggregateId" : "1",
     "aggregateVersion" : 1,
-    "created" : "2014-02-03 12:47:54",
-    "queueBinding": {"id": "q1"},
-    "triggerDate" : "2014-02-03 14:30:01",
+    "created" : "2014-02-25 13:00:00",
+    "queueBinding": {"id": "abc"},
+    "triggerDate" : "2014-02-25 14:00:00",
     "payload" : {
         "stuff" : "something",
         "nested" : {
             "inner" : true
         }
     },
-    "score" : 1391437801000,
+    "score" : 1393336800000,
     "aggregateType" : "Task"
 }

@@ -16,21 +16,44 @@ case class CreateFutureTask(queueBinding: QueueBinding,
                             payload: Payload,
                             score: Option[Long]) extends TaskCommand
 
-case class TriggerTask(id: AggregateId) extends TaskCommand
+case class TriggerTask(id: AggregateId, version: AggregateVersion) extends TaskCommand
 
 case class StartTask(id: AggregateId,
-                     assignee: Option[Assignee]) extends TaskCommand
+                     version: AggregateVersion,
+                     assignee: Option[User],
+                     payloadUpdate: Option[Patch]) extends TaskCommand
 
-case class RequeueTask(id: AggregateId) extends TaskCommand
+case class RequeueTask(id: AggregateId,
+                       version: AggregateVersion,
+                       requeueType: Option[String],
+                       assignee: Option[User],
+                       payloadUpdate: Option[Patch],
+                       scoreUpdate: Option[Long]) extends TaskCommand
 
-case class CompleteTask(id: AggregateId) extends TaskCommand
+case class RescheduleTask(id: AggregateId,
+                          version: AggregateVersion,
+                          triggerDate: DateTime,
+                          assignee: Option[User],
+                          rescheduleType: Option[String],
+                          payloadUpdate: Option[Patch],
+                          scoreUpdate: Option[Long]) extends TaskCommand
 
-case class CancelTask(id: AggregateId) extends TaskCommand
+case class CloseTask(id: AggregateId,
+                     version: AggregateVersion,
+                     concluder: Option[User],
+                     conclusionType: Option[String],
+                     assignee: Option[User],
+                     payloadUpdate: Option[Patch]) extends TaskCommand
 
-case class ArchiveTask(id: AggregateId) extends TaskCommand
+case class ArchiveTask(id: AggregateId, version: AggregateVersion) extends TaskCommand
 
 case class UpdateTaskPayload(id: AggregateId,
                              version: AggregateVersion,
                              updateType: Option[String],
                              payloadUpdate: Patch,
-                             score: Option[Long]) extends TaskCommand
+                             scoreUpdate: Option[Long]) extends TaskCommand
+
+case class UnassignTask(id: AggregateId,
+                        version: AggregateVersion,
+                        unassignType: Option[String],
+                        payloadUpdate: Option[Patch]) extends TaskCommand

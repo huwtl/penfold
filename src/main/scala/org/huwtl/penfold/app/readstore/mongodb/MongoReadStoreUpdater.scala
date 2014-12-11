@@ -1,26 +1,35 @@
 package org.huwtl.penfold.app.readstore.mongodb
 
-import org.huwtl.penfold.readstore.{EventTracker, EventListener}
+import org.huwtl.penfold.readstore.{EventTracker, EventListener, EventRecord}
 import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.domain.model.Status._
 import org.huwtl.penfold.domain.model.{Payload, Status}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.domain.event._
-import org.huwtl.penfold.domain.event.TaskCompleted
-import org.huwtl.penfold.readstore.EventRecord
-import org.huwtl.penfold.domain.event.TaskCancelled
-import org.huwtl.penfold.domain.event.TaskCreated
-import org.huwtl.penfold.domain.event.TaskTriggered
-import org.huwtl.penfold.domain.event.TaskStarted
 import com.mongodb.DuplicateKeyException
 import grizzled.slf4j.Logger
 import com.mongodb.util.JSON
 import org.huwtl.penfold.app.support.RegisterBigIntConversionHelpers
 import com.mongodb.casbah.commons.conversions.scala.RegisterJodaTimeConversionHelpers
 import org.joda.time.DateTime
+import scala.Predef._
+import org.huwtl.penfold.domain.event.TaskRequeued
+import org.huwtl.penfold.domain.event.TaskRescheduled
+import org.huwtl.penfold.domain.event.TaskPayloadUpdated
+import org.huwtl.penfold.domain.event.FutureTaskCreated
+import org.huwtl.penfold.domain.event.TaskArchived
+import org.huwtl.penfold.domain.event.TaskTriggered
+import scala.Some
+import org.huwtl.penfold.domain.event.TaskCreated
+import org.huwtl.penfold.domain.event.TaskStarted
+import org.huwtl.penfold.domain.event.TaskClosed
+import org.joda.time.format.DateTimeFormat
+import org.huwtl.penfold.domain.model.patch.Patch
 
 class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
+
+  private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd")
 
   RegisterBigIntConversionHelpers()
   RegisterJodaTimeConversionHelpers()
@@ -30,20 +39,25 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
   lazy private val tasksCollection = database("tasks")
 
   override def handle(eventRecord: EventRecord) = {
-    eventRecord.event match {
+    val result = eventRecord.event match {
       case e: TaskCreated => handleCreateEvent(e, Ready)
       case e: FutureTaskCreated => handleCreateEvent(e, Waiting)
-      case e: TaskTriggered => handleUpdateStatusEvent(e, Ready)
-      case e: TaskStarted => handleUpdateStatusEvent(e, Started)
-      case e: TaskRequeued => handleUpdateStatusEvent(e, Ready)
-      case e: TaskCompleted => handleUpdateStatusEvent(e, Completed)
-      case e: TaskCancelled => handleUpdateStatusEvent(e, Cancelled)
+      case e: TaskTriggered => handleTaskTriggeredEvent(e)
+      case e: TaskStarted => handleTaskStartedEvent(e)
+      case e: TaskRequeued => handleTaskRequeuedEvent(e)
+      case e: TaskRescheduled => handleTaskRescheduledEvent(e)
+      case e: TaskClosed => handleTaskClosedEvent(e)
+      case e: TaskUnassigned => handleUnassignedEvent(e)
       case e: TaskPayloadUpdated => handleUpdatePayloadEvent(e)
       case e: TaskArchived => handleArchiveEvent(e)
       case _ =>
     }
 
+    logger.info(s"event ${eventRecord.id} handled with result $result")
+
     tracker.trackEvent(eventRecord.id)
+
+    logger.info(s"event ${eventRecord.id} tracked")
 
     success
   }
@@ -59,8 +73,9 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       "status" -> status.name,
       "statusLastModified" -> event.created,
       "triggerDate" -> event.triggerDate,
+      "searchableTriggerDay" -> triggerDaySearchField(event.triggerDate),
       "payload" -> event.payload.content,
-      "sort" -> resolveSortOrder(event, status, event.score),
+      "sort" -> resolveSortOrder(event, status, event.score).get,
       "score" -> event.score
     )
 
@@ -73,43 +88,97 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     }
   }
 
-  private def handleUpdateStatusEvent(event: Event, status: Status) = {
-    val query = updateByIdVersion(event)
+  private def handleTaskTriggeredEvent(event: TaskTriggered) = {
+    handleTaskUpdate(event) {task =>
+      val existingScore = task.as[Long]("score")
+      Map(
+        "previousStatus" -> updatePreviousStatus(task),
+        "status" -> Ready.name,
+        "statusLastModified" -> event.created.toDate,
+        "sort" -> existingScore
+      )
+    }
+  }
 
-    tasksCollection.findOne(query) match {
-      case Some(task) => {
-        val update = $set(
-          "version" -> event.aggregateVersion.number,
-          "previousStatus" -> Map("status" -> task.as[String]("status"), "statusLastModified" -> task.as[DateTime]("statusLastModified")),
-          "status" -> status.name,
-          "statusLastModified" -> event.created.toDate,
-          "assignee" -> resolveAssignee(event, task.getAs[String]("assignee")),
-          "sort" -> resolveSortOrder(event, status, task.as[Long]("score"))
-        )
-        tasksCollection.update(query, update)
-      }
-      case None =>
+  private def handleTaskStartedEvent(event: TaskStarted) = {
+    handleTaskUpdate(event) {task =>
+      Map(
+        "previousStatus" -> updatePreviousStatus(task),
+        "status" -> Started.name,
+        "statusLastModified" -> event.created.toDate,
+        "sort" -> event.created.getMillis,
+        "assignee" -> event.assignee.map(_.username),
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate)
+      )
+    }
+  }
+
+  private def handleTaskRequeuedEvent(event: TaskRequeued) = {
+    handleTaskUpdate(event) {task =>
+      val score = event.score.getOrElse(task.as[Long]("score"))
+      Map(
+        "previousStatus" -> updatePreviousStatus(task),
+        "status" -> Ready.name,
+        "statusLastModified" -> event.created.toDate,
+        "sort" -> score,
+        "assignee" -> event.assignee.map(_.username),
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate),
+        "score" -> score
+      )
+    }
+  }
+
+  private def handleTaskRescheduledEvent(event: TaskRescheduled) = {
+    handleTaskUpdate(event) {task =>
+      val score = event.score.getOrElse(task.as[Long]("score"))
+      Map(
+        "previousStatus" -> updatePreviousStatus(task),
+        "status" -> Waiting.name,
+        "statusLastModified" -> event.created.toDate,
+        "sort" -> event.triggerDate.getMillis,
+        "triggerDate" -> event.triggerDate,
+        "searchableTriggerDay" -> triggerDaySearchField(event.triggerDate),
+        "rescheduleType" -> event.rescheduleType,
+        "assignee" -> event.assignee.map(_.username),
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate),
+        "score" -> score
+      )
+    }
+  }
+
+  private def handleTaskClosedEvent(event: TaskClosed) = {
+    handleTaskUpdate(event) {task =>
+      Map(
+        "previousStatus" -> updatePreviousStatus(task),
+        "status" -> Closed.name,
+        "statusLastModified" -> event.created.toDate,
+        "sort" -> event.created.getMillis,
+        "conclusionType" -> event.conclusionType,
+        "assignee" -> event.assignee.map(_.username),
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate)
+      )
+    }
+  }
+
+  private def handleUnassignedEvent(event: TaskUnassigned) = {
+    handleTaskUpdate(event) {task =>
+      Map(
+        "assignee" -> None,
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate)
+      )
     }
   }
 
   private def handleUpdatePayloadEvent(event: TaskPayloadUpdated) = {
-    val query = updateByIdVersion(event)
-
-    tasksCollection.findOne(query) match {
-      case Some(task) => {
-        val status = Status.from(task.as[String]("status")).get
-        val previousScore = task.as[Long]("score")
-        val payload = objectSerializer.deserialize[Payload](JSON.serialize(task.as[String]("payload")))
-
-        val update = $set(
-          "version" -> event.aggregateVersion.number,
-          "payload" -> event.payloadUpdate.exec(payload.content),
-          "score" -> event.score.getOrElse(previousScore),
-          "sort" -> resolveSortOrder(event, status, previousScore)
-        )
-        tasksCollection.update(query, update)
-      }
-      case None =>
+    handleTaskUpdate(event) {task =>
+      val status = Status.from(task.as[String]("status")).get
+      val existingScore = task.as[Long]("score")
+      val existingSort = task.as[Long]("sort")
+      Map(
+        "payload" -> patchPayloadIfExists(task, Some(event.payloadUpdate)),
+        "score" -> event.score.getOrElse(existingScore),
+        "sort" -> resolveSortOrder(event, status, existingScore).getOrElse(existingSort)
+      )
     }
   }
 
@@ -119,22 +188,39 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     tasksCollection.remove(query)
   }
 
-  private def resolveAssignee(event: Event, previousAssignee: Option[String]) = {
-    event match {
-      case e: TaskRequeued => None
-      case e: TaskStarted => e.assignee.map(_.username)
-      case _ => previousAssignee
+  private def handleTaskUpdate(event: Event)(updatedFields: MongoDBObject => Map[String, Any]) = {
+    val query = updateByIdVersion(event)
+
+    tasksCollection.findOne(query) match {
+      case Some(task) => {
+        val defaults = Map("version" -> event.aggregateVersion.number, "rescheduleType" -> None, "conclusionType" -> None)
+        val updated = updatedFields(task)
+        val update = $set((defaults ++ updated).toSeq: _*)
+        tasksCollection.update(query, update)
+      }
+      case None =>
     }
   }
 
-  private def resolveSortOrder(event: Event, status: Status, previousScore: Long) = {
+  private def updatePreviousStatus(existingTaskRecord: MongoDBObject) = {
+    Map("status" -> existingTaskRecord.as[String]("status"), "statusLastModified" -> existingTaskRecord.as[DateTime]("statusLastModified"))
+  }
+
+  private def patchPayloadIfExists(existingTaskRecord: MongoDBObject, payloadUpdate: Option[Patch]) = {
+    val payload = objectSerializer.deserialize[Payload](JSON.serialize(existingTaskRecord.as[String]("payload")))
+    payloadUpdate.map(_.exec(payload.content)).getOrElse(payload.content)
+  }
+
+  private def triggerDaySearchField(triggerDate: DateTime) = dateFormatter.print(triggerDate)
+
+
+  private def resolveSortOrder(event: Event, status: Status, existingScore: Long) = {
     event match {
-      case e: TaskCreated => e.score
-      case e: FutureTaskCreated => e.triggerDate.getMillis
-      case e: TaskTriggered => previousScore
-      case e: TaskRequeued => previousScore
-      case e: TaskPayloadUpdated if status == Ready => e.score getOrElse previousScore
-      case _ => event.created.getMillis
+      case e: TaskCreated => Some(e.score)
+      case e: FutureTaskCreated => Some(e.triggerDate.getMillis)
+      case e: TaskPayloadUpdated if status == Ready => Some(e.score getOrElse existingScore)
+      case e: TaskPayloadUpdated => None
+      case _ => Some(event.created.getMillis)
     }
   }
 

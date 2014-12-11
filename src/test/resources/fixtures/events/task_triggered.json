@@ -1,7 +1,7 @@
 {
     "type" : "TaskTriggered",
-    "aggregateId" : "a1",
-    "aggregateVersion" : 1,
-    "created" : "2014-02-03 12:47:54",
+    "aggregateId" : "1",
+    "aggregateVersion" : 2,
+    "created" : "2014-02-25 13:00:00",
     "aggregateType" : "Task"
 }

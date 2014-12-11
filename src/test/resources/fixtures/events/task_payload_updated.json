@@ -1,14 +1,14 @@
 {
     "type" : "TaskPayloadUpdated",
-    "aggregateId" : "a1",
-    "aggregateVersion" : 1,
-    "created" : "2014-02-03 12:47:54",
+    "aggregateId" : "1",
+    "aggregateVersion" : 2,
+    "created" : "2014-02-25 13:00:00",
     "payloadUpdate": {
         "operations": [
             {"op": "Add", "path": "/a/b", "value": "1"}
         ]
     },
-    "updateType": "update_type_1",
+    "updateType": "updateType",
     "score" : 100,
     "aggregateType" : "Task"
 }

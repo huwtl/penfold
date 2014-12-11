@@ -3,6 +3,7 @@ package org.huwtl.penfold.app.support.json
 import org.json4s._
 import org.json4s.Extraction._
 import org.json4s.jackson.JsonMethods._
+import org.huwtl.penfold.readstore.Filter
 
 class ObjectSerializer {
   implicit val formats = DefaultFormats +
@@ -15,7 +16,9 @@ class ObjectSerializer {
     new QueueIdJsonSerializer +
     new PatchOperationJsonSerializer +
     new ValueJsonSerializer +
-    new AssigneeJsonSerializer
+    new UserJsonSerializer +
+    new FilterJsonSerializer +
+    FieldSerializer[Filter]()
 
   def serialize[T](obj: T) = {
     compact(decompose(obj))

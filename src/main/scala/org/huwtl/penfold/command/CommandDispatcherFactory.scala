@@ -11,8 +11,9 @@ class CommandDispatcherFactory(domainRepository: DomainRepository, aggregateIdFa
       classOf[TriggerTask] -> new TriggerTaskHandler(domainRepository), //
       classOf[StartTask] -> new StartTaskHandler(domainRepository), //
       classOf[RequeueTask] -> new RequeueTaskHandler(domainRepository), //
-      classOf[CompleteTask] -> new CompleteTaskHandler(domainRepository), //
-      classOf[CancelTask] -> new CancelTaskHandler(domainRepository), //
+      classOf[RescheduleTask] -> new RescheduleTaskHandler(domainRepository), //
+      classOf[UnassignTask] -> new UnassignTaskHandler(domainRepository), //
+      classOf[CloseTask] -> new CloseTaskHandler(domainRepository), //
       classOf[UpdateTaskPayload] -> new UpdateTaskPayloadHandler(domainRepository), //
       classOf[ArchiveTask] -> new ArchiveTaskHandler(domainRepository) //
     ))

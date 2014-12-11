@@ -32,6 +32,7 @@ libraryDependencies ++= Seq(
   "org.mongodb" %% "casbah" % "2.7.0",
   "com.googlecode.flyway" % "flyway-core" % "2.3.1",
   "org.hsqldb" % "hsqldb" % "2.3.2",
+  "com.typesafe.akka" %% "akka-actor" % "2.2.4",
   "com.codahale.metrics" % "metrics-healthchecks" % "3.0.2",
   "me.moocar" % "logback-gelf" % "0.10p1",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
@@ -45,6 +46,8 @@ resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/reposi
 resolvers += "clojars.org" at "http://clojars.org/repo/"
 
 resolvers += Classpaths.sbtPluginReleases
+
+resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases"
 
 ScoverageSbtPlugin.instrumentSettings
 

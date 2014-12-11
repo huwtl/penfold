@@ -2,13 +2,13 @@ package org.huwtl.penfold.command
 
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
-import org.huwtl.penfold.domain.model.AggregateId
+import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId}
 
 class CommandDispatcherTest extends Specification with Mockito {
 
-  val triggerTaskCommand = TriggerTask(AggregateId("a1"))
-  val startTaskCommand = StartTask(AggregateId("a1"), None)
-  val completeTaskCommand = CompleteTask(AggregateId("a1"))
+  val triggerTaskCommand = TriggerTask(AggregateId("a1"), AggregateVersion.init)
+  val startTaskCommand = StartTask(AggregateId("a1"), AggregateVersion.init, None, None)
+  val closeTaskCommand = CloseTask(AggregateId("a1"), AggregateVersion.init, None, None, None, None)
 
   val triggerTaskHandler = mock[TriggerTaskHandler]
   val startTaskHandler = mock[StartTaskHandler]
@@ -26,6 +26,6 @@ class CommandDispatcherTest extends Specification with Mockito {
   }
 
   "throw exception when no suitable handler" in {
-    dispatch.dispatch(completeTaskCommand) must throwA[RuntimeException]
+    dispatch.dispatch(closeTaskCommand) must throwA[RuntimeException]
   }
 }

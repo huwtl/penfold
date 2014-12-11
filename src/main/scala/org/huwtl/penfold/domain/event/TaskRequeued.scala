@@ -1,8 +1,13 @@
 package org.huwtl.penfold.domain.event
 
-import org.huwtl.penfold.domain.model.{AggregateId, AggregateVersion}
+import org.huwtl.penfold.domain.model.{User, AggregateId, AggregateVersion}
 import org.joda.time.DateTime
+import org.huwtl.penfold.domain.model.patch.Patch
 
 case class TaskRequeued(aggregateId: AggregateId,
                         aggregateVersion: AggregateVersion,
-                        created: DateTime) extends TaskEvent
+                        created: DateTime,
+                        requeueType: Option[String],
+                        assignee: Option[User],
+                        payloadUpdate: Option[Patch],
+                        score: Option[Long]) extends TaskEvent

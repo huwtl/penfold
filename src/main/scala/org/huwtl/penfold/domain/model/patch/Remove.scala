@@ -8,7 +8,7 @@ case class Remove(path: String) extends PatchOperation {
         case Nil => mapElems
         case (pathName :: remainingPathNames) => {
           mapElems.get(pathName) match {
-            case None => throw new IllegalArgumentException(s"Value $pathName does not exist")
+            case None => mapElems
             case Some(_) if remainingPathNames.isEmpty => mapElems - pathName
             case Some(map: Map[_, _]) => mapElems.updated(pathName, removeFromMap(remainingPathNames, map.asInstanceOf[Map[String, Any]]))
             case Some(list: List[_]) => mapElems.updated(pathName, removeFromList(remainingPathNames, list))
@@ -26,7 +26,7 @@ case class Remove(path: String) extends PatchOperation {
           listElems(pathName.toInt) match {
             case map: Map[_, _] => listElems.updated(pathName.toInt, removeFromMap(remainingPathNames, map.asInstanceOf[Map[String, Any]]))
             case list: List[_] => listElems.updated(pathName.toInt, removeFromList(remainingPathNames, list))
-            case _ => throw new IllegalArgumentException(s"Value ${remainingPathNames.head} does not exist")
+            case _ => listElems
           }
         }
       }

@@ -1,0 +1,6 @@
+{
+  "op": "EQ",
+  "key": "name",
+  "value": "val",
+  "dataType": "STRING"
+}

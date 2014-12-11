@@ -12,10 +12,12 @@ case class TaskRecord(id: AggregateId,
                       status: Status,
                       statusLastModified: DateTime,
                       previousStatus: Option[PreviousStatus],
-                      assignee: Option[Assignee],
+                      assignee: Option[User],
                       triggerDate: DateTime,
                       score: Long,
                       sort: Long,
-                      payload: Payload)
+                      payload: Payload,
+                      rescheduleType: Option[String] = None,
+                      conclusionType: Option[String] = None)
 
 case class PreviousStatus(status: Status, statusLastModified: DateTime)

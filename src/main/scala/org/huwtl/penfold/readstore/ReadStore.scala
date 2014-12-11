@@ -10,10 +10,10 @@ trait ReadStore {
   def retrieveBy(id: AggregateId): Option[TaskRecord]
 
   def retrieveBy(filters: Filters, pageRequest: PageRequest): PageResult
-  
-  def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, filters: Filters = Filters.empty): PageResult
+
+  def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, sortOrder: SortOrder, filters: Filters = Filters.empty): PageResult
 
   def retrieveTasksToTrigger: Iterator[TaskRecordReference]
 
-  def retrieveTasksToArchive(timeoutAttributePath: String): Iterator[TaskRecordReference]
+  def retrieveTasksToTimeout(timeoutAttributePath: String, status: Option[Status] = None): Iterator[TaskRecordReference]
 }

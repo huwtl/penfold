@@ -7,14 +7,13 @@ import org.json4s.jackson.JsonMethods._
 import org.specs2.mutable.Specification
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.readstore._
-import org.huwtl.penfold.readstore.Filter
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.PageResult
 import org.huwtl.penfold.support.TestModel
 
 class HalQueueFormatterTest extends Specification {
 
-  val filters = Filters(List(Filter("data", Some("value"))))
+  val filters = Filters(List(EQ("data", "a value")))
 
   val pageRequest = PageRequest(10, Some(PageReference("3~1393336800000~0")))
 
@@ -22,9 +21,9 @@ class HalQueueFormatterTest extends Specification {
 
   val status = Status.Ready
 
-  val task1 = TestModel.task.copy(id = AggregateId("1"))
+  val task1 = TestModel.readModels.task.copy(id = AggregateId("1"))
 
-  val task2 = TestModel.task.copy(id = AggregateId("2"))
+  val task2 = TestModel.readModels.task.copy(id = AggregateId("2"))
 
   val queueFormatter = new HalQueueFormatter(new URI("http://host/queues"), new HalTaskFormatter(new URI("http://host/tasks"), new URI("http://host/queues")))
 
@@ -47,7 +46,7 @@ class HalQueueFormatterTest extends Specification {
   }
 
   "format filtered queue as hal+json with encoded filter value" in {
-    val filters = Filters(List(Filter("data", Some("zzz%^&*ee$"))))
+    val filters = Filters(List(EQ("data", "zzz%^&*ee$")))
     val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task2, task1), None, None), filters)
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueueWithEncodedFilterValue.json"))
   }

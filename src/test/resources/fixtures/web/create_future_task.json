@@ -1,0 +1,11 @@
+{
+    "queueBinding": {"id": "abc"},
+    "triggerDate" : "2014-02-25 14:00:00",
+    "payload" : {
+        "data" : "value",
+        "inner" : {
+            "bool" : true
+        }
+    },
+    "score" : 1393336800000
+}

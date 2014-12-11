@@ -1,0 +1,9 @@
+{
+    "type" : "TaskUnassigned",
+    "aggregateId" : "1",
+    "aggregateVersion" : 3,
+    "created" : "2014-02-25 13:00:00",
+    "unassignType": "unassignType",
+    "payloadUpdate" : {"operations": []},
+    "aggregateType" : "Task"
+}

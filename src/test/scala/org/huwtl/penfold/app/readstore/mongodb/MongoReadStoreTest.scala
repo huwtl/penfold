@@ -7,18 +7,23 @@ import org.joda.time.DateTime
 import org.specs2.specification.Scope
 import org.huwtl.penfold.readstore._
 import com.mongodb.casbah.Imports._
-import org.huwtl.penfold.readstore.EventRecord
-import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.domain.event.{TaskCreated, TaskCreatedEvent, FutureTaskCreated, Event}
-import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.readstore.PageRequest
-import org.huwtl.penfold.domain.model.QueueBinding
+import org.huwtl.penfold.domain.event.{TaskCreatedEvent, Event}
 import org.specs2.matcher.DataTables
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import scala.util.Random
 import org.huwtl.penfold.domain.model.Status.{Ready, Waiting}
 import org.specs2.mock.Mockito
 import org.huwtl.penfold.app.support.DateTimeSource
+import org.huwtl.penfold.readstore.EventRecord
+import org.huwtl.penfold.domain.model.QueueId
+import org.huwtl.penfold.domain.event.FutureTaskCreated
+import org.huwtl.penfold.domain.model.AggregateId
+import scala.Some
+import org.huwtl.penfold.readstore.PageReference
+import org.huwtl.penfold.domain.event.TaskCreated
+import org.huwtl.penfold.readstore.PageRequest
+import org.huwtl.penfold.domain.model.QueueBinding
+import org.huwtl.penfold.readstore.QueryParamType.NumericType
 
 class MongoReadStoreTest extends Specification with DataTables with Mockito with EmbedConnection {
   sequential
@@ -27,17 +32,21 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     clearDownExistingDatabase()
 
     val queueId = QueueId("q1")
-    val payload = Payload(Map("a" -> "123", "b" -> "1"))
     val none : Option[String] = None
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val score = triggerDate.getMillis
     val dateTimeSource = mock[DateTimeSource]
-    val indexes = Indexes(List(Index(List(IndexField("a", "payload.a", multiKey = true))), Index(List(IndexField("a", "payload.a", multiKey = true), IndexField("b", "payload.b")))))
+    val indexes = Indexes(List(
+      Index(None, List(IndexField("a", "payload.a", multiKey = true))),
+      Index(None, List(IndexField("a", "payload.a", multiKey = true), IndexField("b", "payload.b"))),
+      Index(None, List(IndexField("c", "payload.c", multiKey = true), IndexField("b", "payload.b")))
+    ))
 
     val database = getDatabase
     val readStoreUpdater = new MongoReadStoreUpdater(database, new MongoEventTracker("tracker", database), new ObjectSerializer)
-    val readStore = new MongoReadStore(database, indexes, new ObjectSerializer, dateTimeSource)
+    val taskMapper = new MongoTaskMapper(new ObjectSerializer)
+    val readStore = new MongoReadStore(database, indexes, taskMapper, new PaginatedQueryService(database, taskMapper), dateTimeSource)
 
     def clearDownExistingDatabase() = getDatabase.dropDatabase()
 
@@ -52,7 +61,8 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       }
     }
 
-    def entry(aggregateId: String, triggerDate: DateTime) = {
+    def entry(aggregateId: String, triggerDate: DateTime, index: Int) = {
+      val payload = Payload(Map("a" -> "123", "b" -> "1", "c" -> index))
       FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, payload, triggerDate.getMillis)
     }
 
@@ -62,12 +72,12 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
 
     def setupEntries() = {
       val entries = List(
-        entry("f", triggerDate.plusDays(2)),
-        entry("e", triggerDate.plusDays(1)),
-        entry("d", triggerDate.minusDays(0)),
-        entry("c", triggerDate.minusDays(1)),
-        entry("b", triggerDate.minusDays(2)),
-        entry("a", triggerDate.minusDays(3))
+        entry("f", triggerDate.plusDays(2), 1),
+        entry("e", triggerDate.plusDays(1), 2),
+        entry("d", triggerDate.minusDays(0), 3),
+        entry("c", triggerDate.minusDays(1), 4),
+        entry("b", triggerDate.minusDays(2), 5),
+        entry("a", triggerDate.minusDays(3), 6)
       )
       persist(entries)
       entries
@@ -95,7 +105,7 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
     val task3 = createTask("a3", timeout = archiveThreshold.plusSeconds(1).getMillis)
     persist(task1 :: task2 :: task3 :: Nil)
 
-    readStore.retrieveTasksToArchive("payload.timeout").toList.map(_.id.value) must containTheSameElementsAs(List("a1", "a2"))
+    readStore.retrieveTasksToTimeout("payload.timeout").toList.map(_.id.value) must containTheSameElementsAs(List("a1", "a2"))
   }
 
   "retrieve task by id" in new context {
@@ -106,17 +116,45 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
   }
 
   "filtering" should {
-    "filter tasks" in new context {
+    "filter tasks on equality" in new context {
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      readStore.retrieveBy(Filters(List(Filter("a", Some("123")), Filter("b", Some("1")))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(Filter("a", Some("123")))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(Filter("payload.a", Some("123")))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(Filter("unknown", None))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(Filter("unknown", Some("123")))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      readStore.retrieveBy(Filters(List(Filter("a", Some("mismatch")), Filter("b", Some("1")))), pageRequest).entries.map(_.id.value) must beEmpty
-      readStore.retrieveBy(Filters(List(Filter("a", Some("123")), Filter("b", Some("mismatch")))), pageRequest).entries.map(_.id.value) must beEmpty
+      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("payload.a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("unknown", null))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("unknown", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(EQ("a", "mismatch"), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEmpty
+      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("b", "mismatch"))), pageRequest).entries.map(_.id.value) must beEmpty
+    }
+
+    "filter tasks with less than comparison" in new context {
+      setupEntries()
+      val pageRequest = PageRequest(2)
+
+      readStore.retrieveBy(Filters(List(LT("c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(LT("c", "100", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", "1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+    }
+
+    "filter tasks with greater than comparison" in new context {
+      setupEntries()
+      val pageRequest = PageRequest(2)
+
+      readStore.retrieveBy(Filters(List(GT("c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("c", "b"))
+      readStore.retrieveBy(Filters(List(GT("c", "0", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(GT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(GT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("d", "c"))
+      readStore.retrieveBy(Filters(List(GT("c", "5", NumericType), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("a"))
+      readStore.retrieveBy(Filters(List(GT("c", "5", NumericType), EQ("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(GT("c", "6", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(GT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
     }
 
     "apply or operator for multi value filters" in new context {
@@ -127,22 +165,22 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       val event5 = TaskCreated(AggregateId("5"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload.empty, score)
       persist(List(event1, event2, event3, event4, event5))
 
-      "page"            | "filter"                                       | "expected"          |
-        PageRequest(5)  ! Filter("a", Set(Option("ABC"), Option("DEF"))) ! List("3", "2", "1") |
-        PageRequest(5)  ! Filter("a", Set(Option("DEF")))                ! List("3")           |
-        PageRequest(5)  ! Filter("a", Set(Option("DEF"), none))          ! List("5", "3")      |
-        PageRequest(5)  ! Filter("a", Set(none))                         ! List("5")           |
-        PageRequest(5)  ! Filter("a", Set(Option("")))                   ! List("4")           |
-        PageRequest(5)  ! Filter("a", Set(Option("ABC")))                ! List("2", "1")      |> {(page, filter, expected) =>
+      "page"            | "filter"                   | "expected"          |
+        PageRequest(5)  ! IN("a", Set("ABC", "DEF")) ! List("3", "2", "1") |
+        PageRequest(5)  ! IN("a", Set("DEF"))        ! List("3")           |
+        PageRequest(5)  ! IN("a", Set("DEF", null))  ! List("5", "3")      |
+        PageRequest(5)  ! IN("a", Set(null))         ! List("5")           |
+        PageRequest(5)  ! IN("a", Set(""))           ! List("4")           |
+        PageRequest(5)  ! IN("a", Set("ABC"))        ! List("2", "1")      |> {(page, filter, expected) =>
 
-        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, Filters(List(filter)))
+        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(filter)))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
       }
     }
   }
 
   "pagination" should {
-    "retrieve tasks by next page" in new context {
+    "retrieve tasks by next page in descending order" in new context {
       val entries = setupEntries()
 
       "page"                                  | "expected"                         | "hasPrev" | "hasNext" |
@@ -159,25 +197,65 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
       PageRequest(2, forwardFrom(entries(4))) ! List("a")                          ! true      ! false     |
       PageRequest(2, forwardFrom(entries(3))) ! List("b", "a")                     ! true      ! false     |> {(page, expected, hasPrev, hasNext) =>
 
-        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page)
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Desc)
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
         pageResult.previousPage.isDefined must beEqualTo(hasPrev)
         pageResult.nextPage.isDefined must beEqualTo(hasNext)
       }
     }
 
-    "retrieve tasks by previous page" in new context {
+    "retrieve tasks by next page in ascending order" in new context {
+      val entries = setupEntries()
+
+      "page"                                    | "expected"                         | "hasPrev" | "hasNext" |
+        PageRequest(10)                         ! List("a", "b", "c", "d", "e", "f") ! false     ! false     |
+        PageRequest(6)                          ! List("a", "b", "c", "d", "e", "f") ! false     ! false     |
+        PageRequest(5)                          ! List("a", "b", "c", "d", "e")      ! false     ! true      |
+        PageRequest(1)                          ! List("a")                          ! false     ! true      |
+        PageRequest(0)                          ! Nil                                ! false     ! false     |
+        PageRequest(0, forwardFrom(entries(5))) ! Nil                                ! false     ! false     |
+        PageRequest(2, forwardFrom(entries(5))) ! List("b", "c")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(3))) ! List("d", "e")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(4))) ! List("c", "d")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(0))) ! Nil                                ! false     ! false     |
+        PageRequest(2, forwardFrom(entries(1))) ! List("f")                          ! true      ! false     |
+        PageRequest(2, forwardFrom(entries(2))) ! List("e", "f")                     ! true      ! false     |> {(page, expected, hasPrev, hasNext) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Asc)
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+        pageResult.previousPage.isDefined must beEqualTo(hasPrev)
+        pageResult.nextPage.isDefined must beEqualTo(hasNext)
+      }
+    }
+
+    "retrieve tasks by previous page in descending order" in new context {
       val entries = setupEntries()
 
       "page"                                 | "expected"                         | "hasPrev" | "hasNext" |
         PageRequest(2, backFrom(entries(5))) ! List("c", "b")                     ! true      ! true      |
         PageRequest(0, backFrom(entries(5))) ! Nil                                ! false     ! false     |
         PageRequest(2, backFrom(entries(2))) ! List("f", "e")                     ! false     ! true      |
-        PageRequest(2, backFrom(entries(3))) ! List("e", "d")                     ! true      ! true      |
         PageRequest(2, backFrom(entries(0))) ! Nil                                ! false     ! false     |
         PageRequest(2, backFrom(entries(3))) ! List("e", "d")                     ! true      ! true      |> {(page, expected, hasPrev, hasNext) =>
 
-        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page)
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Desc)
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+        pageResult.previousPage.isDefined must beEqualTo(hasPrev)
+        pageResult.nextPage.isDefined must beEqualTo(hasNext)
+      }
+    }
+
+    "retrieve tasks by previous page in ascending order" in new context {
+      val entries = setupEntries()
+
+      "page"                                 | "expected"                         | "hasPrev" | "hasNext" |
+        PageRequest(2, backFrom(entries(0))) ! List("d", "e")                     ! true      ! true      |
+        PageRequest(0, backFrom(entries(0))) ! Nil                                ! false     ! false     |
+        PageRequest(2, backFrom(entries(3))) ! List("a", "b")                     ! false     ! true      |
+        PageRequest(2, backFrom(entries(5))) ! Nil                                ! false     ! false     |
+        PageRequest(2, backFrom(entries(2))) ! List("b", "c")                     ! true      ! true      |> {(page, expected, hasPrev, hasNext) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Asc)
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
         pageResult.previousPage.isDefined must beEqualTo(hasPrev)
         pageResult.nextPage.isDefined must beEqualTo(hasNext)
@@ -194,11 +272,13 @@ class MongoReadStoreTest extends Specification with DataTables with Mockito with
         PageRequest(2)  ! List("2", "1")   ! false     ! false     |
         PageRequest(1)  ! List("2")        ! false     ! true      |> {(page, expected, hasPrev, hasNext) =>
 
-        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, Filters(List(Filter("a", Some("ABC")))))
+        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(EQ("a", "ABC"))))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
         pageResult.previousExists must beEqualTo(hasPrev)
         pageResult.nextExists must beEqualTo(hasNext)
       }
     }
   }
+
+  private def filter(key: String) = EQ(key, null)
 }

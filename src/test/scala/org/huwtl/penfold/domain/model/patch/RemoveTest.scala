@@ -15,8 +15,8 @@ class RemoveTest extends Specification with DataTables {
     }
   }
 
-  "throw error when invalid path" in {
-    Remove("/unknown").exec(Map("a" -> "1")) must throwA[IllegalArgumentException]
-    Remove("/a/1/unknown").exec(Map("a" -> List("1", "2"))) must throwA[IllegalArgumentException]
+  "ignore when path item to delete not found" in {
+    Remove("/unknown").exec(Map("a" -> "1")) must beEqualTo(Map("a" -> "1"))
+    Remove("/a/1/unknown").exec(Map("a" -> List("1", "2"))) must beEqualTo(Map("a" -> List("1", "2")))
   }
 }

@@ -4,17 +4,13 @@ import org.scalatra._
 import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
 import org.huwtl.penfold.app.support.hal.HalQueueFormatter
 import org.huwtl.penfold.domain.model.{Status, AggregateId, QueueId}
-import org.huwtl.penfold.readstore.ReadStore
-import org.huwtl.penfold.command.CommandDispatcher
-import org.huwtl.penfold.app.support.json.ObjectSerializer
-import org.huwtl.penfold.app.web.bean.{RequeueTaskRequest, CompleteTaskRequest, StartTaskRequest}
+import org.huwtl.penfold.readstore.{SortOrderMapping, ReadStore}
 import org.huwtl.penfold.app.support.auth.BasicAuthenticationSupport
 import org.huwtl.penfold.app.AuthenticationCredentials
 
 class QueueResource(readStore: ReadStore,
-                    commandDispatcher: CommandDispatcher,
-                    jsonConverter: ObjectSerializer,
                     halFormatter: HalQueueFormatter,
+                    sortOrderMapping: SortOrderMapping,
                     pageSize: Int,
                     authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport {
 
@@ -28,7 +24,8 @@ class QueueResource(readStore: ReadStore,
         val queue = QueueId(params("queue"))
         val page = parsePageRequestParams(params, pageSize)
         val filters = parseFilters(multiParams)
-        Ok(halFormatter.halFrom(queue, status, page, readStore.retrieveByQueue(queue, status, page, filters), filters))
+        val sortOrder = sortOrderMapping.sortOrderFor(status)
+        Ok(halFormatter.halFrom(queue, status, page, readStore.retrieveByQueue(queue, status, page, sortOrder, filters), filters))
       }
     }
   }
@@ -42,24 +39,6 @@ class QueueResource(readStore: ReadStore,
         }
       }
     }
-  }
-
-  post("/:queue/started") {
-    val startTaskRequest = jsonConverter.deserialize[StartTaskRequest](request.body)
-    commandDispatcher.dispatch(startTaskRequest.toCommand)
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(startTaskRequest.id).get))
-  }
-
-  post("/:queue/ready") {
-    val requeueTaskRequest = jsonConverter.deserialize[RequeueTaskRequest](request.body)
-    commandDispatcher.dispatch(requeueTaskRequest.toCommand)
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(requeueTaskRequest.id).get))
-  }
-
-  post("/:queue/completed") {
-    val completeTaskRequest = jsonConverter.deserialize[CompleteTaskRequest](request.body)
-    commandDispatcher.dispatch(completeTaskRequest.toCommand)
-    Ok(halFormatter.halFrom(QueueId(queueIdParam), readStore.retrieveBy(completeTaskRequest.id).get))
   }
 
   override protected def validCredentials: Option[AuthenticationCredentials] = authenticationCredentials

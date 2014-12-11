@@ -1,6 +1,5 @@
 package org.huwtl.penfold.app.schedule
 
-import java.util.concurrent.Executors._
 import org.huwtl.penfold.command.{CommandDispatcher, TriggerTask}
 import org.huwtl.penfold.readstore.{TaskRecordReference, ReadStore}
 import scala.concurrent.duration.FiniteDuration
@@ -8,28 +7,17 @@ import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 import grizzled.slf4j.Logger
 import scala.util.Try
 
-class TaskTriggerScheduler(readStore: ReadStore, commandDispatcher: CommandDispatcher, frequency: FiniteDuration) {
+class TaskTriggerScheduler(readStore: ReadStore, commandDispatcher: CommandDispatcher, override val frequency: FiniteDuration) extends Scheduler {
   private lazy val logger = Logger(getClass)
 
-  def start() = {
-    newSingleThreadScheduledExecutor.scheduleAtFixedRate(new Runnable() {
-      def run() {
-        try {
-          logger.debug("task trigger check started")
+  override val name: String = "task trigger"
 
-          readStore.retrieveTasksToTrigger.foreach(triggerTask)
-
-          logger.debug("task trigger check completed")
-
-        } catch {
-          case e: Exception => logger.error("error during scheduled task trigger check", e)
-        }
-      }
-    }, 0, frequency.length, frequency.unit)
+  override def process() {
+    readStore.retrieveTasksToTrigger.foreach(triggerTask)
   }
 
   private def triggerTask(task: TaskRecordReference) {
-    Try(commandDispatcher.dispatch(TriggerTask(task.id))) recover {
+    Try(commandDispatcher.dispatch(TriggerTask(task.id, task.version))) recover {
       case e: AggregateConflictException => logger.info("conflict triggering task", e)
       case e: Exception => logger.error("error triggering task", e)
     }

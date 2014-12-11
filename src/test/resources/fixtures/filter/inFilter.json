@@ -1,0 +1,6 @@
+{
+  "op": "IN",
+  "key": "name",
+  "values": ["val", null],
+  "dataType": "STRING"
+}
