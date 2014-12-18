@@ -21,7 +21,8 @@ libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-webapp" % "8.1.7.v20120910" % "container,compile",
   "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container,compile" artifacts Artifact("javax.servlet", "jar", "jar"),
   "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided",
-  "com.theoryinpractise" % "halbuilder-core" % "2.0.2",
+  "com.theoryinpractise" % "halbuilder-core" % "4.0.3",
+  "com.theoryinpractise" % "halbuilder-json" % "4.0.2",
   "org.json4s" %% "json4s-jackson" % "3.2.4",
   "com.typesafe" % "scalalogging-slf4j_2.10" % "1.1.0",
   "net.ceedubs" % "ficus_2.10" % "1.0.0",
@@ -38,7 +39,8 @@ libraryDependencies ++= Seq(
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "org.specs2" % "specs2_2.10" % "2.1.1" % "test",
   "org.scalatra" %% "scalatra-specs2" % "2.2.2" % "test",
-  "com.github.athieriot" %% "specs2-embedmongo" % "0.6.0" % "test"
+  "com.github.athieriot" %% "specs2-embedmongo" % "0.6.0" % "test",
+  "com.opentable.components" % "otj-pg-embedded" % "0.3.0" % "test"
 )
 
 resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"

@@ -1,6 +1,7 @@
 package org.huwtl.penfold.app.support.hal
 
 import com.theoryinpractise.halbuilder.api.RepresentationFactory._
+import com.theoryinpractise.halbuilder.json.JsonRepresentationFactory
 import org.joda.time.format.DateTimeFormat
 import java.net.URI
 import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
@@ -13,7 +14,7 @@ import org.huwtl.penfold.readstore.TaskRecord
 import org.huwtl.penfold.domain.model.QueueBinding
 
 class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedRepresentationProvider {
-  private val representationFactory = new DefaultRepresentationFactory
+  private val representationFactory = new JsonRepresentationFactory().withFlag(COALESCE_ARRAYS)
 
   private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 

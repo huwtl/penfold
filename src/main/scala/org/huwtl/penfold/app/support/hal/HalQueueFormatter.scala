@@ -2,12 +2,12 @@ package org.huwtl.penfold.app.support.hal
 
 import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import java.net.URI
-import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
+import com.theoryinpractise.halbuilder.json.JsonRepresentationFactory
 import org.huwtl.penfold.readstore.{PageRequest, Filters, PageResult, TaskRecord}
 import org.huwtl.penfold.domain.model.{QueueId, Status}
 
 class HalQueueFormatter(baseQueueLink: URI, halTaskFormatter: HalTaskFormatter) extends PaginatedRepresentationProvider {
-  private val representationFactory = new DefaultRepresentationFactory
+  private val representationFactory = new JsonRepresentationFactory().withFlag(COALESCE_ARRAYS)
 
   def halFrom(queueId: QueueId, task: TaskRecord) = {
     createHalQueueEntry(queueId, task).toString(HAL_JSON)
