@@ -1,23 +1,18 @@
 package org.huwtl.penfold.app.readstore.postgres
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgreSQL
-import org.specs2.mutable.Specification
+import org.huwtl.penfold.support.PostgresSpecification
 
-class PostgresTest extends Specification {
+import scala.slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import scala.slick.jdbc.StaticQuery.interpolation
+
+class PostgresTest extends PostgresSpecification {
+
+  val database = newDatabase()
 
   "test embedded postgres" in {
-    val pg = EmbeddedPostgreSQL.start()
-    val c = pg.getPostgresDatabase.getConnection
-    val s = c.createStatement()
-    val rs = s.executeQuery("SELECT 1")
+    val count = database.withDynSession(sql"""SELECT 1""".as[Int].first)
 
-    rs.next()
-    val int = rs.getInt(1)
-    val next = rs.next()
-
-    pg.close()
-
-    int must beEqualTo(1)
-    next must beFalse
+    count must beEqualTo(1)
   }
 }
