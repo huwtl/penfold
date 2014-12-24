@@ -11,8 +11,8 @@ class PostgresTest extends PostgresSpecification {
   val database = newDatabase()
 
   "test embedded postgres" in {
-    val count = database.withDynSession(sql"""SELECT 1""".as[Int].first)
+    val count = database.withDynSession(sql"""SELECT count(data) from tasks""".as[Int].first)
 
-    count must beEqualTo(1)
+    count must beEqualTo(0)
   }
 }

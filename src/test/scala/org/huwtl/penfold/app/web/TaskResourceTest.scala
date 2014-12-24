@@ -13,7 +13,6 @@ import org.huwtl.penfold.readstore.PageResult
 import org.huwtl.penfold.support.TestModel
 import org.huwtl.penfold.domain.model.Status.Waiting
 import org.huwtl.penfold.domain.model.AggregateId
-import scala.Some
 import org.huwtl.penfold.app.AuthenticationCredentials
 import org.huwtl.penfold.readstore.PageRequest
 

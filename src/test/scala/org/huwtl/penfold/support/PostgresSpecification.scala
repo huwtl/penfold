@@ -1,6 +1,6 @@
 package org.huwtl.penfold.support
 
-//import com.googlecode.flyway.core.Flyway
+import com.googlecode.flyway.core.Flyway
 import com.opentable.db.postgres.embedded.EmbeddedPostgreSQL
 import org.specs2.mutable.Specification
 import org.specs2.specification.{Fragments, Step}
@@ -19,10 +19,10 @@ trait PostgresSpecification extends Specification {
 
     val dataSource = postgres.getPostgresDatabase
 
-    //val flyway = new Flyway
-    //flyway.setDataSource(dataSource)
-    //flyway.clean()
-    //flyway.migrate()
+    val flyway = new Flyway
+    flyway.setDataSource(dataSource)
+    flyway.setLocations("readstore/migration")
+    flyway.migrate()
 
     Database.forDataSource(dataSource)
   }
