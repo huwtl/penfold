@@ -15,6 +15,10 @@ trait PostgresSpecification extends Specification {
   override def map(fs: => Fragments) = fs ^ Step(postgres.close())
 
   def newDatabase(): Database = {
+    if (postgres != null) {
+      postgres.close()
+    }
+
     postgres = EmbeddedPostgreSQL.start()
 
     val dataSource = postgres.getPostgresDatabase
