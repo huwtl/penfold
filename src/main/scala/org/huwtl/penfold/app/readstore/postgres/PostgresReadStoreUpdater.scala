@@ -1,4 +1,4 @@
-package org.huwtl.penfold.app.readstore.mongodb
+package org.huwtl.penfold.app.readstore.postgres
 
 import org.huwtl.penfold.readstore.{EventTracker, EventListener, EventRecord}
 import com.mongodb.casbah.Imports._
@@ -25,7 +25,7 @@ import org.huwtl.penfold.domain.event.TaskClosed
 import org.joda.time.format.DateTimeFormat
 import org.huwtl.penfold.domain.model.patch.Patch
 
-class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
+class PostgresReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
 
   private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd")
