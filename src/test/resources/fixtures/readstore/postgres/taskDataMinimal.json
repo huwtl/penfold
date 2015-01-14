@@ -1,0 +1,17 @@
+{
+  "id": "1",
+  "version": 1,
+  "created": "2014-02-25 13:00:00",
+  "queue": "abc",
+  "status": "ready",
+  "statusLastModified": "2014-02-25 13:00:01",
+  "triggerDate": "2014-02-25 14:00:00",
+  "score": 1393336800000,
+  "sort": 1393336800000,
+  "payload": {
+    "data": "value",
+    "inner": {
+      "bool": true
+    }
+  }
+}
