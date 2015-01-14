@@ -15,40 +15,40 @@ class TaskDataSerializerTest extends Specification with DataTables {
   val prevStatus = PreviousStatus(Started, new DateTime(2014, 2, 25, 13, 0, 0, 0))
 
   val taskDataMinimal = TaskData(TestModel.aggregateId,
-                          TestModel.version,
-                          TestModel.createdDate,
-                          TestModel.queueId,
-                          Ready,
-                          new DateTime(2014, 2, 25, 13, 0, 1, 0),
-                          None,
-                          TestModel.triggerDate,
-                          None,
-                          TestModel.triggerDate.getMillis,
-                          TestModel.triggerDate.getMillis,
-                          TestModel.payload,
-                          None,
-                          None)
+                                 TestModel.version,
+                                 TestModel.createdDate,
+                                 TestModel.queueId,
+                                 Ready,
+                                 new DateTime(2014, 2, 25, 13, 0, 1, 0),
+                                 None,
+                                 TestModel.triggerDate,
+                                 None,
+                                 TestModel.triggerDate.getMillis,
+                                 TestModel.triggerDate.getMillis,
+                                 TestModel.payload,
+                                 None,
+                                 None)
 
-  val taskData = TaskData(TestModel.aggregateId,
-                          TestModel.version,
-                          TestModel.createdDate,
-                          TestModel.queueId,
-                          Ready,
-                          new DateTime(2014, 2, 25, 13, 0, 1, 0),
-                          Some(prevStatus),
-                          TestModel.triggerDate,
-                          Some(TestModel.assignee),
-                          TestModel.triggerDate.getMillis,
-                          TestModel.triggerDate.getMillis,
-                          TestModel.payload,
-                          Some("user2"),
-                          Some("user3"))
+  val taskDataFull = TaskData(TestModel.aggregateId,
+                              TestModel.version,
+                              TestModel.createdDate,
+                              TestModel.queueId,
+                              Ready,
+                              new DateTime(2014, 2, 25, 13, 0, 1, 0),
+                              Some(prevStatus),
+                              TestModel.triggerDate,
+                              Some(TestModel.assignee),
+                              TestModel.triggerDate.getMillis,
+                              TestModel.triggerDate.getMillis,
+                              TestModel.payload,
+                              Some("user2"),
+                              Some("user3"))
 
   val serializer = new ObjectSerializer
 
-  "deserialise task data" in {
+  "deserialise task data for postgres" in {
     "jsonPath"             || "expected"                                              |
-    "taskData.json"        !!  taskData       |
+    "taskData.json"        !! taskDataFull       |
     "taskDataMinimal.json" !! taskDataMinimal |> {
       (jsonPath, expected) =>
         val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/readstore/postgres/$jsonPath")).mkString
@@ -57,9 +57,9 @@ class TaskDataSerializerTest extends Specification with DataTables {
     }
   }
 
-  "serialise task data" in {
+  "serialise task data for postgres" in {
     "task"            || "expected"             |
-      taskData        !! "taskData.json"        |
+      taskDataFull    !! "taskData.json"        |
       taskDataMinimal !! "taskDataMinimal.json" |> {
       (task, expected) =>
         val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/readstore/postgres/$expected")).mkString))
