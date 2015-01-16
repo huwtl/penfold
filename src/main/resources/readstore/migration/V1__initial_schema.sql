@@ -1,5 +1,6 @@
 CREATE TABLE tasks
 (
+  id varchar(36) PRIMARY KEY,
   data json NOT NULL
 );
 
