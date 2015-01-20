@@ -1,6 +1,6 @@
 package org.huwtl.penfold.app.readstore.postgres
 
-import org.huwtl.penfold.readstore.{EventTracker, EventListener, EventRecord}
+import org.huwtl.penfold.readstore.{PreviousStatus, EventTracker, EventListener, EventRecord}
 import org.huwtl.penfold.domain.model.Status._
 import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId, Payload, Status}
 import org.huwtl.penfold.app.support.json.ObjectSerializer

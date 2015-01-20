@@ -4,6 +4,7 @@ import org.huwtl.penfold.domain.model._
 import org.joda.time.DateTime
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.Payload
+import org.huwtl.penfold.readstore.{PreviousStatus, TaskRecord}
 
 case class TaskData(id: AggregateId,
                     version: AggregateVersion,
@@ -18,6 +19,8 @@ case class TaskData(id: AggregateId,
                     sort: Long,
                     payload: Payload,
                     rescheduleType: Option[String] = None,
-                    conclusionType: Option[String] = None)
-
-case class PreviousStatus(status: Status, statusLastModified: DateTime)
+                    conclusionType: Option[String] = None) {
+  def toTaskRecord = {
+    TaskRecord(id, version, created, QueueBinding(queue), status, statusLastModified, previousStatus, assignee, triggerDate, score, sort, payload, rescheduleType, conclusionType)
+  }
+}
