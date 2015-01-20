@@ -6,7 +6,6 @@ import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId, Payload, S
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.domain.event._
 import grizzled.slf4j.Logger
-import org.joda.time.DateTime
 import scala.Predef._
 import org.huwtl.penfold.domain.event.TaskRequeued
 import org.huwtl.penfold.domain.event.TaskRescheduled
@@ -17,7 +16,6 @@ import org.huwtl.penfold.domain.event.TaskTriggered
 import org.huwtl.penfold.domain.event.TaskCreated
 import org.huwtl.penfold.domain.event.TaskStarted
 import org.huwtl.penfold.domain.event.TaskClosed
-import org.joda.time.format.DateTimeFormat
 import org.huwtl.penfold.domain.model.patch.Patch
 
 import scala.slick.driver.JdbcDriver.backend.Database
@@ -28,8 +26,6 @@ import java.sql.SQLException
 
 class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
-
-  private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd")
 
   private val dupSqlState = "23505"
 
@@ -99,46 +95,70 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
 
   private def handleTaskRequeuedEvent(event: TaskRequeued) = {
     handleTaskUpdate(event) {
-      task =>
-        val score = event.score.getOrElse(task.as[Long]("score"))
-        Map("previousStatus" -> updatePreviousStatus(task), "status" -> Ready.name, "statusLastModified" -> event.created.toDate, "sort" -> score,
-          "assignee" -> event.assignee.map(_.username), "payload" -> patchPayloadIfExists(task, event.payloadUpdate), "score" -> score)
+      task => {
+        val score = event.score.getOrElse(task.score)
+        task.copy(
+          previousStatus = Some(updatePreviousStatus(task)),
+          status = Ready,
+          statusLastModified = event.created,
+          score = score,
+          sort = score,
+          assignee = event.assignee,
+          payload = patchPayloadIfExists(task, event.payloadUpdate))
+      }
     }
   }
 
   private def handleTaskRescheduledEvent(event: TaskRescheduled) = {
     handleTaskUpdate(event) {
-      task =>
-        val score = event.score.getOrElse(task.as[Long]("score"))
-        Map("previousStatus" -> updatePreviousStatus(task), "status" -> Waiting.name, "statusLastModified" -> event.created.toDate, "sort" -> event.triggerDate.getMillis,
-          "triggerDate" -> event.triggerDate, "rescheduleType" -> event.rescheduleType,
-          "assignee" -> event.assignee.map(_.username), "payload" -> patchPayloadIfExists(task, event.payloadUpdate), "score" -> score)
+      task => {
+        task.copy(
+          previousStatus = Some(updatePreviousStatus(task)),
+          status = Waiting,
+          statusLastModified = event.created,
+          score = event.score.getOrElse(task.score),
+          sort = event.triggerDate.getMillis,
+          triggerDate = event.triggerDate,
+          rescheduleType = event.rescheduleType,
+          assignee = event.assignee,
+          payload = patchPayloadIfExists(task, event.payloadUpdate))
+      }
     }
   }
 
   private def handleTaskClosedEvent(event: TaskClosed) = {
     handleTaskUpdate(event) {
-      task =>
-        Map("previousStatus" -> updatePreviousStatus(task), "status" -> Closed.name, "statusLastModified" -> event.created.toDate, "sort" -> event.created.getMillis,
-          "conclusionType" -> event.conclusionType, "assignee" -> event.assignee.map(_.username), "payload" -> patchPayloadIfExists(task, event.payloadUpdate))
+      task => {
+        task.copy(
+          previousStatus = Some(updatePreviousStatus(task)),
+          status = Closed,
+          statusLastModified = event.created,
+          sort = event.created.getMillis,
+          conclusionType = event.conclusionType,
+          assignee = event.assignee,
+          payload = patchPayloadIfExists(task, event.payloadUpdate))
+      }
     }
   }
 
   private def handleUnassignedEvent(event: TaskUnassigned) = {
     handleTaskUpdate(event) {
-      task =>
-        Map("assignee" -> None, "payload" -> patchPayloadIfExists(task, event.payloadUpdate))
+      task => {
+        task.copy(
+          assignee = None,
+          payload = patchPayloadIfExists(task, event.payloadUpdate))
+      }
     }
   }
 
   private def handleUpdatePayloadEvent(event: TaskPayloadUpdated) = {
     handleTaskUpdate(event) {
-      task =>
-        val status = Status.from(task.as[String]("status")).get
-        val existingScore = task.as[Long]("score")
-        val existingSort = task.as[Long]("sort")
-        Map("payload" -> patchPayloadIfExists(task, Some(event.payloadUpdate)), "score" -> event.score.getOrElse(existingScore),
-          "sort" -> resolveSortOrder(event, status, existingScore).getOrElse(existingSort))
+      task => {
+        task.copy(
+          sort = resolveSortOrder(event, task.status, task.score).getOrElse(task.sort),
+          score = event.score.getOrElse(task.score),
+          payload = patchPayloadIfExists(task, Some(event.payloadUpdate)))
+      }
     }
   }
 
