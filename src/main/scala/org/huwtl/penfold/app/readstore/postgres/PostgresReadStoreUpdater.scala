@@ -65,7 +65,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
 
     database.withDynSession {
       try {
-        sqlu"""INSERT INTO tasks (id, data) VALUES (${task.id.value}, $taskJson)""".execute
+        sqlu"""INSERT INTO tasks (id, data) VALUES (${task.id.value}, $taskJson::json)""".execute
       }
       catch {
         case e: SQLException if e.getSQLState == dupSqlState => {
@@ -164,7 +164,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
 
   private def handleArchiveEvent(event: TaskArchived) = {
     database.withDynSession {
-      sqlu"""DELETE FROM tasks WHERE id = ${event.aggregateId.value} AND data->'version' = ${event.aggregateVersion.previous.number})""".execute
+      sqlu"""DELETE FROM tasks WHERE id = ${event.aggregateId.value} AND (data->>'version')::numeric = ${event.aggregateVersion.previous.number}""".execute
     }
   }
 
@@ -174,7 +174,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
         val defaultsApplied = task.copy(version = event.aggregateVersion, rescheduleType = None, conclusionType = None)
         val updatedTaskJson = objectSerializer.serialize(updatedFields(defaultsApplied))
         database.withDynSession {
-          sqlu"""UPDATE tasks SET data = $updatedTaskJson WHERE id = ${event.aggregateId.value} AND data->'version' = ${event.aggregateVersion.previous.number})""".execute
+          sqlu"""UPDATE tasks SET data = $updatedTaskJson::json WHERE id = ${event.aggregateId.value} AND (data->>'version')::numeric = ${event.aggregateVersion.previous.number}""".execute
         }
       case None =>
     }
@@ -200,7 +200,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
 
   private def existing(id: AggregateId, version: AggregateVersion) = {
     database.withDynSession {
-      val json = sql"""SELECT data FROM tasks WHERE id = ${id.value} AND data->'version' = ${version.previous.number}""".as[String].firstOption
+      val json = sql"""SELECT data FROM tasks WHERE id = ${id.value} AND (data->>'version')::numeric = ${version.previous.number}""".as[String].firstOption
       json.map(objectSerializer.deserialize[TaskData])
     }
   }

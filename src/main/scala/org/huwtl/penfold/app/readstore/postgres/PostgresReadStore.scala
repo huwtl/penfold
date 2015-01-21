@@ -32,20 +32,22 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
   }
 
   override def retrieveTasksToTrigger: Iterator[TaskRecordReference] = {
-    val currentTime = dateTimeSource.now
-
-    val query = MongoDBObject("status" -> Waiting.name) ++ ("sort" $lte currentTime.getMillis)
-    val sort = MongoDBObject("sort" -> 1)
-
-    tasksCollection.find(query).sort(sort).map(taskMapper.mapDocumentToTaskReference(_))
+//    val currentTime = dateTimeSource.now
+//
+//    val query = MongoDBObject("status" -> Waiting.name) ++ ("sort" $lte currentTime.getMillis)
+//    val sort = MongoDBObject("sort" -> 1)
+//
+//    tasksCollection.find(query).sort(sort).map(taskMapper.mapDocumentToTaskReference(_))
+    null
   }
 
   override def retrieveTasksToTimeout(timeoutAttributePath: String, status: Option[Status] = None): Iterator[TaskRecordReference] = {
-    val currentTime = dateTimeSource.now
-
-    val query = status.map(status => MongoDBObject("status" -> status.name)).getOrElse(MongoDBObject.empty) ++ (timeoutAttributePath $lte currentTime.getMillis)
-
-    tasksCollection.find(query).map(taskMapper.mapDocumentToTaskReference(_))
+//    val currentTime = dateTimeSource.now
+//
+//    val query = status.map(status => MongoDBObject("status" -> status.name)).getOrElse(MongoDBObject.empty) ++ (timeoutAttributePath $lte currentTime.getMillis)
+//
+//    tasksCollection.find(query).map(taskMapper.mapDocumentToTaskReference(_))
+    null
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, sortOrder: SortOrder, filters: Filters) = {
@@ -58,8 +60,9 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
   }
 
   private def retrieveByPage(filters: Filters, pageRequest: PageRequest, sortOrder: SortOrder) = {
-    val queryPlan = indexes.buildQueryPlan(filters)
-
-    paginatedQueryService.execQuery(queryPlan, pageRequest, sortOrder)
+//    val queryPlan = indexes.buildQueryPlan(filters)
+//
+//    paginatedQueryService.execQuery(queryPlan, pageRequest, sortOrder)
+    null
   }
 }

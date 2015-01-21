@@ -9,6 +9,7 @@ import org.joda.time.DateTime
 import org.huwtl.penfold.domain.model.Status.{Ready, Started}
 import org.huwtl.penfold.support.TestModel
 import scala.Some
+import org.huwtl.penfold.readstore.PreviousStatus
 
 class TaskDataSerializerTest extends Specification with DataTables {
 

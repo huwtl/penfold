@@ -17,6 +17,8 @@ import org.huwtl.penfold.domain.model.patch.{Value, Replace, Patch}
 class PostgresReadStoreUpdaterTest extends PostgresSpecification {
   sequential
 
+  val database = newDatabase()
+
   trait context extends Scope {
     val aggregateId = AggregateId(UUID.randomUUID().toString)
     val payload = Payload(Map("field1" -> "123", "inner" -> Map("field2" -> 1)))
@@ -32,8 +34,6 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
     val taskRequeuedEvent = TestModel.events.requeuedEvent.copy(aggregateId = aggregateId)
     val taskRescheduledEvent = TestModel.events.rescheduledEvent.copy(aggregateId = aggregateId)
     val archivedEvent = TestModel.events.archivedEvent.copy(aggregateId = aggregateId)
-
-    val database = newDatabase()
     val readStore = new PostgresReadStore(database, new PaginatedQueryService(database), objectSerializer, new DateTimeSource)
     val readStoreUpdater = new PostgresReadStoreUpdater(database, new PostgresEventTracker("tracking", database), objectSerializer)
 
