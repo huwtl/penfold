@@ -62,4 +62,7 @@ class MongoReadStore(database: MongoDB, indexes: Indexes, taskMapper: MongoTaskM
 
     paginatedQueryService.execQuery(queryPlan, pageRequest, sortOrder)
   }
+
+  // todo
+  override def forEachTriggeredTask(f: (TaskRecord) => Unit): Unit = ???
 }

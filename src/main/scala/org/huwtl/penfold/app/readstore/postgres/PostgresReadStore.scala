@@ -31,13 +31,28 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
     taskData.map(_.toTaskRecord)
   }
 
-  override def retrieveTasksToTrigger: Iterator[TaskRecordReference] = {
-//    val currentTime = dateTimeSource.now
-//
-//    val query = MongoDBObject("status" -> Waiting.name) ++ ("sort" $lte currentTime.getMillis)
-//    val sort = MongoDBObject("sort" -> 1)
-//
-//    tasksCollection.find(query).sort(sort).map(taskMapper.mapDocumentToTaskReference(_))
+  override def forEachTriggeredTask(f: TaskRecord => Unit) {
+    val currentTime = dateTimeSource.now
+
+    database.withDynSession {
+      val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${Waiting.name} AND (data->>'sort')::numeric = ${currentTime.getMillis} ORDER BY data->>'sort'""".as[String].iterator()
+      rows.foreach(row => f(objectSerializer.deserialize[TaskData](row).toTaskRecord))
+    }
+    null
+  }
+
+  override def retrieveTasksToTrigger(): Iterator[TaskRecordReference] = {
+    database.withDynSession {
+      val json = sql"""SELECT data FROM tasks WHERE id = 'sdsadas' AND (data->>'version')::numeric = 1""".as[String].iterator()
+      json.map(objectSerializer.deserialize[TaskData])
+    }
+
+    //    val currentTime = dateTimeSource.now
+    //
+    //    val query = MongoDBObject("status" -> Waiting.name) ++ ("sort" $lte currentTime.getMillis)
+    //    val sort = MongoDBObject("sort" -> 1)
+    //
+    //    tasksCollection.find(query).sort(sort).map(taskMapper.mapDocumentToTaskReference(_))
     null
   }
 
