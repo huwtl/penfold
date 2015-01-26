@@ -4,49 +4,49 @@ import org.specs2.specification.Scope
 import org.huwtl.penfold.domain.model._
 import org.joda.time.DateTime
 import org.huwtl.penfold.app.support.DateTimeSource
-import org.huwtl.penfold.app.readstore.mongodb._
 import org.huwtl.penfold.app.support.json.ObjectSerializer
-import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.domain.event._
 import scala.util.Random
 import org.huwtl.penfold.readstore._
-import org.huwtl.penfold.app.readstore.mongodb.Index
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.event.FutureTaskCreated
 import org.huwtl.penfold.domain.model.AggregateId
 import scala.Some
 import org.huwtl.penfold.readstore.PageReference
-import org.huwtl.penfold.app.readstore.mongodb.Indexes
-import org.huwtl.penfold.app.readstore.mongodb.IndexField
 import org.huwtl.penfold.readstore.EventRecord
 import org.huwtl.penfold.readstore.EQ
 import org.huwtl.penfold.domain.model.QueueBinding
 import org.specs2.mock.Mockito
 import org.huwtl.penfold.support.PostgresSpecification
+import scala.collection.mutable
+import scala.slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import scala.slick.jdbc.{StaticQuery => Q}
+import Q.interpolation
 
 class PostgresReadStoreTest extends PostgresSpecification with Mockito {
-
   sequential
 
   val database = newDatabase()
 
+  def clearDownExistingDatabase() = {
+    database.withDynSession {
+      sqlu"""DELETE FROM tasks""".execute()
+      sqlu"""DELETE FROM trackers""".execute()
+    }
+  }
+
   class context extends Scope {
+    clearDownExistingDatabase()
     val queueId = QueueId("q1")
     val none: Option[String] = None
     val created = new DateTime(2014, 2, 22, 12, 0, 0, 0)
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val score = triggerDate.getMillis
     val dateTimeSource = mock[DateTimeSource]
-    val indexes = Indexes(List(
-      Index(None, List(IndexField("a", "payload.a", multiKey = true))),
-      Index(None, List(IndexField("a", "payload.a", multiKey = true), IndexField("b", "payload.b"))),
-      Index(None, List(IndexField("c", "payload.c", multiKey = true), IndexField("b", "payload.b")))
-    ))
 
-
-    val readStoreUpdater = new MongoReadStoreUpdater(database, new MongoEventTracker("tracker", database), new ObjectSerializer)
-    val taskMapper = new MongoTaskMapper(new ObjectSerializer)
-    val readStore = new MongoReadStore(database, indexes, taskMapper, new PaginatedQueryService(database, taskMapper), dateTimeSource)
+    val readStoreUpdater = new PostgresReadStoreUpdater(database, new PostgresEventTracker("tracker", database), new ObjectSerializer)
+    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database), new ObjectSerializer, dateTimeSource)
 
     def persist(events: List[Event]) = {
       Random.shuffle(events).zipWithIndex.foreach {
@@ -85,10 +85,12 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito {
     dateTimeSource.now returns triggerDate
     setupEntries()
 
-    val tasks = List()
+    val triggeredTasks = new mutable.ListBuffer[String]()
     readStore.forEachTriggeredTask(task => {
-      tasks = tasks :: task
-    }) beEqualTo(List("a", "b", "c", "d"))
+      triggeredTasks += task.id.value
+    })
+
+    triggeredTasks must beEqualTo(mutable.ListBuffer("a", "b", "c", "d"))
   }
 
   private def filter(key: String) = EQ(key, null)
