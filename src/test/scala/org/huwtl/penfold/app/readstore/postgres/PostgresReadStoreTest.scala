@@ -81,6 +81,13 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito {
     readStore.checkConnectivity.isLeft must beTrue
   }
 
+  "retrieve task by id" in new context {
+    setupEntries()
+
+    readStore.retrieveBy(AggregateId("a")).isDefined must beTrue
+    readStore.retrieveBy(AggregateId("unknown")).isDefined must beFalse
+  }
+
   "retrieve waiting tasks to trigger" in new context {
     dateTimeSource.now returns triggerDate
     setupEntries()
