@@ -8,7 +8,6 @@ import Q.interpolation
 import org.huwtl.penfold.readstore._
 import scala.Some
 import org.huwtl.penfold.readstore.PageReference
-import com.mongodb.casbah.Imports._
 import org.huwtl.penfold.readstore.PageRequest
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.TaskRecord
@@ -35,7 +34,7 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
         }
       }
       case None => {
-        val resultsWithOverflow = execPageQueryWithOverflow(criteria, sortCriteria(queryPlan, sortOrder), pageSize)
+        val resultsWithOverflow = execPageQueryWithOverflow(criteria, sortCriteria(sortOrder), pageSize)
         val results = resultsWithOverflow take pageSize
         val nextPage = if (resultsWithOverflow.size > pageSize) pageReference(results, Forward) else None
 
@@ -58,19 +57,17 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
     null
   }
 
-  private def execPageQueryWithOverflow(criteria: List[String], pageSize: Int) = {
+  private def execPageQueryWithOverflow(criteria: List[String], sort: String, pageSize: Int) = {
     if (pageSize > 0) {
       val criteriaStr = criteria mkString " AND "
       database.withDynSession {
-        // todo sort order
-        val rows = sql"""SELECT data FROM tasks WHERE $criteriaStr ORDER BY data->>'sort', id""".as[String].list()
+        val rows = sql"""SELECT data FROM tasks WHERE $criteriaStr $sort""".as[String].list()
         rows.map(row => objectSerializer.deserialize[TaskData](row).toTaskRecord)
       }
     }
     else {
       List.empty
     }
-    null
   }
 
   private def enforcePageSortOrder(results: List[TaskRecord], sortOrder: SortOrder) = {
@@ -81,13 +78,13 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
   }
 
   private def sortCriteriaForNavigation(queryPlan: QueryPlan, movingToLesserSortScores: Boolean) = {
-    if (movingToLesserSortScores) sortCriteria(queryPlan, SortOrder.Desc) else sortCriteria(queryPlan, SortOrder.Asc)
+    if (movingToLesserSortScores) sortCriteria(SortOrder.Desc) else sortCriteria(SortOrder.Asc)
   }
 
-  private def sortCriteria(queryPlan: QueryPlan, sortOrder: SortOrder) = {
-    val sortDirection = if (sortOrder == SortOrder.Desc) -1 else 1
+  private def sortCriteria(sortOrder: SortOrder) = {
+    val sortDirection = if (sortOrder == SortOrder.Desc) "DESC" else "ASC"
 
-    MongoDBObject(queryPlan.sortFields.map(_.path -> sortDirection))
+    s"ORDER BY data->>'sort', id $sortDirection"
   }
 
   private def parseLastKnownPageDetails(pageReference: Option[PageReference]) = {
@@ -119,7 +116,7 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
     }
   }
 
-  private def queryForward(queryPlan: QueryPlan, criteria: MongoDBObject, pageSize: Int, lastKnownPageDetails: LastKnownPageDetails, sortOrder: SortOrder, movingToLesserSortScores: Boolean) = {
+  private def queryForward(queryPlan: QueryPlan, criteria: List[String], pageSize: Int, lastKnownPageDetails: LastKnownPageDetails, sortOrder: SortOrder, movingToLesserSortScores: Boolean) = {
     val skipForwardFromLastVisitedPage = pagePositionRestriction(lastKnownPageDetails, withLesserSortScore = movingToLesserSortScores)
     val resultsWithOverflow = execPageQueryWithOverflow(criteria ++ skipForwardFromLastVisitedPage, sortCriteriaForNavigation(queryPlan, movingToLesserSortScores = movingToLesserSortScores), pageSize)
     val results = enforcePageSortOrder(resultsWithOverflow take pageSize, sortOrder)
@@ -129,7 +126,7 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
     PageResult(results, previousPage = previousPage, nextPage = nextPage)
   }
 
-  private def queryBackwards(queryPlan: QueryPlan, criteria: MongoDBObject, pageSize: Int, lastKnownPageDetails: LastKnownPageDetails, sortOrder: SortOrder, movingToLesserSortScores: Boolean) = {
+  private def queryBackwards(queryPlan: QueryPlan, criteria: List[String], pageSize: Int, lastKnownPageDetails: LastKnownPageDetails, sortOrder: SortOrder, movingToLesserSortScores: Boolean) = {
     val skipBackFromLastVisitedPage = pagePositionRestriction(lastKnownPageDetails, withLesserSortScore = movingToLesserSortScores)
     val resultsWithOverflow = execPageQueryWithOverflow(criteria ++ skipBackFromLastVisitedPage, sortCriteriaForNavigation(queryPlan, movingToLesserSortScores = movingToLesserSortScores), pageSize)
     val results = enforcePageSortOrder(resultsWithOverflow take pageSize, sortOrder)
