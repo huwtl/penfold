@@ -11,7 +11,7 @@ import Q.interpolation
 import org.huwtl.penfold.domain.model.{QueueId, AggregateId, Status}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 
-class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQueryService, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource) extends ReadStore {
+class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQueryService, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource, queryPlanFactory: PostgresQueryPlanFactory) extends ReadStore {
   private val connectionSuccess = true
 
   override def checkConnectivity: Either[Boolean, Exception] = {
@@ -53,7 +53,7 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, sortOrder: SortOrder, filters: Filters) = {
-    val filtersWithQueueStatus = new Filters(EQ("queue", queueId.value) :: EQ("status", status.name) :: filters.all)
+    val filtersWithQueueStatus = new Filters(EQ("data->>'queue'", queueId.value) :: EQ("data->>'status'", status.name) :: filters.all)
     retrieveByPage(filtersWithQueueStatus, pageRequest, sortOrder)
   }
 
@@ -62,9 +62,8 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
   }
 
   private def retrieveByPage(filters: Filters, pageRequest: PageRequest, sortOrder: SortOrder) = {
-//    val queryPlan = indexes.buildQueryPlan(filters)
-//
-//    paginatedQueryService.execQuery(queryPlan, pageRequest, sortOrder)
-    null
+    val queryPlan = queryPlanFactory.create(filters)
+
+    paginatedQueryService.execQuery(queryPlan, pageRequest, sortOrder)
   }
 }

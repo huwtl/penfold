@@ -34,7 +34,7 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
     val taskRequeuedEvent = TestModel.events.requeuedEvent.copy(aggregateId = aggregateId)
     val taskRescheduledEvent = TestModel.events.rescheduledEvent.copy(aggregateId = aggregateId)
     val archivedEvent = TestModel.events.archivedEvent.copy(aggregateId = aggregateId)
-    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database), objectSerializer, new DateTimeSource)
+    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, objectSerializer), objectSerializer, new DateTimeSource, new PostgresQueryPlanFactory)
     val readStoreUpdater = new PostgresReadStoreUpdater(database, new PostgresEventTracker("tracking", database), objectSerializer)
 
     def handleEvents(events: Event*) = {
