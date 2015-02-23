@@ -28,6 +28,8 @@ libraryDependencies ++= Seq(
   "net.ceedubs" % "ficus_2.10" % "1.0.0",
   "org.scalatra" %% "scalatra-auth" % "2.2.2",
   "com.typesafe.slick" % "slick_2.10" % "2.0.1",
+  "com.github.tminglei" % "slick-pg_2.10" % "0.8.1",
+  "com.vividsolutions" % "jts" % "1.13",
   "c3p0" % "c3p0" % "0.9.1.2",
   "mysql" % "mysql-connector-java" % "5.1.30",
   "org.mongodb" %% "casbah" % "2.7.0",

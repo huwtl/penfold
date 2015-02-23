@@ -23,16 +23,19 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
+import org.huwtl.penfold.readstore.QueryParamType.NumericType
+import org.huwtl.penfold.domain.model.Status.Ready
+import org.specs2.matcher.DataTables
 
-class PostgresReadStoreTest extends PostgresSpecification with Mockito {
+class PostgresReadStoreTest extends PostgresSpecification with Mockito with DataTables {
   sequential
 
   val database = newDatabase()
 
   def clearDownExistingDatabase() = {
     database.withDynSession {
-      sqlu"""DELETE FROM tasks""".execute()
-      sqlu"""DELETE FROM trackers""".execute()
+      sqlu"""DELETE FROM tasks""".execute
+      sqlu"""DELETE FROM trackers""".execute
     }
   }
 
@@ -98,6 +101,70 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito {
     })
 
     triggeredTasks must beEqualTo(mutable.ListBuffer("a", "b", "c", "d"))
+  }
+
+  "filtering" should {
+    "filter tasks on equality" in new context {
+      setupEntries()
+      val pageRequest = PageRequest(2)
+
+      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("payload.a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("unknown", null))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("unknown", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(EQ("a", "mismatch"), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEmpty
+      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("b", "mismatch"))), pageRequest).entries.map(_.id.value) must beEmpty
+    }
+
+    "filter tasks with less than comparison" in new context {
+      setupEntries()
+      val pageRequest = PageRequest(2)
+
+      readStore.retrieveBy(Filters(List(LT("c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(LT("c", "100", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", "1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+    }
+
+    "filter tasks with greater than comparison" in new context {
+      setupEntries()
+      val pageRequest = PageRequest(2)
+
+      readStore.retrieveBy(Filters(List(GT("c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("c", "b"))
+      readStore.retrieveBy(Filters(List(GT("c", "0", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(GT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(GT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("d", "c"))
+      readStore.retrieveBy(Filters(List(GT("c", "5", NumericType), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("a"))
+      readStore.retrieveBy(Filters(List(GT("c", "5", NumericType), EQ("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(GT("c", "6", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(GT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+    }
+
+    "apply or operator for multi value filters" in new context {
+      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "DEF")), score)
+      val event4 = TaskCreated(AggregateId("4"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "")), score)
+      val event5 = TaskCreated(AggregateId("5"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload.empty, score)
+      persist(List(event1, event2, event3, event4, event5))
+
+      "page"            | "filter"                   | "expected"          |
+        PageRequest(5)  ! IN("a", Set("ABC", "DEF")) ! List("3", "2", "1") |
+        PageRequest(5)  ! IN("a", Set("DEF"))        ! List("3")           |
+        PageRequest(5)  ! IN("a", Set("DEF", null))  ! List("5", "3")      |
+        PageRequest(5)  ! IN("a", Set(null))         ! List("5")           |
+        PageRequest(5)  ! IN("a", Set(""))           ! List("4")           |
+        PageRequest(5)  ! IN("a", Set("ABC"))        ! List("2", "1")      |> {(page, filter, expected) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(filter)))
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+      }
+    }
   }
 
   private def filter(key: String) = EQ(key, null)
