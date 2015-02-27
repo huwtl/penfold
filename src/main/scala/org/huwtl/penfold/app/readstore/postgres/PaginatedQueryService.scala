@@ -2,82 +2,90 @@ package org.huwtl.penfold.app.readstore.postgres
 
 import scala.slick.driver.JdbcDriver.backend.Database
 
-import scala.slick.jdbc.{StaticQuery => Q, GetResult}
+import scala.slick.jdbc.{StaticQuery => Q}
 import org.huwtl.penfold.readstore._
 import scala.Some
-import org.huwtl.penfold.readstore.PageReference
 import org.huwtl.penfold.readstore.PageRequest
-import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.readstore.TaskRecord
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.app.readstore.postgres.NavigationDirection.{Forward, Reverse}
-import com.github.tminglei.slickpg._
+import Database.dynamicSession
 
 import MyPostgresDriver.simple._
 
 import scala.slick.lifted
+import org.huwtl.penfold.app.readstore.postgres.TasksTable.TasksTable
+import grizzled.slf4j.Logger
 
+class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializer, aliases: Aliases) {
 
-class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializer) {
+  private lazy val logger = Logger(getClass)
 
-  private val pageReferenceSeparator = "~"
+  val sortColumn = "sort"
 
-  case class JsonBean(id: String, json: JsonString)
+  val lastKnownPageTransformer = new LastKnownPageDetailsTransformer()
 
-  class TestTable(tag: lifted.Tag) extends Table[JsonBean](tag, "tasks") {
-    def id = column[String]("id", O.DBType("varchar(36)"), O.PrimaryKey)
-
-    def data = column[JsonString]("data")
-
-    def * = (id, data) <> (JsonBean.tupled, JsonBean.unapply)
-  }
-  val Tasks = TableQuery[TestTable]
-
-  def execQuery(queryPlan: PostgresQueryPlan, pageRequest: PageRequest, sortOrder: SortOrder): PageResult = {
+  def execQuery(filters: Filters, pageRequest: PageRequest, sortOrder: SortOrder): PageResult = {
     val pageSize = pageRequest.pageSize
 
-    val criteria = queryPlan.restrictionFields
+    val query = TasksTable.Tasks
 
-    parseLastKnownPageDetails(pageRequest.pageReference) match {
+    lastKnownPageTransformer.toPageDetails(pageRequest.pageReference) match {
       case Some(lastKnownPageDetails) =>
         (lastKnownPageDetails.direction, sortOrder) match {
-          case (Forward, SortOrder.Desc) => queryForward(queryPlan, List()/*criteria*/, pageSize, lastKnownPageDetails, SortOrder.Desc, movingToLesserSortScores = true)
-          case (Forward, SortOrder.Asc) => queryForward(queryPlan, List()/*criteria*/, pageSize, lastKnownPageDetails, SortOrder.Asc, movingToLesserSortScores = false)
-          case (Reverse, SortOrder.Desc) => queryBackwards(queryPlan, List()/*criteria*/, pageSize, lastKnownPageDetails, SortOrder.Desc, movingToLesserSortScores = false)
-          case (Reverse, SortOrder.Asc) => queryBackwards(queryPlan, List()/*criteria*/, pageSize, lastKnownPageDetails, SortOrder.Asc, movingToLesserSortScores = true)
+          case (Forward, SortOrder.Desc) => queryForward(query, filters, pageSize, lastKnownPageDetails, SortOrder.Desc, movingToLesserSortScores = true)
+          case (Forward, SortOrder.Asc) => queryForward(query, filters, pageSize, lastKnownPageDetails, SortOrder.Asc, movingToLesserSortScores = false)
+          case (Reverse, SortOrder.Desc) => queryBackwards(query, filters, pageSize, lastKnownPageDetails, SortOrder.Desc, movingToLesserSortScores = false)
+          case (Reverse, SortOrder.Asc) => queryBackwards(query, filters, pageSize, lastKnownPageDetails, SortOrder.Asc, movingToLesserSortScores = true)
         }
       case None =>
-        val resultsWithOverflow = execPageQueryWithOverflow(criteria, lastKnownPageDetails, pageSize)
+        val resultsWithOverflow = execPageQueryWithOverflow(query, filters, sortOrder, pageSize)
         val results = resultsWithOverflow take pageSize
-        val nextPage = if (resultsWithOverflow.size > pageSize) pageReference(results, Forward) else None
+        val nextPage = if (resultsWithOverflow.size > pageSize) lastKnownPageTransformer.toPageReference(results, Forward) else None
 
         PageResult(results, previousPage = None, nextPage = nextPage)
     }
   }
 
-  private def execPageQueryWithOverflow(criteria: List[PostgresRestrictionField], lastKnownPageDetails: LastKnownPageDetails, withLesserSortScore: Boolean, pageSize: Int, sortOrder: SortOrder) = {
+  private def execPageQueryWithOverflow(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], filters: Filters, sortOrder: SortOrder, pageSize: Int) = {
     if (pageSize > 0) {
       database.withDynSession {
-        val query: lifted.Query[TestTable, TestTable#TableElementType, Seq] = criteria.foldLeft(pagePositionRestriction(lastKnownPageDetails, withLesserSortScore))((query, restriction) => {
-          query.filter(row =>
-          restriction.filter match {
-            case EQ(key, value, dataType) => row.data.+>>(restriction.path).asColumnOf[Long] === value.bind
-            case IN(key, values, dataType) => row.data.+>>(restriction.path) inSetBind values
-            case LT(key, value, dataType) => row.data.+>>(restriction.path).asColumnOf[Long] < Option(value).map(_.toLong).getOrElse(Long.MinValue).bind
-            case GT(key, value, dataType) => row.data.+>>(restriction.path).asColumnOf[Long] > Option(value).map(_.toLong).getOrElse(Long.MaxValue).bind
-            case _ => throw new IllegalStateException("unsupported filter type")
-          })
+        val queryWithCriteria: lifted.Query[TasksTable, TasksTable#TableElementType, Seq] = filters.all.foldLeft(query)((q, f) => {
+
+          val filterPath = aliases.path(Alias(f.key)).value
+
+          q.filter((row: TasksTable) =>
+            f match {
+              case EQ(key, value, dataType) => jsonPath(row, filterPath) === value.bind
+              case IN(key, values, dataType) => jsonPath(row, filterPath) inSetBind values
+              case LT(key, value, dataType) => jsonPath(row, filterPath).asColumnOf[Long] < Option(value).map(_.toLong).getOrElse(Long.MinValue).bind
+              case GT(key, value, dataType) => jsonPath(row, filterPath).asColumnOf[Long] > Option(value).map(_.toLong).getOrElse(Long.MaxValue).bind
+              case _ => throw new IllegalStateException("unsupported filter type")
+            })
         })
 
-        val sort = sortCriteria(query, sortOrder)
+        val sort = sortCriteria(queryWithCriteria, sortOrder).take(pageSize + 1)
 
-        val rows = sort.map(_.data).take(pageSize + 1).list
+        val rows = sort.map(_.data)
 
-        rows.map(row => objectSerializer.deserialize[TaskData](row.value).toTaskRecord)
+        logger.info(s"query: ${rows.selectStatement}")
+
+        rows.list.map(row => objectSerializer.deserialize[TaskData](row.value).toTaskRecord)
       }
     }
     else {
       List.empty
+    }
+  }
+
+  private def jsonPath(row: TasksTable, path: String) = {
+    val parts = path.split("\\.").toList
+
+    parts match {
+      case List(part) => row.data.+>>(part)
+      case firstPart :: otherParts => otherParts.init.foldLeft(row.data.+>(firstPart))((currentJsonPath, nextPart) => {
+        currentJsonPath.+>(nextPart)
+      }).+>>(parts.last)
     }
   }
 
@@ -88,69 +96,49 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
     }
   }
 
-  private def sortCriteriaForNavigation(queryPlan: PostgresQueryPlan, movingToLesserSortScores: Boolean) = {
-    if (movingToLesserSortScores) sortCriteria(SortOrder.Desc) else sortCriteria(SortOrder.Asc)
+  private def sortCriteriaForNavigation(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], movingToLesserSortScores: Boolean) = {
+    if (movingToLesserSortScores) sortCriteria(query, SortOrder.Desc) else sortCriteria(query, SortOrder.Asc)
   }
 
-  private def sortCriteria(query: lifted.Query[TestTable, TestTable#TableElementType, Seq], sortOrder: SortOrder) = {
-    if (sortOrder == SortOrder.Desc) query.sortBy(_.data.+>>("sort".desc).asColumnOf[Long]).sortBy(_.id) else query.sortBy(_.data.+>>("sort".asc).asColumnOf[Long]).sortBy(_.id)
+  private def sortCriteria(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], sortOrder: SortOrder) = {
+    val sortById = query.sortBy(_.id.desc)
+
+    if (sortOrder == SortOrder.Desc)
+      sortById.sortBy(row => row.data.+>>(sortColumn).asColumnOf[Long].desc)
+    else
+      sortById.sortBy(row => row.data.+>>(sortColumn).asColumnOf[Long].asc)
   }
 
-  private def parseLastKnownPageDetails(pageReference: Option[PageReference]) = {
-    if (pageReference.isDefined) {
-      pageReference.get.value.split(pageReferenceSeparator) match {
-        case Array(idFromLastViewedPage, sortValueFromLastViewedPage, navigationalDirection) =>
-          Some(LastKnownPageDetails(AggregateId(idFromLastViewedPage), sortValueFromLastViewedPage.toLong, if (navigationalDirection == "1") Forward else Reverse))
-        case _ => None
-      }
-    }
-    else {
-      None
-    }
-  }
-
-  private def pageReference(results: List[TaskRecord], direction: NavigationDirection) = {
-    direction match {
-      case Forward => Some(PageReference(Array(results.last.id.value, results.last.sort, 1) mkString pageReferenceSeparator))
-      case Reverse => Some(PageReference(Array(results.head.id.value, results.head.sort, 0) mkString pageReferenceSeparator))
-    }
-  }
-
-  private def pagePositionRestriction(lastKnownDetails: LastKnownPageDetails, withLesserSortScore: Boolean) = {
+  private def pagePositionRestriction(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], lastKnownDetails: LastKnownPageDetails, withLesserSortScore: Boolean, pageSize: Int) = {
     if (withLesserSortScore) {
-      Tasks.filter(row => {
-        (row.data.+>>("sort").asColumnOf[Long] === lastKnownDetails.sortValue.bind && row.id < lastKnownDetails.id.value.bind) || row.data.+>>("sort").asColumnOf[Long] < lastKnownDetails.sortValue.bind
+      query.filter(row => {
+        (row.data.+>>(sortColumn).asColumnOf[Long] === lastKnownDetails.sortValue.bind && row.id < lastKnownDetails.id.value.bind) || row.data.+>>(sortColumn).asColumnOf[Long] < lastKnownDetails.sortValue.bind
       })
     }
     else {
-      Tasks.filter(row => {
-        (row.data.+>>("sort").asColumnOf[Long] === lastKnownDetails.sortValue.bind && row.id > lastKnownDetails.id.value.bind) || row.data.+>>("sort").asColumnOf[Long] > lastKnownDetails.sortValue.bind
+      query.filter(row => {
+        (row.data.+>>(sortColumn).asColumnOf[Long] === lastKnownDetails.sortValue.bind && row.id > lastKnownDetails.id.value.bind) || row.data.+>>(sortColumn).asColumnOf[Long] > lastKnownDetails.sortValue.bind
       })
     }
   }
 
-  private def queryForward(queryPlan: PostgresQueryPlan, criteria: List[String], pageSize: Int, lastKnownPageDetails: LastKnownPageDetails, sortOrder: SortOrder, movingToLesserSortScores: Boolean) = {
-//    val skipForwardFromLastVisitedPage = pagePositionRestriction(lastKnownPageDetails, withLesserSortScore = movingToLesserSortScores)
-//    val resultsWithOverflow = execPageQueryWithOverflow(skipForwardFromLastVisitedPage ::: criteria, sortCriteriaForNavigation(queryPlan, movingToLesserSortScores = movingToLesserSortScores), pageSize)
-//    val results = enforcePageSortOrder(resultsWithOverflow take pageSize, sortOrder)
-//    val previousPage = if (results.nonEmpty) pageReference(results, Reverse) else None
-//    val nextPage = if (resultsWithOverflow.size > pageSize) pageReference(results, Forward) else None
-//
-//    PageResult(results, previousPage = previousPage, nextPage = nextPage)
-    PageResult.empty
+  private def queryForward(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], filters: Filters, pageSize: Int, lastKnownPageDetails: LastKnownPageDetails, sortOrder: SortOrder, movingToLesserSortScores: Boolean) = {
+    val skipForwardFromLastVisitedPage = pagePositionRestriction(query, lastKnownPageDetails, movingToLesserSortScores, pageSize)
+    val resultsWithOverflow = execPageQueryWithOverflow(sortCriteriaForNavigation(skipForwardFromLastVisitedPage, movingToLesserSortScores), filters, sortOrder, pageSize)
+    val results = enforcePageSortOrder(resultsWithOverflow take pageSize, sortOrder)
+    val previousPage = if (results.nonEmpty) lastKnownPageTransformer.toPageReference(results, Reverse) else None
+    val nextPage = if (resultsWithOverflow.size > pageSize) lastKnownPageTransformer.toPageReference(results, Forward) else None
+
+    PageResult(results, previousPage = previousPage, nextPage = nextPage)
   }
 
-  private def queryBackwards(queryPlan: PostgresQueryPlan, criteria: List[String], pageSize: Int, lastKnownPageDetails: LastKnownPageDetails, sortOrder: SortOrder, movingToLesserSortScores: Boolean) = {
-//    val skipBackFromLastVisitedPage = pagePositionRestriction(lastKnownPageDetails, withLesserSortScore = movingToLesserSortScores)
-//    val resultsWithOverflow = execPageQueryWithOverflow(skipBackFromLastVisitedPage ::: criteria, sortCriteriaForNavigation(queryPlan, movingToLesserSortScores = movingToLesserSortScores), pageSize)
-//    val results = enforcePageSortOrder(resultsWithOverflow take pageSize, sortOrder)
-//    val previousPage = if (resultsWithOverflow.size > pageSize) pageReference(results, Reverse) else None
-//    val nextPage = if (results.nonEmpty) pageReference(results, Forward) else None
-//
-//    PageResult(results, previousPage = previousPage, nextPage = nextPage)
-    PageResult.empty
+  private def queryBackwards(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], filters: Filters, pageSize: Int, lastKnownPageDetails: LastKnownPageDetails, sortOrder: SortOrder, movingToLesserSortScores: Boolean) = {
+    val skipBackFromLastVisitedPage = pagePositionRestriction(query, lastKnownPageDetails, movingToLesserSortScores, pageSize)
+    val resultsWithOverflow = execPageQueryWithOverflow(sortCriteriaForNavigation(skipBackFromLastVisitedPage, movingToLesserSortScores), filters, sortOrder, pageSize)
+    val results = enforcePageSortOrder(resultsWithOverflow take pageSize, sortOrder)
+    val previousPage = if (resultsWithOverflow.size > pageSize) lastKnownPageTransformer.toPageReference(results, Reverse) else None
+    val nextPage = if (results.nonEmpty) lastKnownPageTransformer.toPageReference(results, Forward) else None
+
+    PageResult(results, previousPage = previousPage, nextPage = nextPage)
   }
-
-  case class Criteria(expression: String, params: List[Any])
-
 }

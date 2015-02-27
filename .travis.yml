@@ -6,7 +6,7 @@ scala:
    - "2.10.3"
 
 jdk:
-  - openjdk7
+  - openjdk8
 
 branches:
   except:

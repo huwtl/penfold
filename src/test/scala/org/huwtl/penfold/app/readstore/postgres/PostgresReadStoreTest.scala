@@ -47,9 +47,10 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
     val triggerDate = new DateTime(2014, 2, 22, 12, 30, 0, 0)
     val score = triggerDate.getMillis
     val dateTimeSource = mock[DateTimeSource]
+    val aliases = Aliases(Map(Alias("a") -> Path("payload.a"), Alias("b") -> Path("payload.b"), Alias("c") -> Path("payload.c")))
 
     val readStoreUpdater = new PostgresReadStoreUpdater(database, new PostgresEventTracker("tracker", database), new ObjectSerializer)
-    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, new ObjectSerializer), new ObjectSerializer, dateTimeSource, new PostgresQueryPlanFactory)
+    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, new ObjectSerializer, aliases), new ObjectSerializer, dateTimeSource, aliases)
 
     def persist(events: List[Event]) = {
       Random.shuffle(events).zipWithIndex.foreach {
@@ -108,24 +109,24 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(EQ("a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
       readStore.retrieveBy(Filters(List(EQ("payload.a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(EQ("unknown", null))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-      readStore.retrieveBy(Filters(List(EQ("unknown", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      readStore.retrieveBy(Filters(List(EQ("a", "mismatch"), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEmpty
-      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("b", "mismatch"))), pageRequest).entries.map(_.id.value) must beEmpty
+      readStore.retrieveBy(Filters(List(EQ("a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("payload.b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("payload.unknown", null))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("payload.unknown", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(EQ("a", "mismatch"), EQ("payload.b", "1"))), pageRequest).entries.map(_.id.value) must beEmpty
+      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("payload.b", "mismatch"))), pageRequest).entries.map(_.id.value) must beEmpty
     }
 
     "filter tasks with less than comparison" in new context {
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      readStore.retrieveBy(Filters(List(LT("c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(LT("payload.c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
       readStore.retrieveBy(Filters(List(LT("c", "100", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
       readStore.retrieveBy(Filters(List(LT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
-      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
-      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("payload.b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("payload.b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
       readStore.retrieveBy(Filters(List(LT("c", "1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
       readStore.retrieveBy(Filters(List(LT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
       readStore.retrieveBy(Filters(List(LT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
@@ -135,7 +136,7 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      readStore.retrieveBy(Filters(List(GT("c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("c", "b"))
+      readStore.retrieveBy(Filters(List(GT("payload.c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("c", "b"))
       readStore.retrieveBy(Filters(List(GT("c", "0", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
       readStore.retrieveBy(Filters(List(GT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
       readStore.retrieveBy(Filters(List(GT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("d", "c"))
@@ -153,13 +154,13 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
       val event5 = TaskCreated(AggregateId("5"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload.empty, score)
       persist(List(event1, event2, event3, event4, event5))
 
-      "page"            | "filter"                   | "expected"          |
-        PageRequest(5)  ! IN("a", Set("ABC", "DEF")) ! List("3", "2", "1") |
-        PageRequest(5)  ! IN("a", Set("DEF"))        ! List("3")           |
-        PageRequest(5)  ! IN("a", Set("DEF", null))  ! List("5", "3")      |
-        PageRequest(5)  ! IN("a", Set(null))         ! List("5")           |
-        PageRequest(5)  ! IN("a", Set(""))           ! List("4")           |
-        PageRequest(5)  ! IN("a", Set("ABC"))        ! List("2", "1")      |> {(page, filter, expected) =>
+      "page"            | "filter"                           | "expected"          |
+        PageRequest(5)  ! IN("payload.a", Set("ABC", "DEF")) ! List("3", "2", "1") |
+        PageRequest(5)  ! IN("a", Set("DEF"))                ! List("3")           |
+        PageRequest(5)  ! IN("a", Set("DEF", null))          ! List("3")           |
+        PageRequest(5)  ! IN("a", Set(null))                 ! List()              |
+        PageRequest(5)  ! IN("a", Set(""))                   ! List("4")           |
+        PageRequest(5)  ! IN("a", Set("ABC"))                ! List("2", "1")      |> {(page, filter, expected) =>
 
         val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(filter)))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
