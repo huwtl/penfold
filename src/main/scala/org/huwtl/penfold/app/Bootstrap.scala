@@ -15,9 +15,8 @@ import org.huwtl.penfold.app.support.{DateTimeSource, UUIDFactory}
 import org.huwtl.penfold.app.schedule.{ReadyTaskAssignmentTimeoutScheduler, EventSyncScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
 import com.codahale.metrics.health.HealthCheckRegistry
 import org.huwtl.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
-import org.huwtl.penfold.app.readstore.mongodb._
 import org.huwtl.penfold.app.store.jdbc._
-import com.mongodb.casbah.Imports._
+import org.huwtl.penfold.app.readstore.postgres.{PaginatedQueryService, PostgresReadStore, PostgresReadStoreUpdater, PostgresEventTracker}
 
 class Bootstrap extends LifeCycle {
   override def init(context: ServletContext) {
@@ -33,14 +32,10 @@ class Bootstrap extends LifeCycle {
     val eventStore = new JdbcEventStore(domainJdbcPool, eventSerializer)
     val eventQueryService = new JdbcDomainEventQueryService(domainJdbcPool, eventSerializer)
 
-    val readStoreServers = config.readStoreMongoDatabaseServers.servers.map(server => new ServerAddress(server.host, server.port))
-    val readStoreDatabase = MongoClient(readStoreServers)(config.readStoreMongoDatabaseServers.databaseName)
-    val readStoreEventProvider = new NewEventsProvider(new MongoNextExpectedEventIdProvider("readStoreEventTracker", readStoreDatabase), eventQueryService)
-    val readStoreUpdater = new EventNotifier(readStoreEventProvider, new MongoReadStoreUpdater(readStoreDatabase, new MongoEventTracker("readStoreEventTracker", readStoreDatabase), objectSerializer))
-
-    val indexes = Indexes(config.readStoreIndexes)
-
-    new IndexWriter().write(readStoreDatabase, indexes, config)
+    val readStoreJdbcPool = new JdbcDatabaseInitialiser().init(new JdbcConnectionPoolFactory().create(config.readStoreJdbcConnectionPool))
+    val postgresEventTracker = new PostgresEventTracker("readStoreEventTracker", readStoreJdbcPool)
+    val readStoreEventProvider = new NewEventsProvider(postgresEventTracker, eventQueryService)
+    val readStoreUpdater = new EventNotifier(readStoreEventProvider, new PostgresReadStoreUpdater(readStoreJdbcPool, postgresEventTracker, objectSerializer))
 
     val eventNotifiers = new ActorBasedEventNotifiers(new EventNotifiersImpl(List(readStoreUpdater)), noOfWorkers = 3)
 
@@ -48,9 +43,7 @@ class Bootstrap extends LifeCycle {
 
     val commandDispatcher = new CommandDispatcherFactory(domainRepository, aggregateIdFactory).create
 
-    val mongoTaskParser = new MongoTaskMapper(objectSerializer)
-
-    val readStore = new MongoReadStore(readStoreDatabase, indexes, mongoTaskParser, new PaginatedQueryService(readStoreDatabase, mongoTaskParser), new DateTimeSource)
+    val readStore = new PostgresReadStore(readStoreJdbcPool, new PaginatedQueryService(readStoreJdbcPool, objectSerializer, config.readStorePathAliases), objectSerializer, new DateTimeSource, config.readStorePathAliases)
 
     val baseUrl = URI.create(config.publicUrl)
 

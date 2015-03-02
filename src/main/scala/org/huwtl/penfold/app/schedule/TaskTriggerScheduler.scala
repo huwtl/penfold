@@ -13,7 +13,7 @@ class TaskTriggerScheduler(readStore: ReadStore, commandDispatcher: CommandDispa
   override val name: String = "task trigger"
 
   override def process() {
-    readStore.retrieveTasksToTrigger.foreach(triggerTask)
+    readStore.forEachTriggeredTask(triggerTask)
   }
 
   private def triggerTask(task: TaskRecordReference) {

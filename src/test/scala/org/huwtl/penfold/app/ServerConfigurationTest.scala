@@ -6,7 +6,6 @@ import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
-import org.huwtl.penfold.app.readstore.mongodb.{IndexField, Index}
 
 class ServerConfigurationTest extends Specification {
 
@@ -18,17 +17,13 @@ class ServerConfigurationTest extends Specification {
 
   val jdbcUrl = "jdbc:hsqldb:mem:penfold;sql.syntax_mys=true"
 
-  val indexes = List(
-    Index(Some("index1"), List(IndexField("field1", "payload.field1"))),
-    Index(Some("index2"), List(IndexField("field1", "payload.field1"), IndexField("field2", "payload.field2", multiKey = true))))
-
   "load minimally populated config file" in {
     val expectedConfig = ServerConfiguration(
       publicUrl,
       httpPort,
       None,
       JdbcConnectionPool(jdbcUrl, "user", "", "org.hsqldb.jdbcDriver"),
-      MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 12345)))
+      JdbcConnectionPool(jdbcUrl, "user2", "", "org.hsqldb.jdbcDriver")
     )
 
     val config = loadConfig("minimal")
@@ -42,8 +37,8 @@ class ServerConfigurationTest extends Specification {
       httpPort,
       Some(authCredentials),
       JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
-      MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 12345))),
-      readStoreIndexes = indexes,
+      JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
+      Map("alias1" -> "path1", "alias2" -> "path2"),
       sortOrdering = SortOrderingConfiguration("Desc", "Desc", "Asc", "Asc"),
       pageSize = 25,
       eventSync = FiniteDuration(2L, MINUTES),

@@ -23,8 +23,7 @@ Penfold is spoken to via a Restful API, based on the media type [HAL+JSON](http:
 Prerequisites:
 
 * [JVM](https://www.java.com/en/download/) 6+
-* [Mysql server](http://www.mysql.com/)
-* [MongoDB server](http://www.mongodb.org/) 
+* [Postgres server](http://www.postgresql.org/)
 
 1.
 Download the latest penfold JAR file from [Maven Central](http://search.maven.org/). The JAR can be found under "org.huwtl.penfold"
@@ -49,14 +48,11 @@ penfold {
     password = <PASSWORD>
   }
 
-  readStoreMongoDatabaseServers {
-    databaseName = <DATABASE_NAME>
-    servers = [
-      {
-        host = "127.0.0.1"
-        port = 27017
-      }
-    ]
+  readStoreJdbcConnectionPool {
+    driver = com.mysql.jdbc.Driver
+    url = "jdbc:mysql://localhost:3306/<EMPTY_DATABASE_NAME>"
+    username = <USERNAME>
+    password = <PASSWORD>
   }
 }
 ```

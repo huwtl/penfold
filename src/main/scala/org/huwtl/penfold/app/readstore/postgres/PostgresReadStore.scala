@@ -30,23 +30,19 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
     taskData.map(_.toTaskRecord)
   }
 
-  override def forEachTriggeredTask(f: TaskRecord => Unit) {
+  override def forEachTriggeredTask(f: TaskRecordReference => Unit) {
     val currentTime = dateTimeSource.now
 
     database.withDynSession {
       val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${Waiting.name} AND (data->>'sort')::numeric <= ${currentTime.getMillis} ORDER BY data->>'sort'""".as[String].iterator
-      rows.foreach(row => f(objectSerializer.deserialize[TaskData](row).toTaskRecord))
+      rows.foreach(row => f(objectSerializer.deserialize[TaskData](row).toTaskRecordReference))
     }
-  }
-
-  override def retrieveTasksToTrigger(): Iterator[TaskRecordReference] = {
-    null
   }
 
   override def retrieveTasksToTimeout(timeoutAttributePath: String, status: Option[Status] = None): Iterator[TaskRecordReference] = {
 //    val currentTime = dateTimeSource.now
 //
-//    val query = status.map(status => MongoDBObject("status" -> status.name)).getOrElse(MongoDBObject.empty) ++ (timeoutAttributePath $lte currentTime.getMillis)
+//    val query = status.map(status => DBObject("status" -> status.name)).getOrElse(DBObject.empty) ++ (timeoutAttributePath $lte currentTime.getMillis)
 //
 //    tasksCollection.find(query).map(taskMapper.mapDocumentToTaskReference(_))
     null

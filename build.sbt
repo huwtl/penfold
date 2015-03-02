@@ -32,16 +32,15 @@ libraryDependencies ++= Seq(
   "com.vividsolutions" % "jts" % "1.13",
   "c3p0" % "c3p0" % "0.9.1.2",
   "mysql" % "mysql-connector-java" % "5.1.30",
-  "org.mongodb" %% "casbah" % "2.7.0",
+  "postgresql" % "postgresql" % "9.1-901-1.jdbc4",
   "com.googlecode.flyway" % "flyway-core" % "2.3.1",
-  "org.hsqldb" % "hsqldb" % "2.3.2",
   "com.typesafe.akka" %% "akka-actor" % "2.2.4",
   "com.codahale.metrics" % "metrics-healthchecks" % "3.0.2",
   "me.moocar" % "logback-gelf" % "0.10p1",
+  "org.hsqldb" % "hsqldb" % "2.3.2" % "test",
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "org.specs2" % "specs2_2.10" % "2.1.1" % "test",
   "org.scalatra" %% "scalatra-specs2" % "2.2.2" % "test",
-  "com.github.athieriot" %% "specs2-embedmongo" % "0.6.0" % "test",
   "com.opentable.components" % "otj-pg-embedded" % "0.3.0" % "test"
 )
 
