@@ -23,13 +23,13 @@ Penfold is spoken to via a Restful API, based on the media type [HAL+JSON](http:
 Prerequisites:
 
 * [JVM](https://www.java.com/en/download/) 6+
-* [Postgres server](http://www.postgresql.org/)
+* [Postgres database server](http://www.postgresql.org/)
 
 1.
 Download the latest penfold JAR file from [Maven Central](http://search.maven.org/). The JAR can be found under "org.huwtl.penfold"
 
 2.
-Create a new empty database on your Mysql server
+Create a new empty database on your Postgres database server
 
 3.
 Create a configuration file named "penfold.conf", and populate with:
@@ -41,16 +41,8 @@ penfold {
 
   httpPort = 8080
 
-  domainJdbcConnectionPool {
-    driver = com.mysql.jdbc.Driver
-    url = "jdbc:mysql://localhost:3306/<EMPTY_DATABASE_NAME>"
-    username = <USERNAME>
-    password = <PASSWORD>
-  }
-
-  readStoreJdbcConnectionPool {
-    driver = com.mysql.jdbc.Driver
-    url = "jdbc:mysql://localhost:3306/<EMPTY_DATABASE_NAME>"
+  database {
+    url = "jdbc:postgresql://<HOST:<PORT>/<NAME_OF_EMPTY_DATABASE>"
     username = <USERNAME>
     password = <PASSWORD>
   }

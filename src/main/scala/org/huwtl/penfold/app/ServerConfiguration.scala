@@ -5,12 +5,13 @@ import java.util.concurrent.TimeUnit
 import org.huwtl.penfold.readstore.{SortOrderMapping, SortOrder}
 import org.huwtl.penfold.domain.model.Status
 import org.huwtl.penfold.app.readstore.postgres.{Aliases, Path, Alias}
+import org.huwtl.penfold.app.store.postgres.CustomDbMigrationPath
 
 case class ServerConfiguration(publicUrl: String,
                                httpPort: Int,
                                authentication: Option[AuthenticationCredentials],
-                               domainJdbcConnectionPool: JdbcConnectionPool,
-                               readStoreJdbcConnectionPool: JdbcConnectionPool,
+                               database: DatabaseConfiguration,
+                               private val readStoreDbMigrationPath : Option[String] = None,
                                private val readStoreAliases: Map[String, String] = Map.empty,
                                sortOrdering: SortOrderingConfiguration = SortOrderingConfiguration(),
                                pageSize: Int = 10,
@@ -22,11 +23,13 @@ case class ServerConfiguration(publicUrl: String,
   val readStorePathAliases = Aliases(readStoreAliases.map {
     case (alias, path) => (Alias(alias), Path(path))
   })
+
+  val customReadStoreDbMigrationPath = readStoreDbMigrationPath.map(CustomDbMigrationPath)
 }
 
 case class AuthenticationCredentials(username: String, password: String)
 
-case class JdbcConnectionPool(url: String, username: String, password: String, driver: String, poolSize: Int = 15)
+case class DatabaseConfiguration(url: String, username: String, password: String, driver: String = "org.postgresql.Driver", poolSize: Int = 15)
 
 case class TaskArchiverConfiguration(timeoutPayloadPath: String,
                                      checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))

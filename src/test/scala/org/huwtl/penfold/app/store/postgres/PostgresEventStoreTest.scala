@@ -1,4 +1,4 @@
-package org.huwtl.penfold.app.store.jdbc
+package org.huwtl.penfold.app.store.postgres
 
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
@@ -9,15 +9,15 @@ import org.huwtl.penfold.domain.event.{Event, TaskTriggered, TaskCreated}
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
-import org.huwtl.penfold.support.JdbcSpecification
+import org.huwtl.penfold.support.PostgresSpecification
 import org.specs2.specification.Scope
 
-class JdbcEventStoreTest extends Specification with DataTables with JdbcSpecification {
+class PostgresEventStoreTest extends Specification with DataTables with PostgresSpecification {
 
   class context extends Scope {
     val triggerDate = new DateTime(2014, 4, 3, 13, 0, 0, 0)
     val database = newDatabase()
-    val store = new JdbcEventStore(database, new EventSerializer)
+    val store = new PostgresEventStore(database, new EventSerializer)
 
     def createdEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {
       TaskCreated(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), QueueBinding(QueueId("q1")), triggerDate, Payload.empty, triggerDate.getMillis)

@@ -1,10 +1,10 @@
-package org.huwtl.penfold.app.store.jdbc
+package org.huwtl.penfold.app.store.postgres
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import org.huwtl.penfold.app.JdbcConnectionPool
+import org.huwtl.penfold.app.DatabaseConfiguration
 
-class JdbcConnectionPoolFactory {
-  def create(poolConfig: JdbcConnectionPool) = {
+class PostgresConnectionPoolFactory {
+  def create(poolConfig: DatabaseConfiguration) = {
     val dataSource = new ComboPooledDataSource
 
     dataSource.setDriverClass(poolConfig.driver)

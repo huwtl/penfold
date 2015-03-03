@@ -1,4 +1,4 @@
-package org.huwtl.penfold.app.store.jdbc
+package org.huwtl.penfold.app.store.postgres
 
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -8,11 +8,12 @@ import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.app.support.json.EventSerializer
 import org.huwtl.penfold.domain.event.Event
 import org.huwtl.penfold.domain.store.EventStore
-import java.sql.{SQLIntegrityConstraintViolationException, Timestamp}
+import java.sql.Timestamp
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 import scala.util.{Failure, Success, Try}
+import org.postgresql.util.PSQLException
 
-class JdbcEventStore(database: Database, eventSerializer: EventSerializer) extends EventStore {
+class PostgresEventStore(database: Database, eventSerializer: EventSerializer) extends EventStore {
   implicit val getEventFromRow = GetResult(row => eventSerializer.deserialize(row.nextString()))
 
   private val connectionSuccess = true
@@ -34,13 +35,13 @@ class JdbcEventStore(database: Database, eventSerializer: EventSerializer) exten
           ${event.aggregateId.value},
           ${event.aggregateVersion.number},
           ${event.aggregateType.name},
-          ${new Timestamp(event.created.getMillis).toString},
+          ${new Timestamp(event.created.getMillis)},
           ${eventSerializer.serialize(event)}
         )
         """.execute
         event
       } catch {
-        case e: SQLIntegrityConstraintViolationException => throw new AggregateConflictException(s"aggregate conflict ${event.aggregateId}")
+        case e: PSQLException if e.getSQLState == "23505" => throw new AggregateConflictException(s"aggregate conflict ${event.aggregateId}")
       }
     }
   }

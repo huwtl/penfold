@@ -15,7 +15,7 @@ import org.huwtl.penfold.app.support.{DateTimeSource, UUIDFactory}
 import org.huwtl.penfold.app.schedule.{ReadyTaskAssignmentTimeoutScheduler, EventSyncScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
 import com.codahale.metrics.health.HealthCheckRegistry
 import org.huwtl.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
-import org.huwtl.penfold.app.store.jdbc._
+import org.huwtl.penfold.app.store.postgres._
 import org.huwtl.penfold.app.readstore.postgres.{PaginatedQueryService, PostgresReadStore, PostgresReadStoreUpdater, PostgresEventTracker}
 
 class Bootstrap extends LifeCycle {
@@ -28,14 +28,13 @@ class Bootstrap extends LifeCycle {
 
     val aggregateIdFactory = new UUIDFactory
 
-    val domainJdbcPool = new JdbcDatabaseInitialiser().init(new JdbcConnectionPoolFactory().create(config.domainJdbcConnectionPool))
-    val eventStore = new JdbcEventStore(domainJdbcPool, eventSerializer)
-    val eventQueryService = new JdbcDomainEventQueryService(domainJdbcPool, eventSerializer)
+    val database = new PostgresDatabaseInitialiser(config.customReadStoreDbMigrationPath).init(new PostgresConnectionPoolFactory().create(config.database))
+    val eventStore = new PostgresEventStore(database, eventSerializer)
+    val eventQueryService = new PostgresDomainEventQueryService(database, eventSerializer)
 
-    val readStoreJdbcPool = new JdbcDatabaseInitialiser().init(new JdbcConnectionPoolFactory().create(config.readStoreJdbcConnectionPool))
-    val postgresEventTracker = new PostgresEventTracker("readStoreEventTracker", readStoreJdbcPool)
+    val postgresEventTracker = new PostgresEventTracker("readStoreEventTracker", database)
     val readStoreEventProvider = new NewEventsProvider(postgresEventTracker, eventQueryService)
-    val readStoreUpdater = new EventNotifier(readStoreEventProvider, new PostgresReadStoreUpdater(readStoreJdbcPool, postgresEventTracker, objectSerializer))
+    val readStoreUpdater = new EventNotifier(readStoreEventProvider, new PostgresReadStoreUpdater(database, postgresEventTracker, objectSerializer))
 
     val eventNotifiers = new ActorBasedEventNotifiers(new EventNotifiersImpl(List(readStoreUpdater)), noOfWorkers = 3)
 
@@ -43,7 +42,7 @@ class Bootstrap extends LifeCycle {
 
     val commandDispatcher = new CommandDispatcherFactory(domainRepository, aggregateIdFactory).create
 
-    val readStore = new PostgresReadStore(readStoreJdbcPool, new PaginatedQueryService(readStoreJdbcPool, objectSerializer, config.readStorePathAliases), objectSerializer, new DateTimeSource, config.readStorePathAliases)
+    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, objectSerializer, config.readStorePathAliases), objectSerializer, new DateTimeSource, config.readStorePathAliases)
 
     val baseUrl = URI.create(config.publicUrl)
 

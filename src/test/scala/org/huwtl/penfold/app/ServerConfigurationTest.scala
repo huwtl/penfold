@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
+import org.huwtl.penfold.app.store.postgres.CustomDbMigrationPath
 
 class ServerConfigurationTest extends Specification {
 
@@ -15,15 +16,14 @@ class ServerConfigurationTest extends Specification {
 
   val authCredentials = AuthenticationCredentials("user", "secret")
 
-  val jdbcUrl = "jdbc:hsqldb:mem:penfold;sql.syntax_mys=true"
+  val dbUrl = "jdbc:hsqldb:mem:penfold;sql.syntax_mys=true"
 
   "load minimally populated config file" in {
     val expectedConfig = ServerConfiguration(
       publicUrl,
       httpPort,
       None,
-      JdbcConnectionPool(jdbcUrl, "user", "", "org.hsqldb.jdbcDriver"),
-      JdbcConnectionPool(jdbcUrl, "user2", "", "org.hsqldb.jdbcDriver")
+      DatabaseConfiguration(dbUrl, "user", "", "org.postgresql.Driver")
     )
 
     val config = loadConfig("minimal")
@@ -36,8 +36,8 @@ class ServerConfigurationTest extends Specification {
       publicUrl,
       httpPort,
       Some(authCredentials),
-      JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
-      JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
+      DatabaseConfiguration(dbUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
+      Some("/tmp"),
       Map("alias1" -> "path1", "alias2" -> "path2"),
       sortOrdering = SortOrderingConfiguration("Desc", "Desc", "Asc", "Asc"),
       pageSize = 25,

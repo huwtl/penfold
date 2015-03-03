@@ -31,7 +31,6 @@ libraryDependencies ++= Seq(
   "com.github.tminglei" % "slick-pg_2.10" % "0.8.1",
   "com.vividsolutions" % "jts" % "1.13",
   "c3p0" % "c3p0" % "0.9.1.2",
-  "mysql" % "mysql-connector-java" % "5.1.30",
   "postgresql" % "postgresql" % "9.1-901-1.jdbc4",
   "com.googlecode.flyway" % "flyway-core" % "2.3.1",
   "com.typesafe.akka" %% "akka-actor" % "2.2.4",
