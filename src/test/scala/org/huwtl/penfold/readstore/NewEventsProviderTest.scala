@@ -10,8 +10,8 @@ import org.joda.time.DateTime
 
 class NewEventsProviderTest extends Specification with Mockito with DataTables {
   class context extends Scope {
-    val event1 = EventRecord(EventSequenceId(0), TaskTriggered(AggregateId("1"), AggregateVersion.init, DateTime.now))
-    val event2 = EventRecord(EventSequenceId(1), TaskTriggered(AggregateId("2"), AggregateVersion.init, DateTime.now))
+    val event1 = EventRecord(EventSequenceId(1), TaskTriggered(AggregateId("1"), AggregateVersion.init, DateTime.now))
+    val event2 = EventRecord(EventSequenceId(2), TaskTriggered(AggregateId("2"), AggregateVersion.init, DateTime.now))
 
     val nextExpectedEventIdProvider = mock[NextExpectedEventIdProvider]
 
@@ -24,10 +24,10 @@ class NewEventsProviderTest extends Specification with Mockito with DataTables {
 
   "provide new events" in new context {
     "lastEventId"            | "nextExpectedId"   | "expectedStream"       |
-    None                     ! EventSequenceId(0) ! Stream.empty           |
-    Some(EventSequenceId(0)) ! EventSequenceId(0) ! Stream(event1)         |
-    Some(EventSequenceId(1)) ! EventSequenceId(0) ! Stream(event1, event2) |
-    Some(EventSequenceId(1)) ! EventSequenceId(1) ! Stream(event2)         |> {
+    None                     ! EventSequenceId(1) ! Stream.empty           |
+    Some(EventSequenceId(1)) ! EventSequenceId(1) ! Stream(event1)         |
+    Some(EventSequenceId(2)) ! EventSequenceId(1) ! Stream(event1, event2) |
+    Some(EventSequenceId(2)) ! EventSequenceId(2) ! Stream(event2)         |> {
       (lastEventId, nextExpectedId, expectedStream) =>
         eventStoreQueryRepository.retrieveIdOfLast returns lastEventId
         nextExpectedEventIdProvider.nextExpectedEvent returns nextExpectedId

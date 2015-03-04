@@ -16,7 +16,7 @@ class ServerConfigurationTest extends Specification {
 
   val authCredentials = AuthenticationCredentials("user", "secret")
 
-  val dbUrl = "jdbc:hsqldb:mem:penfold;sql.syntax_mys=true"
+  val dbUrl = "jdbc:hsqldb:mem:penfold"
 
   "load minimally populated config file" in {
     val expectedConfig = ServerConfiguration(

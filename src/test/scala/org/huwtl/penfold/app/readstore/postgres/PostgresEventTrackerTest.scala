@@ -30,29 +30,29 @@ class PostgresEventTrackerTest extends PostgresSpecification {
   "track single event as being handled" in new context {
     tracker.trackEvent(EventSequenceId.first)
 
-    tracker.nextExpectedEvent must beEqualTo(EventSequenceId(1))
+    tracker.nextExpectedEvent must beEqualTo(EventSequenceId(2))
   }
 
   "track multiple events as being handled" in new context {
-    tracker.trackEvent(EventSequenceId(0))
     tracker.trackEvent(EventSequenceId(1))
     tracker.trackEvent(EventSequenceId(2))
+    tracker.trackEvent(EventSequenceId(3))
+
+    tracker.nextExpectedEvent must beEqualTo(EventSequenceId(4))
+  }
+
+  "ignore requests to track previously tracked events" in new context {
+    tracker.trackEvent(EventSequenceId(1))
+    tracker.trackEvent(EventSequenceId(2))
+    tracker.trackEvent(EventSequenceId(1))
 
     tracker.nextExpectedEvent must beEqualTo(EventSequenceId(3))
   }
 
-  "ignore requests to track previously tracked events" in new context {
-    tracker.trackEvent(EventSequenceId(0))
+  "ignore same tracking of previously tracked event" in new context {
     tracker.trackEvent(EventSequenceId(1))
-    tracker.trackEvent(EventSequenceId(0))
+    tracker.trackEvent(EventSequenceId(1))
 
     tracker.nextExpectedEvent must beEqualTo(EventSequenceId(2))
-  }
-
-  "ignore same tracking of previously tracked event" in new context {
-    tracker.trackEvent(EventSequenceId(0))
-    tracker.trackEvent(EventSequenceId(0))
-
-    tracker.nextExpectedEvent must beEqualTo(EventSequenceId(1))
   }
 }

@@ -8,9 +8,8 @@ import org.huwtl.penfold.domain.event.TaskTriggered
 import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId}
 import org.huwtl.penfold.readstore.{EventRecord, EventSequenceId}
 import org.joda.time.DateTime
-import org.specs2.mock.Mockito
 
-class PostgresDomainEventQueryServiceTest extends Specification with PostgresSpecification with Mockito {
+class PostgresDomainEventQueryServiceTest extends PostgresSpecification {
 
   class context extends Scope {
     val created = new DateTime(2014, 3, 1, 12, 0, 0, 0)
@@ -29,21 +28,21 @@ class PostgresDomainEventQueryServiceTest extends Specification with PostgresSpe
     store.add(event1)
     store.add(event2)
 
-    queryService.retrieveIdOfLast must beEqualTo(Some(EventSequenceId(1)))
+    queryService.retrieveIdOfLast must beEqualTo(Some(EventSequenceId(2)))
   }
 
   "retrieve id of last event added to domain event store" in new context {
     store.add(event1)
     store.add(event2)
 
-    queryService.retrieveIdOfLast must beEqualTo(Some(EventSequenceId(1)))
+    queryService.retrieveIdOfLast must beEqualTo(Some(EventSequenceId(2)))
   }
 
   "retrieve event from domain event store" in new context {
     store.add(event1)
     store.add(event2)
 
-    queryService.retrieveBy(EventSequenceId(0)) must beEqualTo(Some(new EventRecord(EventSequenceId(0), event1)))
-    queryService.retrieveBy(EventSequenceId(2)) must beNone
+    queryService.retrieveBy(EventSequenceId(1)) must beEqualTo(Some(new EventRecord(EventSequenceId(1), event1)))
+    queryService.retrieveBy(EventSequenceId(3)) must beNone
   }
 }
