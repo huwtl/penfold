@@ -6,7 +6,7 @@ import org.huwtl.penfold.app.web._
 import java.net.URI
 import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import org.huwtl.penfold.command._
-import org.huwtl.penfold.domain.store.DomainRepository
+import org.huwtl.penfold.domain.store.{DomainRepositoryImpl, DomainRepository}
 import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
 import org.huwtl.penfold.readstore.{EventNotifiersImpl, EventNotifier, NewEventsProvider}
 import com.typesafe.config.ConfigFactory
@@ -38,7 +38,7 @@ class Bootstrap extends LifeCycle {
 
     val eventNotifiers = new ActorBasedEventNotifiers(new EventNotifiersImpl(List(readStoreUpdater)), noOfWorkers = 3)
 
-    val domainRepository = new DomainRepository(eventStore, eventNotifiers)
+    val domainRepository = new PostgresTransactionalDomainRepository(database, new DomainRepositoryImpl(eventStore, eventNotifiers))
 
     val commandDispatcher = new CommandDispatcherFactory(domainRepository, aggregateIdFactory).create
 

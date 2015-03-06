@@ -63,14 +63,12 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
 
     val taskJson = objectSerializer.serialize(task)
 
-    database.withDynSession {
-      try {
-        sqlu"""INSERT INTO tasks (id, data) VALUES (${task.id.value}, $taskJson::json)""".execute
-      }
-      catch {
-        case e: SQLException if e.getSQLState == dupSqlState => {
-          logger.info("task creation event already handled, ignoring", e)
-        }
+    try {
+      sqlu"""INSERT INTO tasks (id, data) VALUES (${task.id.value}, $taskJson::json)""".execute
+    }
+    catch {
+      case e: SQLException if e.getSQLState == dupSqlState => {
+        logger.info("task creation event already handled, ignoring", e)
       }
     }
   }
@@ -163,9 +161,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
   }
 
   private def handleArchiveEvent(event: TaskArchived) = {
-    database.withDynSession {
-      sqlu"""DELETE FROM tasks WHERE id = ${event.aggregateId.value} AND (data->>'version')::numeric = ${event.aggregateVersion.previous.number}""".execute
-    }
+    sqlu"""DELETE FROM tasks WHERE id = ${event.aggregateId.value} AND (data->>'version')::numeric = ${event.aggregateVersion.previous.number}""".execute
   }
 
   private def handleTaskUpdate(event: Event)(updatedFields: TaskData => TaskData) = {
@@ -173,9 +169,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
       case Some(task) =>
         val defaultsApplied = task.copy(version = event.aggregateVersion, rescheduleType = None, conclusionType = None)
         val updatedTaskJson = objectSerializer.serialize(updatedFields(defaultsApplied))
-        database.withDynSession {
-          sqlu"""UPDATE tasks SET data = $updatedTaskJson::json WHERE id = ${event.aggregateId.value} AND (data->>'version')::numeric = ${event.aggregateVersion.previous.number}""".execute
-        }
+        sqlu"""UPDATE tasks SET data = $updatedTaskJson::json WHERE id = ${event.aggregateId.value} AND (data->>'version')::numeric = ${event.aggregateVersion.previous.number}""".execute
       case None =>
     }
   }
@@ -199,9 +193,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
   }
 
   private def existing(id: AggregateId, version: AggregateVersion) = {
-    database.withDynSession {
-      val json = sql"""SELECT data FROM tasks WHERE id = ${id.value} AND (data->>'version')::numeric = ${version.previous.number}""".as[String].firstOption
-      json.map(objectSerializer.deserialize[TaskData])
-    }
+    val json = sql"""SELECT data FROM tasks WHERE id = ${id.value} AND (data->>'version')::numeric = ${version.previous.number}""".as[String].firstOption
+    json.map(objectSerializer.deserialize[TaskData])
   }
 }

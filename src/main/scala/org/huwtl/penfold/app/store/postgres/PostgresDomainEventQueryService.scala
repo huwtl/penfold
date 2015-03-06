@@ -20,19 +20,14 @@ class PostgresDomainEventQueryService(database: Database, serializer: EventSeria
   implicit val getEventIdFromRow = GetResult(row => EventSequenceId(row.nextLong()))
 
   override def retrieveIdOfLast = {
-    database.withDynSession {
-      sql"""
-        SELECT id FROM events ORDER BY id DESC LIMIT 1
-      """.as[EventSequenceId].firstOption
-    }
+    sql"""SELECT id FROM events ORDER BY id DESC LIMIT 1""".as[EventSequenceId].firstOption
   }
 
   override def retrieveBy(id: EventSequenceId) = {
-    val foundEvent = database.withDynSession {
+    val foundEvent =
       retryUntilSome[EventRecord](retries = eventRetrievalRetries, interval = FiniteDuration(100, MILLISECONDS)) {
         sql"""SELECT id, data FROM events WHERE id = ${id.value}""".as[EventRecord].firstOption
       }
-    }
 
     foundEvent match {
       case None => {

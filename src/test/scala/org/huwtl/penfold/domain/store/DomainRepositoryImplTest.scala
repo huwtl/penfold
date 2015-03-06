@@ -10,7 +10,7 @@ import org.huwtl.penfold.domain.event.{TaskTriggered, TaskCreated}
 import org.joda.time.DateTime
 import org.specs2.specification.Scope
 
-class DomainRepositoryTest extends Specification with Mockito {
+class DomainRepositoryImplTest extends Specification with Mockito {
   class context extends Scope {
     val aggregateId = AggregateId("a1")
 
@@ -24,7 +24,7 @@ class DomainRepositoryTest extends Specification with Mockito {
 
     val notifiers = mock[EventNotifiers]
 
-    val repo = new DomainRepository(eventStore, notifiers)
+    val repo = new DomainRepositoryImpl(eventStore, notifiers)
   }
 
   "append new aggregate root events to event store" in new context {

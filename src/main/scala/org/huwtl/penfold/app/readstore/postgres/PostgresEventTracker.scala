@@ -16,17 +16,15 @@ class PostgresEventTracker(trackerKey: String, database: Database) extends Event
   private val dupSqlState = "23505"
 
   override def trackEvent(eventId: EventSequenceId) {
-    database.withDynSession {
-      try {
-        val rowsUpdated = sqlu"""UPDATE trackers SET last_event_id = ${eventId.value} where id = $trackerKey and last_event_id < ${eventId.value}""".first
+    try {
+      val rowsUpdated = sqlu"""UPDATE trackers SET last_event_id = ${eventId.value} where id = $trackerKey and last_event_id < ${eventId.value}""".first
 
-        if (rowsUpdated == 0 && !lastEventId.isDefined) {
-          sqlu"""INSERT INTO trackers (id, last_event_id) VALUES ($trackerKey, ${eventId.value})""".execute
-        }
-      } catch {
-        case e: SQLException if e.getSQLState == dupSqlState => {
-          logger.info(s"tracking row already exists for event $eventId")
-        }
+      if (rowsUpdated == 0 && !lastEventId.isDefined) {
+        sqlu"""INSERT INTO trackers (id, last_event_id) VALUES ($trackerKey, ${eventId.value})""".execute
+      }
+    } catch {
+      case e: SQLException if e.getSQLState == dupSqlState => {
+        logger.info(s"tracking row already exists for event $eventId")
       }
     }
   }
@@ -39,10 +37,8 @@ class PostgresEventTracker(trackerKey: String, database: Database) extends Event
   }
 
   private def lastEventId = {
-    database.withDynSession {
-      sql"""SELECT last_event_id FROM trackers WHERE id = $trackerKey"""
-        .as[Long]
-        .firstOption
-    }
+    sql"""SELECT last_event_id FROM trackers WHERE id = $trackerKey"""
+      .as[Long]
+      .firstOption
   }
 }

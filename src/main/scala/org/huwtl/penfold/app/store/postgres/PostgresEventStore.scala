@@ -27,9 +27,8 @@ class PostgresEventStore(database: Database, eventSerializer: EventSerializer) e
   }
 
   override def add(event: Event) = {
-    database.withDynSession {
-      try {
-        sqlu"""
+    try {
+      sqlu"""
         INSERT INTO events (type, aggregate_id, aggregate_version, aggregate_type, created, data) VALUES (
           ${event.getClass.getSimpleName},
           ${event.aggregateId.value},
@@ -39,20 +38,17 @@ class PostgresEventStore(database: Database, eventSerializer: EventSerializer) e
           ${eventSerializer.serialize(event)}
         )
         """.execute
-        event
-      } catch {
-        case e: PSQLException if e.getSQLState == "23505" => throw new AggregateConflictException(s"aggregate conflict ${event.aggregateId}")
-      }
+      event
+    } catch {
+      case e: PSQLException if e.getSQLState == "23505" => throw new AggregateConflictException(s"aggregate conflict ${event.aggregateId}")
     }
   }
 
   override def retrieveBy(aggregateId: AggregateId) = {
-    database.withDynSession {
-      sql"""
+    sql"""
         SELECT data FROM events
           WHERE aggregate_id = ${aggregateId.value}
           ORDER BY aggregate_version
       """.as[Event].list
-    }
   }
 }
