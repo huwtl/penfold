@@ -16,7 +16,7 @@ class PostgresEventTrackerTest extends PostgresSpecification {
   class context extends Scope {
     val trackingKey = "testKey"
 
-    database.withDynSession {
+    database.withDynTransaction {
       sqlu"""DELETE FROM trackers""".execute
     }
 
@@ -24,35 +24,45 @@ class PostgresEventTrackerTest extends PostgresSpecification {
   }
 
   "know first expected event id when no events tracked" in new context {
-    tracker.nextExpectedEvent must beEqualTo(EventSequenceId.first)
+    database.withDynTransaction {
+      tracker.nextExpectedEvent must beEqualTo(EventSequenceId.first)
+    }
   }
 
   "track single event as being handled" in new context {
-    tracker.trackEvent(EventSequenceId.first)
+    database.withDynTransaction {
+      tracker.trackEvent(EventSequenceId.first)
 
-    tracker.nextExpectedEvent must beEqualTo(EventSequenceId(2))
+      tracker.nextExpectedEvent must beEqualTo(EventSequenceId(2))
+    }
   }
 
   "track multiple events as being handled" in new context {
-    tracker.trackEvent(EventSequenceId(1))
-    tracker.trackEvent(EventSequenceId(2))
-    tracker.trackEvent(EventSequenceId(3))
+    database.withDynTransaction {
+      tracker.trackEvent(EventSequenceId(1))
+      tracker.trackEvent(EventSequenceId(2))
+      tracker.trackEvent(EventSequenceId(3))
 
-    tracker.nextExpectedEvent must beEqualTo(EventSequenceId(4))
+      tracker.nextExpectedEvent must beEqualTo(EventSequenceId(4))
+    }
   }
 
   "ignore requests to track previously tracked events" in new context {
-    tracker.trackEvent(EventSequenceId(1))
-    tracker.trackEvent(EventSequenceId(2))
-    tracker.trackEvent(EventSequenceId(1))
+    database.withDynTransaction {
+      tracker.trackEvent(EventSequenceId(1))
+      tracker.trackEvent(EventSequenceId(2))
+      tracker.trackEvent(EventSequenceId(1))
 
-    tracker.nextExpectedEvent must beEqualTo(EventSequenceId(3))
+      tracker.nextExpectedEvent must beEqualTo(EventSequenceId(3))
+    }
   }
 
   "ignore same tracking of previously tracked event" in new context {
-    tracker.trackEvent(EventSequenceId(1))
-    tracker.trackEvent(EventSequenceId(1))
+    database.withDynTransaction {
+      tracker.trackEvent(EventSequenceId(1))
+      tracker.trackEvent(EventSequenceId(1))
 
-    tracker.nextExpectedEvent must beEqualTo(EventSequenceId(2))
+      tracker.nextExpectedEvent must beEqualTo(EventSequenceId(2))
+    }
   }
 }

@@ -38,15 +38,19 @@ class PostgresEventStoreTest extends Specification with DataTables with Postgres
       event2 !! List(event1, event2) |
       event3 !! List(event3)         |> {
       (event, expected) =>
-        store.add(event)
-        store.retrieveBy(event.aggregateId) must beEqualTo(expected)
+        database.withDynTransaction {
+          store.add(event)
+          store.retrieveBy(event.aggregateId) must beEqualTo(expected)
+        }
     }
   }
 
   "prevent concurrent modifications to aggregate" in new context {
     val event = createdEvent(AggregateId("a1"), AggregateVersion(1))
-    store.add(event)
-    store.add(event) must throwA[AggregateConflictException]
+    database.withDynTransaction {
+      store.add(event)
+      store.add(event) must throwA[AggregateConflictException]
+    }
   }
 
   "check connectivity to store" in new context {

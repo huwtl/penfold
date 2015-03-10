@@ -5,7 +5,7 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.{Fragments, Step}
 
 import scala.slick.driver.JdbcDriver.backend.Database
-import org.huwtl.penfold.app.store.postgres.{CustomDbMigrationPath, PostgresDatabaseInitialiser}
+import org.huwtl.penfold.app.store.postgres.PostgresDatabaseInitialiser
 
 trait PostgresSpecification extends Specification {
   sequential
@@ -23,6 +23,6 @@ trait PostgresSpecification extends Specification {
 
     val dataSource = postgres.getPostgresDatabase
 
-    new PostgresDatabaseInitialiser(Some(CustomDbMigrationPath("/Users/hlewis/penfold_db"))).init(dataSource)
+    new PostgresDatabaseInitialiser(None).init(dataSource)
   }
 }

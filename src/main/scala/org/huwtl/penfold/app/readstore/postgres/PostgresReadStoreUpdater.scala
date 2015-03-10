@@ -22,12 +22,9 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{StaticQuery => Q}
-import java.sql.SQLException
 
 class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
-
-  private val dupSqlState = "23505"
 
   private val success = true
 
@@ -63,14 +60,8 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
 
     val taskJson = objectSerializer.serialize(task)
 
-    try {
-      sqlu"""INSERT INTO tasks (id, data) VALUES (${task.id.value}, $taskJson::json)""".execute
-    }
-    catch {
-      case e: SQLException if e.getSQLState == dupSqlState => {
-        logger.info("task creation event already handled, ignoring", e)
-      }
-    }
+    val alreadyExists = sql"""SELECT id FROM tasks WHERE id = ${task.id.value}""".as[String].firstOption
+    if (!alreadyExists.isDefined) sqlu"""INSERT INTO tasks (id, data) VALUES (${task.id.value}, $taskJson::json)""".execute
   }
 
   private def handleTaskTriggeredEvent(event: TaskTriggered) = {

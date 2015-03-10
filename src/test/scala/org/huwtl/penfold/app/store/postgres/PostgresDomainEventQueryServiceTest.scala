@@ -1,6 +1,5 @@
 package org.huwtl.penfold.app.store.postgres
 
-import org.specs2.mutable.Specification
 import org.huwtl.penfold.support.PostgresSpecification
 import org.specs2.specification.Scope
 import org.huwtl.penfold.app.support.json.EventSerializer
@@ -21,28 +20,36 @@ class PostgresDomainEventQueryServiceTest extends PostgresSpecification {
   }
 
   "retrieve nothing for last id when domain event store is empty" in new context {
-    queryService.retrieveIdOfLast must beNone
+    database.withDynTransaction {
+      queryService.retrieveIdOfLast must beNone
+    }
   }
 
   "retrieve id of last event added to domain event store" in new context {
-    store.add(event1)
-    store.add(event2)
+    database.withDynTransaction {
+      store.add(event1)
+      store.add(event2)
 
-    queryService.retrieveIdOfLast must beEqualTo(Some(EventSequenceId(2)))
+      queryService.retrieveIdOfLast must beEqualTo(Some(EventSequenceId(2)))
+    }
   }
 
   "retrieve id of last event added to domain event store" in new context {
-    store.add(event1)
-    store.add(event2)
+    database.withDynTransaction {
+      store.add(event1)
+      store.add(event2)
 
-    queryService.retrieveIdOfLast must beEqualTo(Some(EventSequenceId(2)))
+      queryService.retrieveIdOfLast must beEqualTo(Some(EventSequenceId(2)))
+    }
   }
 
   "retrieve event from domain event store" in new context {
-    store.add(event1)
-    store.add(event2)
+    database.withDynTransaction {
+      store.add(event1)
+      store.add(event2)
 
-    queryService.retrieveBy(EventSequenceId(1)) must beEqualTo(Some(new EventRecord(EventSequenceId(1), event1)))
-    queryService.retrieveBy(EventSequenceId(3)) must beNone
+      queryService.retrieveBy(EventSequenceId(1)) must beEqualTo(Some(new EventRecord(EventSequenceId(1), event1)))
+      queryService.retrieveBy(EventSequenceId(3)) must beNone
+    }
   }
 }

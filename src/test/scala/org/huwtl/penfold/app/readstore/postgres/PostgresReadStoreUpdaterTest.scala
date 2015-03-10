@@ -38,8 +38,10 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
     val readStoreUpdater = new PostgresReadStoreUpdater(database, new PostgresEventTracker("tracking", database), objectSerializer)
 
     def handleEvents(events: Event*) = {
-      events.zipWithIndex.foreach {
-        case (event, index) => readStoreUpdater.handle(EventRecord(EventSequenceId(index + 1), event))
+      database.withDynTransaction {
+        events.zipWithIndex.foreach {
+          case (event, index) => readStoreUpdater.handle(EventRecord(EventSequenceId(index + 1), event))
+        }
       }
     }
   }
@@ -47,46 +49,56 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
   "create task and start" in new context {
     handleEvents(taskCreatedEvent, taskStartedEvent)
 
-    val task = readStore.retrieveBy(aggregateId)
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.readModels.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
+      task must beEqualTo(Some(TestModel.readModels.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
+    }
   }
 
   "trigger future task" in new context {
     handleEvents(futureTaskCreatedEvent, taskTriggeredEvent)
 
-    val task = readStore.retrieveBy(aggregateId)
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.readModels.triggeredTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
+      task must beEqualTo(Some(TestModel.readModels.triggeredTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
+    }
   }
 
   "unassign task" in new context {
     handleEvents(taskCreatedEvent, taskStartedEvent, taskClosedEvent, taskRequeuedEvent, taskUnassignedEvent)
 
-    val task = readStore.retrieveBy(aggregateId)
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.readModels.readyTask.copy(
-      id = aggregateId,
-      version = taskUnassignedEvent.aggregateVersion,
-      payload = payload,
-      previousStatus = Some(TestModel.previousStatus.copy(status = Closed)),
-      assignee = None)))
+      task must beEqualTo(Some(TestModel.readModels.readyTask.copy(
+        id = aggregateId,
+        version = taskUnassignedEvent.aggregateVersion,
+        payload = payload,
+        previousStatus = Some(TestModel.previousStatus.copy(status = Closed)),
+        assignee = None)))
+    }
   }
 
   "close task" in new context {
     handleEvents(taskCreatedEvent, taskStartedEvent, taskClosedEvent)
 
-    val task = readStore.retrieveBy(aggregateId)
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.readModels.closedTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
+      task must beEqualTo(Some(TestModel.readModels.closedTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
+    }
   }
 
   "reschedule future task" in new context {
     handleEvents(taskCreatedEvent, taskStartedEvent, taskRescheduledEvent)
 
-    val task = readStore.retrieveBy(aggregateId)
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.readModels.rescheduledTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
+      task must beEqualTo(Some(TestModel.readModels.rescheduledTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
+    }
   }
 
   "update payload of ready task" in new context {
@@ -97,9 +109,11 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
     val taskPayloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), updateTime, payloadUpdate, None, Some(updatedScore))
     handleEvents(taskCreatedEvent, taskPayloadUpdatedEvent)
 
-    val task = readStore.retrieveBy(aggregateId)
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.readModels.readyTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, sort = updatedScore, payload = updatedPayload)))
+      task must beEqualTo(Some(TestModel.readModels.readyTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, sort = updatedScore, payload = updatedPayload)))
+    }
   }
 
   "update payload of non-ready task without changing sort order" in new context {
@@ -110,44 +124,54 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
     val taskPayloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), updateTime, payloadUpdate, None, Some(updatedScore))
     handleEvents(futureTaskCreatedEvent, taskPayloadUpdatedEvent)
 
-    val task = readStore.retrieveBy(aggregateId)
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.readModels.waitingTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, payload = updatedPayload)))
+      task must beEqualTo(Some(TestModel.readModels.waitingTask.copy(id = aggregateId, version = lastVersion, score = updatedScore, payload = updatedPayload)))
+    }
   }
 
   "ignore duplicate events" in new context {
     handleEvents(taskCreatedEvent, taskStartedEvent, taskCreatedEvent)
 
-    val task = readStore.retrieveBy(aggregateId)
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.readModels.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
+      task must beEqualTo(Some(TestModel.readModels.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload)))
+    }
   }
 
   "remove task on archive" in new context {
     handleEvents(taskCreatedEvent, archivedEvent)
 
-    val task = readStore.retrieveBy(aggregateId)
-    task must beNone
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
+      task must beNone
+    }
   }
 
   "requeue task" in new context {
     handleEvents(taskCreatedEvent, taskStartedEvent, taskClosedEvent, taskRequeuedEvent)
 
-    val task = readStore.retrieveBy(aggregateId)
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
 
-    task must beEqualTo(Some(TestModel.readModels.readyTask.copy(
-      id = aggregateId,
-      version = taskRequeuedEvent.aggregateVersion,
-      payload = payload,
-      previousStatus = Some(TestModel.previousStatus.copy(status = Closed)),
-      assignee = Some(TestModel.assignee))))
+      task must beEqualTo(Some(TestModel.readModels.readyTask.copy(
+        id = aggregateId,
+        version = taskRequeuedEvent.aggregateVersion,
+        payload = payload,
+        previousStatus = Some(TestModel.previousStatus.copy(status = Closed)),
+        assignee = Some(TestModel.assignee))))
+    }
   }
 
   "ignore events on aggregate version mismatch" in new context {
     val unexpectedVersion = taskStartedEvent.aggregateVersion
     handleEvents(taskCreatedEvent, taskStartedEvent, archivedEvent.copy(aggregateVersion = unexpectedVersion))
 
-    val task = readStore.retrieveBy(aggregateId)
-    task must beSome(TestModel.readModels.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload))
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
+      task must beSome(TestModel.readModels.startedTask.copy(id = aggregateId, version = lastVersion, payload = payload))
+    }
   }
 }

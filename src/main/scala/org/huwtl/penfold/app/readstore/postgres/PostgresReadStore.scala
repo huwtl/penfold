@@ -23,10 +23,8 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
   }
 
   override def retrieveBy(id: AggregateId) = {
-    val taskData = database.withDynSession {
-      val json = sql"""SELECT data FROM tasks WHERE id = ${id.value}""".as[String].firstOption
-      json.map(objectSerializer.deserialize[TaskData])
-    }
+    val json = sql"""SELECT data FROM tasks WHERE id = ${id.value}""".as[String].firstOption
+    val taskData = json.map(objectSerializer.deserialize[TaskData])
     taskData.map(_.toTaskRecord)
   }
 
