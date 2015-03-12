@@ -6,7 +6,7 @@ import org.huwtl.penfold.app.web._
 import java.net.URI
 import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import org.huwtl.penfold.command._
-import org.huwtl.penfold.domain.store.{DomainRepositoryImpl, DomainRepository}
+import org.huwtl.penfold.domain.store.{DomainRepositoryImpl}
 import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
 import org.huwtl.penfold.readstore.{EventNotifiersImpl, EventNotifier, NewEventsProvider}
 import com.typesafe.config.ConfigFactory

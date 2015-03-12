@@ -69,6 +69,7 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
         val rows = sort.map(_.data)
 
         logger.info(s"query: ${rows.selectStatement}")
+        println(rows.selectStatement)
 
         rows.list.map(row => objectSerializer.deserialize[TaskData](row.value).toTaskRecord)
       }
