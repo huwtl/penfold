@@ -3,7 +3,6 @@ package org.huwtl.penfold.readstore
 import org.huwtl.penfold.domain.model.Status
 import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.app.readstore.postgres.TaskData
 
 trait ReadStore {
   def checkConnectivity: Either[Boolean, Exception]

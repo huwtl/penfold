@@ -1,11 +1,11 @@
 {
   "id": "1",
   "version": 1,
-  "created": "2014-02-25 13:00:00",
+  "created": 1393333200000,
   "queue": "abc",
   "status": "ready",
-  "statusLastModified": "2014-02-25 13:00:01",
-  "triggerDate": "2014-02-25 14:00:00",
+  "statusLastModified": 1393333201000,
+  "triggerDate": 1393336800000,
   "score": 1393336800000,
   "sort": 1393336800000,
   "payload": {

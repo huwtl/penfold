@@ -10,5 +10,6 @@
     },
     "updateType": "updateType",
     "score" : 100,
-    "aggregateType" : "Task"
+    "aggregateType" : "Task",
+    "version": 1
 }

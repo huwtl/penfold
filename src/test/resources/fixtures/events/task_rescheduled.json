@@ -8,5 +8,6 @@
     "rescheduleType": "schType",
     "payloadUpdate": {"operations": []},
     "score": 1393336800000,
-    "aggregateType" : "Task"
+    "aggregateType" : "Task",
+    "version": 1
 }

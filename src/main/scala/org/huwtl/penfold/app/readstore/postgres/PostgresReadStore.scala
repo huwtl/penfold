@@ -32,7 +32,7 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
     val currentTime = dateTimeSource.now
 
     database.withDynSession {
-      val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${Waiting.name} AND (data->>'sort')::numeric <= ${currentTime.getMillis} ORDER BY data->>'sort'""".as[String].iterator
+      val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${Waiting.name} AND (data->>'sort')::bigint <= ${currentTime.getMillis} ORDER BY data->>'sort'""".as[String].iterator
       rows.foreach(row => f(objectSerializer.deserialize[TaskData](row).toTaskRecordReference))
     }
   }

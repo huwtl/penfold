@@ -55,7 +55,7 @@ class EventSerializerTest extends Specification with DataTables {
     taskClosedEvent         !! "task_closed.json"          |
     taskArchivedEvent       !! "task_archived.json"        |> {
       (event, expectedJsonPath) =>
-        val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/${expectedJsonPath}")).mkString))
+        val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/$expectedJsonPath")).mkString))
         val json = serializer.serialize(event)
         json must beEqualTo(expectedJson)
     }

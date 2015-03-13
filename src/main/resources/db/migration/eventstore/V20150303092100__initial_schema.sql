@@ -2,6 +2,7 @@ CREATE TABLE events
 (
   id SERIAL,
   type VARCHAR(64) NOT NULL,
+  version INT NOT NULL,
   aggregate_id VARCHAR(64) NOT NULL,
   aggregate_version INT NOT NULL,
   aggregate_type VARCHAR(64) NOT NULL,

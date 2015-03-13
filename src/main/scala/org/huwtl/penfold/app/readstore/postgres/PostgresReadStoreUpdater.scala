@@ -1,6 +1,6 @@
 package org.huwtl.penfold.app.readstore.postgres
 
-import org.huwtl.penfold.readstore.{PreviousStatus, EventTracker, EventListener, EventRecord}
+import org.huwtl.penfold.readstore.{EventTracker, EventListener, EventRecord}
 import org.huwtl.penfold.domain.model.Status._
 import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId, Payload, Status}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
@@ -55,7 +55,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
   private def handleCreateEvent(event: TaskCreatedEvent, status: Status) = {
     val queue = event.queueBinding.id
 
-    val task = TaskData(event.aggregateId, event.aggregateVersion, event.created, queue, status, event.created, previousStatus = None, event.triggerDate, assignee = None,
+    val task = TaskData(event.aggregateId, event.aggregateVersion, event.created.getMillis, queue, status, event.created.getMillis, previousStatus = None, event.triggerDate.getMillis, assignee = None,
       event.score, resolveSortOrder(event, status, event.score).get, event.payload, rescheduleType = None, conclusionType = None)
 
     val taskJson = objectSerializer.serialize(task)
@@ -66,7 +66,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
 
   private def handleTaskTriggeredEvent(event: TaskTriggered) = {
     handleTaskUpdate(event) {
-      task => task.copy(previousStatus = Some(updatePreviousStatus(task)), status = Ready, statusLastModified = event.created, sort = task.score)
+      task => task.copy(previousStatus = Some(updatePreviousStatus(task)), status = Ready, statusLastModified = event.created.getMillis, sort = task.score)
     }
   }
 
@@ -75,7 +75,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
       task => task.copy(
         previousStatus = Some(updatePreviousStatus(task)),
         status = Started,
-        statusLastModified = event.created,
+        statusLastModified = event.created.getMillis,
         sort = event.created.getMillis,
         assignee = event.assignee,
         payload = patchPayloadIfExists(task, event.payloadUpdate))
@@ -89,7 +89,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
         task.copy(
           previousStatus = Some(updatePreviousStatus(task)),
           status = Ready,
-          statusLastModified = event.created,
+          statusLastModified = event.created.getMillis,
           score = score,
           sort = score,
           assignee = event.assignee,
@@ -104,10 +104,10 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
         task.copy(
           previousStatus = Some(updatePreviousStatus(task)),
           status = Waiting,
-          statusLastModified = event.created,
+          statusLastModified = event.created.getMillis,
           score = event.score.getOrElse(task.score),
           sort = event.triggerDate.getMillis,
-          triggerDate = event.triggerDate,
+          triggerDate = event.triggerDate.getMillis,
           rescheduleType = event.rescheduleType,
           assignee = event.assignee,
           payload = patchPayloadIfExists(task, event.payloadUpdate))
@@ -121,7 +121,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
         task.copy(
           previousStatus = Some(updatePreviousStatus(task)),
           status = Closed,
-          statusLastModified = event.created,
+          statusLastModified = event.created.getMillis,
           sort = event.created.getMillis,
           conclusionType = event.conclusionType,
           assignee = event.assignee,
@@ -152,7 +152,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
   }
 
   private def handleArchiveEvent(event: TaskArchived) = {
-    sqlu"""DELETE FROM tasks WHERE id = ${event.aggregateId.value} AND (data->>'version')::numeric = ${event.aggregateVersion.previous.number}""".execute
+    sqlu"""DELETE FROM tasks WHERE id = ${event.aggregateId.value} AND (data->>'version')::bigint = ${event.aggregateVersion.previous.number}""".execute
   }
 
   private def handleTaskUpdate(event: Event)(updatedFields: TaskData => TaskData) = {
@@ -160,7 +160,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
       case Some(task) =>
         val defaultsApplied = task.copy(version = event.aggregateVersion, rescheduleType = None, conclusionType = None)
         val updatedTaskJson = objectSerializer.serialize(updatedFields(defaultsApplied))
-        sqlu"""UPDATE tasks SET data = $updatedTaskJson::json WHERE id = ${event.aggregateId.value} AND (data->>'version')::numeric = ${event.aggregateVersion.previous.number}""".execute
+        sqlu"""UPDATE tasks SET data = $updatedTaskJson::json WHERE id = ${event.aggregateId.value} AND (data->>'version')::bigint = ${event.aggregateVersion.previous.number}""".execute
       case None =>
     }
   }
@@ -184,7 +184,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
   }
 
   private def existing(id: AggregateId, version: AggregateVersion) = {
-    val json = sql"""SELECT data FROM tasks WHERE id = ${id.value} AND (data->>'version')::numeric = ${version.previous.number}""".as[String].firstOption
+    val json = sql"""SELECT data FROM tasks WHERE id = ${id.value} AND (data->>'version')::bigint = ${version.previous.number}""".as[String].firstOption
     json.map(objectSerializer.deserialize[TaskData])
   }
 }

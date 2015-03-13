@@ -29,8 +29,9 @@ class PostgresEventStore(database: Database, eventSerializer: EventSerializer) e
   override def add(event: Event) = {
     try {
       sqlu"""
-        INSERT INTO events (type, aggregate_id, aggregate_version, aggregate_type, created, data) VALUES (
+        INSERT INTO events (type, version, aggregate_id, aggregate_version, aggregate_type, created, data) VALUES (
           ${event.getClass.getSimpleName},
+          ${event.version},
           ${event.aggregateId.value},
           ${event.aggregateVersion.number},
           ${event.aggregateType.name},

@@ -9,20 +9,19 @@ import org.joda.time.DateTime
 import org.huwtl.penfold.domain.model.Status.{Ready, Started}
 import org.huwtl.penfold.support.TestModel
 import scala.Some
-import org.huwtl.penfold.readstore.PreviousStatus
 
 class TaskDataSerializerTest extends Specification with DataTables {
 
-  val prevStatus = PreviousStatus(Started, new DateTime(2014, 2, 25, 13, 0, 0, 0))
+  val prevStatus = PreviousStatus(Started, new DateTime(2014, 2, 25, 13, 0, 0, 0).getMillis)
 
   val taskDataMinimal = TaskData(TestModel.aggregateId,
                                  TestModel.version,
-                                 TestModel.createdDate,
+                                 TestModel.createdDate.getMillis,
                                  TestModel.queueId,
                                  Ready,
-                                 new DateTime(2014, 2, 25, 13, 0, 1, 0),
+                                 new DateTime(2014, 2, 25, 13, 0, 1, 0).getMillis,
                                  None,
-                                 TestModel.triggerDate,
+                                 TestModel.triggerDate.getMillis,
                                  None,
                                  TestModel.triggerDate.getMillis,
                                  TestModel.triggerDate.getMillis,
@@ -32,12 +31,12 @@ class TaskDataSerializerTest extends Specification with DataTables {
 
   val taskDataFull = TaskData(TestModel.aggregateId,
                               TestModel.version,
-                              TestModel.createdDate,
+                              TestModel.createdDate.getMillis,
                               TestModel.queueId,
                               Ready,
-                              new DateTime(2014, 2, 25, 13, 0, 1, 0),
+                              new DateTime(2014, 2, 25, 13, 0, 1, 0).getMillis,
                               Some(prevStatus),
-                              TestModel.triggerDate,
+                              TestModel.triggerDate.getMillis,
                               Some(TestModel.assignee),
                               TestModel.triggerDate.getMillis,
                               TestModel.triggerDate.getMillis,
