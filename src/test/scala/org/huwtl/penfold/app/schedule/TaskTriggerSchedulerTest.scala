@@ -2,7 +2,7 @@ package org.huwtl.penfold.app.schedule
 
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
-import org.huwtl.penfold.readstore.{TaskRecordReference, ReadStore}
+import org.huwtl.penfold.readstore.{TaskProjectionReference, ReadStore}
 import org.huwtl.penfold.command.CommandDispatcher
 
 class TaskTriggerSchedulerTest extends Specification with Mockito {
@@ -12,6 +12,6 @@ class TaskTriggerSchedulerTest extends Specification with Mockito {
 
     new TaskTriggerScheduler(readStore, commandDispatcher, null).process()
 
-    there was one(readStore).forEachTriggeredTask(any[TaskRecordReference => Unit])
+    there was one(readStore).forEachTriggeredTask(any[TaskProjectionReference => Unit])
   }
 }

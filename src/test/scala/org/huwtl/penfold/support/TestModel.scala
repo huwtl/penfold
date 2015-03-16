@@ -14,7 +14,7 @@ import org.huwtl.penfold.domain.model.QueueId
 import org.huwtl.penfold.domain.event.FutureTaskCreated
 import org.huwtl.penfold.domain.event.TaskArchived
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.readstore.TaskRecord
+import org.huwtl.penfold.readstore.TaskProjection
 import org.huwtl.penfold.domain.event.TaskTriggered
 import scala.Some
 import org.huwtl.penfold.domain.event.TaskCreated
@@ -83,7 +83,7 @@ object TestModel {
   }
 
   object readModels {
-    val task = TaskRecord(aggregateId, AggregateVersion.init, createdDate, QueueBinding(queueId), Status.Ready, createdDate, None, None, triggerDate, score, score, payload)
+    val task = TaskProjection(aggregateId, AggregateVersion.init, createdDate, QueueBinding(queueId), Status.Ready, createdDate, None, None, triggerDate, score, score, payload)
 
     val readyTask = task
 

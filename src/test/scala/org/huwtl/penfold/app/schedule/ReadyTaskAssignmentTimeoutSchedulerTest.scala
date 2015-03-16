@@ -1,7 +1,7 @@
 package org.huwtl.penfold.app.schedule
 
 import org.specs2.mutable.Specification
-import org.huwtl.penfold.readstore.{TaskRecordReference, ReadStore}
+import org.huwtl.penfold.readstore.{TaskProjectionReference, ReadStore}
 import org.huwtl.penfold.command.{UnassignTask, CommandDispatcher}
 import org.huwtl.penfold.app.TaskAssignmentTimeoutConfiguration
 import org.huwtl.penfold.support.TestModel
@@ -16,7 +16,7 @@ class ReadyTaskAssignmentTimeoutSchedulerTest extends Specification with Mockito
     val readStore = mock[ReadStore]
     val commandDispatcher = mock[CommandDispatcher]
     val config = TaskAssignmentTimeoutConfiguration("assignmentTimeout")
-    readStore.retrieveTasksToTimeout("payload.assignmentTimeout", Some(Ready)) returns List(TaskRecordReference(TestModel.aggregateId, AggregateVersion.init)).toIterator
+    //readStore.retrieveTasksToTimeout("payload.assignmentTimeout", Some(Ready)) returns List(TaskProjectionReference(TestModel.aggregateId, AggregateVersion.init)).toIterator
 
     new ReadyTaskAssignmentTimeoutScheduler(readStore, commandDispatcher, config).process()
 

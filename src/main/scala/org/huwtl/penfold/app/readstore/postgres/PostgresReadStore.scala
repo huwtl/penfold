@@ -10,6 +10,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import org.huwtl.penfold.domain.model.{QueueId, AggregateId, Status}
 import org.huwtl.penfold.app.support.json.ObjectSerializer
+import scala.concurrent.duration.FiniteDuration
 
 class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQueryService, objectSerializer: ObjectSerializer, dateTimeSource: DateTimeSource, aliases: Aliases) extends ReadStore {
   private val connectionSuccess = true
@@ -25,25 +26,7 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
   override def retrieveBy(id: AggregateId) = {
     val json = sql"""SELECT data FROM tasks WHERE id = ${id.value}""".as[String].firstOption
     val taskData = json.map(objectSerializer.deserialize[TaskData])
-    taskData.map(_.toTaskRecord)
-  }
-
-  override def forEachTriggeredTask(f: TaskRecordReference => Unit) {
-    val currentTime = dateTimeSource.now
-
-    database.withDynSession {
-      val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${Waiting.name} AND (data->>'sort')::bigint <= ${currentTime.getMillis} ORDER BY data->>'sort'""".as[String].iterator
-      rows.foreach(row => f(objectSerializer.deserialize[TaskData](row).toTaskRecordReference))
-    }
-  }
-
-  override def retrieveTasksToTimeout(timeoutAttributePath: String, status: Option[Status] = None): Iterator[TaskRecordReference] = {
-//    val currentTime = dateTimeSource.now
-//
-//    val query = status.map(status => DBObject("status" -> status.name)).getOrElse(DBObject.empty) ++ (timeoutAttributePath $lte currentTime.getMillis)
-//
-//    tasksCollection.find(query).map(taskMapper.mapDocumentToTaskReference(_))
-    null
+    taskData.map(_.toTaskProjection)
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, sortOrder: SortOrder, filters: Filters) = {
@@ -53,6 +36,22 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
 
   override def retrieveBy(filters: Filters, pageRequest: PageRequest) = {
     retrieveByPage(filters, pageRequest, SortOrder.Desc)
+  }
+
+  override def forEachTriggeredTask(f: TaskProjectionReference => Unit) {
+    val currentTime = dateTimeSource.now.getMillis
+
+    val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${Waiting.name} AND (data->>'triggerDate')::bigint <= $currentTime ORDER BY data->>'triggerDate'""".as[String].iterator
+    rows.foreach(row => f(objectSerializer.deserialize[TaskData](row).toTaskProjectionReference))
+  }
+
+  override def forEachTimedOutTask(status: Status, timeoutDuration: FiniteDuration, f: TaskProjectionReference => Unit) {
+    val timeout = dateTimeSource.now.getMillis - timeoutDuration.toMillis
+
+    val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${status.name} AND (data->>'statusLastModified')::bigint <= $timeout ORDER BY data->>'statusLastModified'""".as[String].iterator
+    rows.foreach(row => {
+        f(objectSerializer.deserialize[TaskData](row).toTaskProjectionReference)
+    })
   }
 
   private def retrieveByPage(filters: Filters, pageRequest: PageRequest, sortOrder: SortOrder) = {

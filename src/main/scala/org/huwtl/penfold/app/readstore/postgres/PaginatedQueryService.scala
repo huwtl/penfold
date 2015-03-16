@@ -6,7 +6,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 import org.huwtl.penfold.readstore._
 import scala.Some
 import org.huwtl.penfold.readstore.PageRequest
-import org.huwtl.penfold.readstore.TaskRecord
+import org.huwtl.penfold.readstore.TaskProjection
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.app.readstore.postgres.NavigationDirection.{Forward, Reverse}
 import Database.dynamicSession
@@ -70,7 +70,7 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
 
         logger.info(s"query: ${rows.selectStatement}")
 
-        rows.list.map(row => objectSerializer.deserialize[TaskData](row.value).toTaskRecord)
+        rows.list.map(row => objectSerializer.deserialize[TaskData](row.value).toTaskProjection)
       }
     }
     else {
@@ -89,7 +89,7 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
     }
   }
 
-  private def enforcePageSortOrder(results: List[TaskRecord], sortOrder: SortOrder) = {
+  private def enforcePageSortOrder(results: List[TaskProjection], sortOrder: SortOrder) = {
     sortOrder match {
       case SortOrder.Desc => results.sortWith((e1, e2) => e1.id.value > e2.id.value).sortWith((e1, e2) => e1.sort > e2.sort)
       case SortOrder.Asc => results.sortWith((e1, e2) => e1.id.value < e2.id.value).sortWith((e1, e2) => e1.sort < e2.sort)

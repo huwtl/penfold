@@ -1,7 +1,7 @@
 package org.huwtl.penfold.app.schedule
 
 import org.huwtl.penfold.command.{CommandDispatcher, TriggerTask}
-import org.huwtl.penfold.readstore.{TaskRecordReference, ReadStore}
+import org.huwtl.penfold.readstore.{TaskProjectionReference, ReadStore}
 import scala.concurrent.duration.FiniteDuration
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 import grizzled.slf4j.Logger
@@ -16,7 +16,7 @@ class TaskTriggerScheduler(readStore: ReadStore, commandDispatcher: CommandDispa
     readStore.forEachTriggeredTask(triggerTask)
   }
 
-  private def triggerTask(task: TaskRecordReference) {
+  private def triggerTask(task: TaskProjectionReference) {
     Try(commandDispatcher.dispatch(TriggerTask(task.id, task.version))) recover {
       case e: AggregateConflictException => logger.info("conflict triggering task", e)
       case e: Exception => logger.error("error triggering task", e)

@@ -1,6 +1,6 @@
 package org.huwtl.penfold.app.readstore.postgres
 
-import org.huwtl.penfold.readstore.{TaskRecord, PageReference}
+import org.huwtl.penfold.readstore.{TaskProjection, PageReference}
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.app.readstore.postgres.NavigationDirection.{Reverse, Forward}
 
@@ -20,7 +20,7 @@ class LastKnownPageDetailsTransformer {
     }
   }
 
-  def toPageReference(results: List[TaskRecord], direction: NavigationDirection) = {
+  def toPageReference(results: List[TaskProjection], direction: NavigationDirection) = {
     direction match {
       case Forward => Some(PageReference(Array(results.last.id.value, results.last.sort, 1) mkString pageReferenceSeparator))
       case Reverse => Some(PageReference(Array(results.head.id.value, results.head.sort, 0) mkString pageReferenceSeparator))

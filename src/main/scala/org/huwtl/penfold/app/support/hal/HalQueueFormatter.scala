@@ -3,13 +3,13 @@ package org.huwtl.penfold.app.support.hal
 import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import java.net.URI
 import com.theoryinpractise.halbuilder.json.JsonRepresentationFactory
-import org.huwtl.penfold.readstore.{PageRequest, Filters, PageResult, TaskRecord}
+import org.huwtl.penfold.readstore.{PageRequest, Filters, PageResult, TaskProjection}
 import org.huwtl.penfold.domain.model.{QueueId, Status}
 
 class HalQueueFormatter(baseQueueLink: URI, halTaskFormatter: HalTaskFormatter) extends PaginatedRepresentationProvider {
   private val representationFactory = new JsonRepresentationFactory().withFlag(COALESCE_ARRAYS)
 
-  def halFrom(queueId: QueueId, task: TaskRecord) = {
+  def halFrom(queueId: QueueId, task: TaskProjection) = {
     createHalQueueEntry(queueId, task).toString(HAL_JSON)
   }
 
@@ -25,7 +25,7 @@ class HalQueueFormatter(baseQueueLink: URI, halTaskFormatter: HalTaskFormatter) 
     root.toString(HAL_JSON)
   }
 
-  private def createHalQueueEntry(queueId: QueueId, task: TaskRecord) = {
+  private def createHalQueueEntry(queueId: QueueId, task: TaskProjection) = {
     representationFactory.newRepresentation(s"${baseQueueLink.toString}/${queueId.value}/${task.status.name}/${task.id.value}")
       .withProperty("taskId", task.id.value)
       .withRepresentation("task", halTaskFormatter.halRepresentationFrom(task))

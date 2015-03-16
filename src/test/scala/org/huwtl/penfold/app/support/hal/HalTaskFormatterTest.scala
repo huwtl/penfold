@@ -7,7 +7,7 @@ import org.json4s.jackson.JsonMethods._
 import org.specs2.mutable.Specification
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.readstore._
-import org.huwtl.penfold.readstore.TaskRecord
+import org.huwtl.penfold.readstore.TaskProjection
 import scala.Some
 import org.huwtl.penfold.support.TestModel._
 import org.huwtl.penfold.support.TestModel.readModels._
@@ -64,7 +64,7 @@ class HalTaskFormatterTest extends Specification {
     ))
   }
 
-  private def hal(task: TaskRecord) = {
+  private def hal(task: TaskProjection) = {
     parse(taskFormatter.halFrom(task))
   }
 

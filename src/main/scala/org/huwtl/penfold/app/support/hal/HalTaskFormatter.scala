@@ -10,7 +10,7 @@ import org.huwtl.penfold.domain.model.Status._
 import com.theoryinpractise.halbuilder.api.Representation
 import org.huwtl.penfold.app.support.JavaMapUtil
 import org.huwtl.penfold.readstore.PageRequest
-import org.huwtl.penfold.readstore.TaskRecord
+import org.huwtl.penfold.readstore.TaskProjection
 import org.huwtl.penfold.domain.model.QueueBinding
 
 class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedRepresentationProvider {
@@ -18,7 +18,7 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
 
   private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
-  def halRepresentationFrom(task: TaskRecord) = {
+  def halRepresentationFrom(task: TaskProjection) = {
     val representation = representationFactory.newRepresentation(s"${baseTaskLink.toString}/${task.id.value}")
       .withProperty("id", task.id.value)
       .withProperty("version", task.version.number)
@@ -50,7 +50,7 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
     representation
   }
 
-  def addLinks(task : TaskRecord, representation: Representation) = {
+  def addLinks(task : TaskProjection, representation: Representation) = {
     val queueIdParam = task.queueBinding.id.value
 
     val taskUpdateUrl = s"${baseTaskLink.toString}/${task.id.value}/${task.version.number}"
@@ -77,7 +77,7 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
     }
   }
 
-  def halFrom(task: TaskRecord) = {
+  def halFrom(task: TaskProjection) = {
     halRepresentationFrom(task).toString(HAL_JSON)
   }
 

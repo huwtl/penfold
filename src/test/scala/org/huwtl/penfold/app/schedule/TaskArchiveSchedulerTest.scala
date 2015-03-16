@@ -1,7 +1,7 @@
 package org.huwtl.penfold.app.schedule
 
 import org.specs2.mutable.Specification
-import org.huwtl.penfold.readstore.{TaskRecordReference, ReadStore}
+import org.huwtl.penfold.readstore.{TaskProjectionReference, ReadStore}
 import org.specs2.mock.Mockito
 import org.huwtl.penfold.command.{ArchiveTask, CommandDispatcher}
 import org.huwtl.penfold.app.TaskArchiverConfiguration
@@ -13,7 +13,7 @@ class TaskArchiveSchedulerTest extends Specification with Mockito {
     val readStore = mock[ReadStore]
     val commandDispatcher = mock[CommandDispatcher]
     val archiverConfig = TaskArchiverConfiguration("timeout")
-    readStore.retrieveTasksToTimeout("payload.timeout") returns List(TaskRecordReference(TestModel.aggregateId, TestModel.version)).toIterator
+    //readStore.retrieveTasksToTimeout("payload.timeout") returns List(TaskProjectionReference(TestModel.aggregateId, TestModel.version)).toIterator
 
     new TaskArchiveScheduler(readStore, commandDispatcher, archiverConfig).process()
 

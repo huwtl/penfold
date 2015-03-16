@@ -2,7 +2,7 @@ package org.huwtl.penfold.app.readstore.postgres
 
 import org.specs2.specification.Scope
 import org.huwtl.penfold.domain.model._
-import org.joda.time.DateTime
+import org.joda.time.{Interval, DateTime}
 import org.huwtl.penfold.app.support.DateTimeSource
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.domain.event._
@@ -24,8 +24,10 @@ import Database.dynamicSession
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import org.huwtl.penfold.readstore.QueryParamType.NumericType
-import org.huwtl.penfold.domain.model.Status.Ready
+import org.huwtl.penfold.domain.model.Status.{Waiting, Ready}
 import org.specs2.matcher.DataTables
+import scala.concurrent.duration.FiniteDuration
+import java.util.concurrent.TimeUnit
 
 class PostgresReadStoreTest extends PostgresSpecification with Mockito with DataTables {
   sequential
@@ -62,7 +64,7 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
 
     def entry(aggregateId: String, triggerDate: DateTime, index: Int) = {
       val payload = Payload(Map("a" -> "123", "b" -> "1", "c" -> index))
-      FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, payload, triggerDate.getMillis)
+      FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created.plusSeconds(1), QueueBinding(queueId), triggerDate, payload, triggerDate.getMillis)
     }
 
     def forwardFrom(lastEvent: TaskCreatedEvent) = Some(PageReference(s"${lastEvent.aggregateId.value}~${lastEvent.triggerDate.getMillis}~1"))
@@ -107,6 +109,24 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
       })
 
       triggeredTasks must beEqualTo(mutable.ListBuffer("a", "b", "c", "d"))
+    }
+  }
+
+  "retrieve tasks to timeout" in new context {
+    dateTimeSource.now returns created
+    val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created.minusSeconds(1), QueueBinding(queueId), created.minusSeconds(1), Payload(Map()), score)
+    val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created.minusSeconds(3), QueueBinding(queueId), created.minusSeconds(3), Payload(Map()), score)
+    val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created.minusSeconds(4), QueueBinding(queueId), created.minusSeconds(4), Payload(Map()), score)
+    val event4 = TaskCreated(AggregateId("4"), AggregateVersion.init, created.minusSeconds(2), QueueBinding(queueId), created.minusSeconds(2), Payload(Map()), score)
+    persist(List(event1, event2, event3, event4))
+
+    database.withDynTransaction {
+      val timedOutTasks = new mutable.ListBuffer[String]()
+      readStore.forEachTimedOutTask(Ready, FiniteDuration(3l, TimeUnit.SECONDS), task => {
+        timedOutTasks += task.id.value
+      })
+
+      timedOutTasks must beEqualTo(mutable.ListBuffer("3", "2"))
     }
   }
 

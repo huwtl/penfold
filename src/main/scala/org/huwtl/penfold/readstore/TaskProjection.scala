@@ -5,7 +5,7 @@ import org.joda.time.DateTime
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.Payload
 
-case class TaskRecord(id: AggregateId,
+case class TaskProjection(id: AggregateId,
                       version: AggregateVersion,
                       created: DateTime,
                       queueBinding: QueueBinding,
