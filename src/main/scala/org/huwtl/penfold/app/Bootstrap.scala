@@ -6,13 +6,13 @@ import org.huwtl.penfold.app.web._
 import java.net.URI
 import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import org.huwtl.penfold.command._
-import org.huwtl.penfold.domain.store.{DomainRepositoryImpl}
+import org.huwtl.penfold.domain.store.DomainRepositoryImpl
 import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
 import org.huwtl.penfold.readstore.{EventNotifiersImpl, EventNotifier, NewEventsProvider}
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import org.huwtl.penfold.app.support.{DateTimeSource, UUIDFactory}
-import org.huwtl.penfold.app.schedule.{ReadyTaskAssignmentTimeoutScheduler, EventSyncScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
+import org.huwtl.penfold.app.schedule.{RequeueTimeoutScheduler, EventSyncScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
 import com.codahale.metrics.health.HealthCheckRegistry
 import org.huwtl.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
 import org.huwtl.penfold.app.store.postgres._
@@ -67,12 +67,12 @@ class Bootstrap extends LifeCycle {
 
     new TaskTriggerScheduler(readStore, commandDispatcher, config.triggeredCheckFrequency).start()
 
-    if (config.readyTaskAssignmentTimeout.isDefined) {
-      new ReadyTaskAssignmentTimeoutScheduler(readStore, commandDispatcher, config.readyTaskAssignmentTimeout.get).start()
+    if (config.requeueTimeout.isDefined) {
+      new RequeueTimeoutScheduler(readStore, commandDispatcher, config.requeueTimeout.get).start()
     }
 
-    if (config.taskArchiver.isDefined) {
-      new TaskArchiveScheduler(readStore, commandDispatcher, config.taskArchiver.get).start()
+    if (config.archiveTimeout.isDefined) {
+      new TaskArchiveScheduler(readStore, commandDispatcher, config.archiveTimeout.get).start()
     }
   }
 }

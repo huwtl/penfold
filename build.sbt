@@ -40,6 +40,7 @@ libraryDependencies ++= Seq(
   "org.mockito" % "mockito-all" % "1.9.0" % "test",
   "org.specs2" % "specs2_2.10" % "2.1.1" % "test",
   "org.scalatra" %% "scalatra-specs2" % "2.2.2" % "test",
+  "org.hamcrest" % "hamcrest-core" % "1.3" % "test",
   "com.opentable.components" % "otj-pg-embedded" % "0.3.0" % "test"
 )
 

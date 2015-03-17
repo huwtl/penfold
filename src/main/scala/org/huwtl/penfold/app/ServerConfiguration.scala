@@ -17,8 +17,8 @@ case class ServerConfiguration(publicUrl: String,
                                pageSize: Int = 10,
                                eventSync: FiniteDuration = FiniteDuration(15L, TimeUnit.MINUTES),
                                triggeredCheckFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS),
-                               taskArchiver: Option[TaskArchiverConfiguration] = None,
-                               readyTaskAssignmentTimeout: Option[TaskAssignmentTimeoutConfiguration] = None) {
+                               archiveTimeout: Option[TaskArchiverConfiguration] = None,
+                               requeueTimeout: Option[TaskRequeueTimeoutConfiguration] = None) {
 
   val readStorePathAliases = Aliases(readStoreAliases.map {
     case (alias, path) => (Alias(alias), Path(path))
@@ -31,11 +31,9 @@ case class AuthenticationCredentials(username: String, password: String)
 
 case class DatabaseConfiguration(url: String, username: String, password: String, driver: String = "org.postgresql.Driver", poolSize: Int = 15)
 
-case class TaskArchiverConfiguration(timeoutPayloadPath: String,
-                                     checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
+case class TaskArchiverConfiguration(timeout: FiniteDuration, checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
 
-case class TaskAssignmentTimeoutConfiguration(timeoutPayloadPath: String,
-                                              checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
+case class TaskRequeueTimeoutConfiguration(timeout: FiniteDuration, checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
 
 case class SortOrderingConfiguration(private val waiting: String = "Asc",
                                      private val ready: String = "Asc",
