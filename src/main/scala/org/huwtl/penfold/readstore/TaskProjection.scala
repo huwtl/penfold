@@ -17,7 +17,7 @@ case class TaskProjection(id: AggregateId,
                       score: Long,
                       sort: Long,
                       payload: Payload,
-                      rescheduleType: Option[String] = None,
-                      conclusionType: Option[String] = None)
+                      rescheduleReason: Option[String] = None,
+                      closeReason: Option[String] = None)
 
 case class PreviousStatus(status: Status, statusLastModified: DateTime)

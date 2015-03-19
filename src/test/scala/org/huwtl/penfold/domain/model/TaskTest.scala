@@ -17,7 +17,7 @@ class TaskTest extends Specification {
 
   val concluder = User("user1")
 
-  val conclusionType = "type"
+  val closeReason = "type"
 
   val assignee = User("user")
 
@@ -65,7 +65,7 @@ class TaskTest extends Specification {
 
   "task closure" should {
     "close task" in {
-      val closeTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).close(TestModel.version, Some(concluder), Some(conclusionType), None, None)
+      val closeTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).close(TestModel.version, Some(concluder), Some(closeReason), None, None)
       typesOf(closeTask.uncommittedEvents) must beEqualTo(List(classOf[TaskClosed], classOf[TaskCreated]))
     }
 

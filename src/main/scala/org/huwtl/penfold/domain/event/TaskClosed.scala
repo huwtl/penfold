@@ -8,6 +8,6 @@ case class TaskClosed(aggregateId: AggregateId,
                       aggregateVersion: AggregateVersion,
                       created: DateTime,
                       concluder: Option[User],
-                      conclusionType: Option[String],
+                      closeReason: Option[String],
                       assignee: Option[User],
                       payloadUpdate: Option[Patch]) extends TaskEvent

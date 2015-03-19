@@ -56,7 +56,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
     val queue = event.queueBinding.id
 
     val task = TaskData(event.aggregateId, event.aggregateVersion, event.created.getMillis, queue, status, event.created.getMillis, previousStatus = None, event.triggerDate.getMillis, assignee = None,
-      event.score, resolveSortOrder(event, status, event.score).get, event.payload, rescheduleType = None, conclusionType = None)
+      event.score, resolveSortOrder(event, status, event.score).get, event.payload, rescheduleReason = None, closeReason = None)
 
     val taskJson = objectSerializer.serialize(task)
 
@@ -108,7 +108,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
           score = event.score.getOrElse(task.score),
           sort = event.triggerDate.getMillis,
           triggerDate = event.triggerDate.getMillis,
-          rescheduleType = event.rescheduleType,
+          rescheduleReason = event.rescheduleReason,
           assignee = event.assignee,
           payload = patchPayloadIfExists(task, event.payloadUpdate))
       }
@@ -123,7 +123,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
           status = Closed,
           statusLastModified = event.created.getMillis,
           sort = event.created.getMillis,
-          conclusionType = event.conclusionType,
+          closeReason = event.closeReason,
           assignee = event.assignee,
           payload = patchPayloadIfExists(task, event.payloadUpdate))
       }
@@ -159,7 +159,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
   private def handleTaskUpdate(event: Event)(updatedFields: TaskData => TaskData) = {
     existing(event.aggregateId, event.aggregateVersion) match {
       case Some(task) =>
-        val defaultsApplied = task.copy(version = event.aggregateVersion, rescheduleType = None, conclusionType = None)
+        val defaultsApplied = task.copy(version = event.aggregateVersion, rescheduleReason = None, closeReason = None)
         val updatedTaskJson = objectSerializer.serialize(updatedFields(defaultsApplied))
         sqlu"""UPDATE tasks SET data = $updatedTaskJson::json WHERE id = ${event.aggregateId.value} AND (data->>'version')::bigint = ${event.aggregateVersion.previous.number}""".execute
       case None =>

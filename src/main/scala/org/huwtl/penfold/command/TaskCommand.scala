@@ -34,14 +34,14 @@ case class RescheduleTask(id: AggregateId,
                           version: AggregateVersion,
                           triggerDate: DateTime,
                           assignee: Option[User],
-                          rescheduleType: Option[String],
+                          rescheduleReason: Option[String],
                           payloadUpdate: Option[Patch],
                           scoreUpdate: Option[Long]) extends TaskCommand
 
 case class CloseTask(id: AggregateId,
                      version: AggregateVersion,
                      concluder: Option[User],
-                     conclusionType: Option[String],
+                     closeReason: Option[String],
                      assignee: Option[User],
                      payloadUpdate: Option[Patch]) extends TaskCommand
 

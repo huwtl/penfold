@@ -18,10 +18,10 @@ case class TaskData(id: AggregateId,
                     score: Long,
                     sort: Long,
                     payload: Payload,
-                    rescheduleType: Option[String] = None,
-                    conclusionType: Option[String] = None) {
+                    rescheduleReason: Option[String] = None,
+                    closeReason: Option[String] = None) {
   def toTaskProjection = {
-    TaskProjection(id, version, new DateTime(created), QueueBinding(queue), status, new DateTime(statusLastModified), previousStatus.map(_.toPreviousStatusProjection), assignee, new DateTime(triggerDate), score, sort, payload, rescheduleType, conclusionType)
+    TaskProjection(id, version, new DateTime(created), QueueBinding(queue), status, new DateTime(statusLastModified), previousStatus.map(_.toPreviousStatusProjection), assignee, new DateTime(triggerDate), score, sort, payload, rescheduleReason, closeReason)
   }
 
   def toTaskProjectionReference = {

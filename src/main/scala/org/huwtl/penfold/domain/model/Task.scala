@@ -87,10 +87,10 @@ case class Task(uncommittedEvents: List[Event],
     applyTaskRequeued(TaskRequeued(aggregateId, version.next, now, requeueType, assignee, payloadUpdate, score))
   }
 
-  def reschedule(expectedVersion: AggregateVersion, triggerDate: DateTime, assignee: Option[User], rescheduleType: Option[String], payloadUpdate: Option[Patch], score: Option[Long]): Task = {
+  def reschedule(expectedVersion: AggregateVersion, triggerDate: DateTime, assignee: Option[User], rescheduleReason: Option[String], payloadUpdate: Option[Patch], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
     checkConflict(status != Archived, s"Cannot reschedule an archived task ($aggregateId)")
-    applyTaskRescheduled(TaskRescheduled(aggregateId, version.next, now, triggerDate, assignee, rescheduleType, payloadUpdate, score))
+    applyTaskRescheduled(TaskRescheduled(aggregateId, version.next, now, triggerDate, assignee, rescheduleReason, payloadUpdate, score))
   }
 
   def unassign(expectedVersion: AggregateVersion, unassignType: Option[String], payloadUpdate: Option[Patch]): Task = {

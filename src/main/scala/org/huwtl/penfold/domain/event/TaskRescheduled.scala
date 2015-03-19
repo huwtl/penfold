@@ -9,6 +9,6 @@ case class TaskRescheduled(aggregateId: AggregateId,
                            created: DateTime,
                            triggerDate: DateTime,
                            assignee: Option[User],
-                           rescheduleType: Option[String],
+                           rescheduleReason: Option[String],
                            payloadUpdate: Option[Patch],
                            score: Option[Long]) extends TaskEvent

@@ -33,12 +33,12 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       representation.withProperty("assignee", task.assignee.get.username)
     }
 
-    if (task.rescheduleType.isDefined) {
-      representation.withProperty("rescheduleType", task.rescheduleType.get)
+    if (task.rescheduleReason.isDefined) {
+      representation.withProperty("rescheduleReason", task.rescheduleReason.get)
     }
 
-    if (task.conclusionType.isDefined) {
-      representation.withProperty("conclusionType", task.conclusionType.get)
+    if (task.closeReason.isDefined) {
+      representation.withProperty("closeReason", task.closeReason.get)
     }
 
     if (task.previousStatus.isDefined) {

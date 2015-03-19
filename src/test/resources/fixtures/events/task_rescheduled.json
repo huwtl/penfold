@@ -5,7 +5,7 @@
     "created" : "2014-02-25 13:00:00",
     "triggerDate" : "2014-02-25 14:00:00",
     "assignee": "user1",
-    "rescheduleType": "schType",
+    "rescheduleReason": "schType",
     "payloadUpdate": {"operations": []},
     "score": 1393336800000,
     "aggregateType" : "Task",

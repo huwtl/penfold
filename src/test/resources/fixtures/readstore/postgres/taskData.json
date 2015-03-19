@@ -19,6 +19,6 @@
       "bool": true
     }
   },
-  "rescheduleType": "user2",
-  "conclusionType": "user3"
+  "rescheduleReason": "user2",
+  "closeReason": "user3"
 }
