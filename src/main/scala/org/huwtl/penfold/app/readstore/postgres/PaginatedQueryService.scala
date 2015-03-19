@@ -49,29 +49,27 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
 
   private def execPageQueryWithOverflow(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], filters: Filters, sortOrder: SortOrder, pageSize: Int) = {
     if (pageSize > 0) {
-      database.withDynSession {
-        val queryWithCriteria: lifted.Query[TasksTable, TasksTable#TableElementType, Seq] = filters.all.foldLeft(query)((q, f) => {
+      val queryWithCriteria: lifted.Query[TasksTable, TasksTable#TableElementType, Seq] = filters.all.foldLeft(query)((q, f) => {
 
-          val filterPath = aliases.path(Alias(f.key)).value
+        val filterPath = aliases.path(Alias(f.key)).value
 
-          q.filter((row: TasksTable) =>
-            f match {
-              case EQ(key, value, dataType) => jsonPath(row, filterPath) === value.bind
-              case IN(key, values, dataType) => jsonPath(row, filterPath) inSetBind values
-              case LT(key, value, dataType) => jsonPath(row, filterPath).asColumnOf[Long] < Option(value).map(_.toLong).getOrElse(Long.MinValue).bind
-              case GT(key, value, dataType) => jsonPath(row, filterPath).asColumnOf[Long] > Option(value).map(_.toLong).getOrElse(Long.MaxValue).bind
-              case _ => throw new IllegalStateException("unsupported filter type")
-            })
-        })
+        q.filter((row: TasksTable) =>
+          f match {
+            case EQ(key, value, dataType) => jsonPath(row, filterPath) === value.bind
+            case IN(key, values, dataType) => jsonPath(row, filterPath) inSetBind values
+            case LT(key, value, dataType) => jsonPath(row, filterPath).asColumnOf[Long] < Option(value).map(_.toLong).getOrElse(Long.MinValue).bind
+            case GT(key, value, dataType) => jsonPath(row, filterPath).asColumnOf[Long] > Option(value).map(_.toLong).getOrElse(Long.MaxValue).bind
+            case _ => throw new IllegalStateException("unsupported filter type")
+          })
+      })
 
-        val sort = sortCriteria(queryWithCriteria, sortOrder).take(pageSize + 1)
+      val sort = sortCriteria(queryWithCriteria, sortOrder).take(pageSize + 1)
 
-        val rows = sort.map(_.data)
+      val rows = sort.map(_.data)
 
-        logger.info(s"query: ${rows.selectStatement}")
+      logger.info(s"query: ${rows.selectStatement}")
 
-        rows.list.map(row => objectSerializer.deserialize[TaskData](row.value).toTaskProjection)
-      }
+      rows.list.map(row => objectSerializer.deserialize[TaskData](row.value).toTaskProjection)
     }
     else {
       List.empty

@@ -5,7 +5,7 @@ CREATE TABLE tasks
 );
 
 CREATE UNIQUE INDEX tasks_id_idx ON tasks((data->>'id'));
-CREATE INDEX tasks_version_idx ON tasks(cast(data->>'created' AS BIGINT));
+CREATE INDEX tasks_version_idx ON tasks(cast(data->>'version' AS BIGINT));
 CREATE INDEX tasks_status_idx ON tasks((data->>'status'));
 CREATE INDEX tasks_queue_idx ON tasks((data->>'queue'));
 CREATE INDEX tasks_assignee_idx ON tasks((data->>'assignee'));
@@ -19,4 +19,10 @@ CREATE TABLE trackers
 (
   id varchar PRIMARY KEY,
   last_event_id bigint NOT NULL
+);
+
+CREATE TABLE archived
+(
+  id varchar(36) PRIMARY KEY,
+  data json NOT NULL
 );

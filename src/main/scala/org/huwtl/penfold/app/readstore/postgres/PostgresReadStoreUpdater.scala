@@ -152,6 +152,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
   }
 
   private def handleArchiveEvent(event: TaskArchived) = {
+    sqlu"""INSERT INTO archived (id, data) (SELECT t.id, t.data FROM tasks t WHERE t.id = ${event.aggregateId.value})""".execute
     sqlu"""DELETE FROM tasks WHERE id = ${event.aggregateId.value} AND (data->>'version')::bigint = ${event.aggregateVersion.previous.number}""".execute
   }
 

@@ -13,6 +13,10 @@ import org.huwtl.penfold.readstore.{EventSequenceId, EventRecord}
 import org.huwtl.penfold.domain.model.Status.Closed
 import org.joda.time.DateTime
 import org.huwtl.penfold.domain.model.patch.{Value, Replace, Patch}
+import scala.slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import scala.slick.jdbc.StaticQuery.interpolation
+import scala.slick.jdbc.{StaticQuery => Q}
 
 class PostgresReadStoreUpdaterTest extends PostgresSpecification {
   sequential
@@ -141,12 +145,13 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
     }
   }
 
-  "remove task on archive" in new context {
+  "archive task" in new context {
     handleEvents(taskCreatedEvent, archivedEvent)
 
     database.withDynTransaction {
       val task = readStore.retrieveBy(aggregateId)
       task must beNone
+      sql"""SELECT id, data FROM archived WHERE id = ${aggregateId.value}""".as[String].firstOption.isDefined must beTrue
     }
   }
 

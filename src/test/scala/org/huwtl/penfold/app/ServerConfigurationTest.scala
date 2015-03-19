@@ -6,7 +6,6 @@ import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
-import org.huwtl.penfold.app.store.postgres.CustomDbMigrationPath
 
 class ServerConfigurationTest extends Specification {
 
