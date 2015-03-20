@@ -5,6 +5,7 @@
   "queue": "abc",
   "status": "ready",
   "statusLastModified": 1393333201000,
+  "attempts": 0,
   "triggerDate": 1393336800000,
   "score": 1393336800000,
   "sort": 1393336800000,

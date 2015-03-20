@@ -55,7 +55,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
   private def handleCreateEvent(event: TaskCreatedEvent, status: Status) = {
     val queue = event.queueBinding.id
 
-    val task = TaskData(event.aggregateId, event.aggregateVersion, event.created.getMillis, queue, status, event.created.getMillis, previousStatus = None, event.triggerDate.getMillis, assignee = None,
+    val task = TaskData(event.aggregateId, event.aggregateVersion, event.created.getMillis, queue, status, event.created.getMillis, previousStatus = None, 0, event.triggerDate.getMillis, assignee = None,
       event.score, resolveSortOrder(event, status, event.score).get, event.payload, rescheduleReason = None, closeReason = None)
 
     val taskJson = objectSerializer.serialize(task)
@@ -76,6 +76,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
         previousStatus = Some(updatePreviousStatus(task)),
         status = Started,
         statusLastModified = event.created.getMillis,
+        attempts = task.attempts + 1,
         sort = event.created.getMillis,
         assignee = event.assignee,
         payload = patchPayloadIfExists(task, event.payloadUpdate))

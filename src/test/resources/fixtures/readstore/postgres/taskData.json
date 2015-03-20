@@ -9,6 +9,7 @@
     "status": "started",
     "statusLastModified": 1393333200000
   },
+  "attempts": 0,
   "triggerDate": 1393336800000,
   "assignee": "user1",
   "score": 1393336800000,

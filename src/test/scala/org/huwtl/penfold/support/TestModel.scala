@@ -83,7 +83,7 @@ object TestModel {
   }
 
   object readModels {
-    val task = TaskProjection(aggregateId, AggregateVersion.init, createdDate, QueueBinding(queueId), Status.Ready, createdDate, None, None, triggerDate, score, score, payload)
+    val task = TaskProjection(aggregateId, AggregateVersion.init, createdDate, QueueBinding(queueId), Status.Ready, createdDate, None, 0, None, triggerDate, score, score, payload)
 
     val readyTask = task
 
@@ -91,7 +91,7 @@ object TestModel {
 
     val waitingTask = task.copy(status = Waiting)
 
-    val startedTask = task.copy(version = AggregateVersion(2), status = Started, assignee = Some(assignee), previousStatus = Some(PreviousStatus(Ready, createdDate)), sort = createdDate.getMillis)
+    val startedTask = task.copy(version = AggregateVersion(2), status = Started, attempts = 1, assignee = Some(assignee), previousStatus = Some(PreviousStatus(Ready, createdDate)), sort = createdDate.getMillis)
 
     val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), assignee = Some(concluder), closeReason = Some(closeReason))
 

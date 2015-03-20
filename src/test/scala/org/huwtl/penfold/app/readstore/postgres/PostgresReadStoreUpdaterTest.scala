@@ -80,6 +80,7 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
         id = aggregateId,
         version = taskUnassignedEvent.aggregateVersion,
         payload = payload,
+        attempts = 1,
         previousStatus = Some(TestModel.previousStatus.copy(status = Closed)),
         assignee = None)))
     }
@@ -101,7 +102,7 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
     database.withDynTransaction {
       val task = readStore.retrieveBy(aggregateId)
 
-      task must beEqualTo(Some(TestModel.readModels.rescheduledTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
+      task must beEqualTo(Some(TestModel.readModels.rescheduledTask.copy(id = aggregateId, version = AggregateVersion(3), attempts = 1, payload = payload)))
     }
   }
 
@@ -164,6 +165,7 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
       task must beEqualTo(Some(TestModel.readModels.readyTask.copy(
         id = aggregateId,
         version = taskRequeuedEvent.aggregateVersion,
+        attempts = 1,
         payload = payload,
         previousStatus = Some(TestModel.previousStatus.copy(status = Closed)),
         assignee = Some(TestModel.assignee))))

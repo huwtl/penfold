@@ -5,6 +5,7 @@
         "RescheduleTask": {"href": "http://host/tasks/1/3"},
         "queue": {"href": "http://host/queues/abc/closed"}
     },
+    "attempts": 1,
     "id": "1",
     "version": 3,
     "payload": {
