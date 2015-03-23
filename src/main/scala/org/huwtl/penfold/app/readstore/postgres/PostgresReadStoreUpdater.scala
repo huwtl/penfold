@@ -109,7 +109,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
           score = event.score.getOrElse(task.score),
           sort = event.triggerDate.getMillis,
           triggerDate = event.triggerDate.getMillis,
-          rescheduleReason = event.rescheduleReason,
+          rescheduleReason = event.reason,
           assignee = event.assignee,
           payload = patchPayloadIfExists(task, event.payloadUpdate))
       }
@@ -124,8 +124,8 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
           status = Closed,
           statusLastModified = event.created.getMillis,
           sort = event.created.getMillis,
-          closeReason = event.closeReason,
-          assignee = event.assignee,
+          closeReason = event.reason,
+          assignee = None,
           payload = patchPayloadIfExists(task, event.payloadUpdate))
       }
     }

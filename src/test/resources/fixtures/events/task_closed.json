@@ -3,10 +3,9 @@
     "aggregateId" : "1",
     "aggregateVersion" : 3,
     "created" : "2014-02-25 13:00:00",
-    "concluder": "user1",
-    "closeReason": "type",
-    "assignee": "user1",
+    "user": "user1",
+    "reason": "type",
     "payloadUpdate": {"operations": []},
     "aggregateType" : "Task",
-    "version": 1
+    "version": 2
 }

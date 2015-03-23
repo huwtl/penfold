@@ -15,11 +15,9 @@ class TaskTest extends Specification {
 
   val queue = QueueId("abc")
 
-  val concluder = User("user1")
+  val user = User("user1")
 
   val closeReason = "type"
-
-  val assignee = User("user")
 
   "task creation" should {
     "create new task" in {
@@ -65,18 +63,18 @@ class TaskTest extends Specification {
 
   "task closure" should {
     "close task" in {
-      val closeTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).close(TestModel.version, Some(concluder), Some(closeReason), None, None)
+      val closeTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).close(TestModel.version, Some(user), Some(closeReason), None)
       typesOf(closeTask.uncommittedEvents) must beEqualTo(List(classOf[TaskClosed], classOf[TaskCreated]))
     }
 
     "ensure archived tasks cannot be closed" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).close(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).close(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
   "task requeuing" should {
     "requeue task" in {
-      val requeuedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, Some(assignee), None).requeue(TestModel.version.next, None, None, None, None)
+      val requeuedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, Some(user), None).requeue(TestModel.version.next, None, None, None, None)
       typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[TaskStarted], classOf[TaskCreated]))
     }
 
@@ -93,7 +91,7 @@ class TaskTest extends Specification {
 
   "task rescheduling" should {
     "reschedule task" in {
-      val rescheduleTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, Some(assignee), None).reschedule(TestModel.version.next, DateTime.now().plusHours(1), Some(assignee), Some("type"), None, None)
+      val rescheduleTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, Some(user), None).reschedule(TestModel.version.next, DateTime.now().plusHours(1), Some(user), Some("type"), None, None)
       typesOf(rescheduleTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRescheduled], classOf[TaskStarted], classOf[TaskCreated]))
     }
 
@@ -118,7 +116,7 @@ class TaskTest extends Specification {
 
     "ensure closed, archived tasks cannot accept updated payload" in {
       readyTask
-        .close(TestModel.version, None, None, None, None)
+        .close(TestModel.version, None, None, None)
         .updatePayload(TestModel.version.next, Patch(Nil), None, None) must throwA[AggregateConflictException]
 
       readyTask
@@ -141,8 +139,8 @@ class TaskTest extends Specification {
   "task unassignment" should {
     "unassign ready task" in {
       val unassignedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
-        .start(TestModel.version, Some(assignee), None)
-        .requeue(TestModel.version.next, None, Some(assignee), None, None)
+        .start(TestModel.version, Some(user), None)
+        .requeue(TestModel.version.next, None, Some(user), None, None)
         .unassign(TestModel.version.next.next, None, None)
 
       typesOf(unassignedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskUnassigned], classOf[TaskRequeued], classOf[TaskStarted], classOf[TaskCreated]))
@@ -150,8 +148,8 @@ class TaskTest extends Specification {
 
     "unassign waiting task" in {
       val unassignedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
-        .start(TestModel.version, Some(assignee), None)
-        .reschedule(TestModel.version.next, TestModel.triggerDate, Some(assignee), None, None, None)
+        .start(TestModel.version, Some(user), None)
+        .reschedule(TestModel.version.next, TestModel.triggerDate, Some(user), None, None, None)
         .unassign(TestModel.version.next.next, None, None)
 
       typesOf(unassignedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskUnassigned], classOf[TaskRescheduled], classOf[TaskStarted], classOf[TaskCreated]))
@@ -161,7 +159,7 @@ class TaskTest extends Specification {
       val task = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
       task.archive(TestModel.version).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
       task.start(TestModel.version, None, None).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
-      task.close(TestModel.version, None, None, None, None).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
+      task.close(TestModel.version, None, None, None).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
     }
 
     "only assigned tasks can be unassigned" in {
@@ -181,7 +179,7 @@ class TaskTest extends Specification {
     waitingTaskAtVersion1.archive(AggregateVersion(1)) must throwA[AggregateConflictException]
     readyTaskAtVersion3.start(AggregateVersion(2), None, None) must throwA[AggregateConflictException]
     readyTaskAtVersion3.reschedule(AggregateVersion(2), TestModel.triggerDate, None, None, None, None) must throwA[AggregateConflictException]
-    readyTaskAtVersion3.close(AggregateVersion(2), None, None, None, None) must throwA[AggregateConflictException]
+    readyTaskAtVersion3.close(AggregateVersion(2), None, None, None) must throwA[AggregateConflictException]
     startedTaskAtVersion2.requeue(AggregateVersion(1), None, None, None, None) must throwA[AggregateConflictException]
     startedTaskAtVersion2.unassign(AggregateVersion(1), None, None) must throwA[AggregateConflictException]
   }

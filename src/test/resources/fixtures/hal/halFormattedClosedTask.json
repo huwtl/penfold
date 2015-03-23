@@ -20,7 +20,6 @@
         "status": "started",
         "statusLastModified": "2014-02-25 13:00:00"
     },
-    "assignee": "user1",
     "closeReason": "type",
     "triggerDate": "2014-02-25 14:00:00",
     "queueBinding": {"id": "abc"},

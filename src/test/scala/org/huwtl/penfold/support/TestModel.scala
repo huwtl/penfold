@@ -42,15 +42,15 @@ object TestModel {
 
   val assignee = User("user1")
 
-  val concluder = User("user1")
+  val user = User("user1")
 
   val updateType = "updateType"
 
-  val unassignType = "unassignType"
+  val unassignReason = "unassignType"
 
   val rescheduleReason = "schType"
 
-  val requeueType = "reqType"
+  val requeueReason = "reqType"
 
   val closeReason = "type"
 
@@ -69,17 +69,17 @@ object TestModel {
 
     val createFutureTask = CreateFutureTask(QueueBinding(TestModel.queueId), triggerDate, payload, Some(score))
 
-    val unassignTask = UnassignTask(aggregateId, version, Some(unassignType), Some(payloadUpdate))
+    val unassignTask = UnassignTask(aggregateId, version, Some(unassignReason), Some(payloadUpdate))
 
     val updateTaskPayload = UpdateTaskPayload(aggregateId, version, Some(updateType), payloadUpdate, Some(score))
 
     val startTask = StartTask(aggregateId, version, Some(assignee), Some(payloadUpdate))
 
-    val requeueTask = RequeueTask(aggregateId, version, Some(requeueType), Some(assignee), Some(payloadUpdate), Some(score))
+    val requeueTask = RequeueTask(aggregateId, version, Some(requeueReason), Some(assignee), Some(payloadUpdate), Some(score))
 
     val rescheduleTask = RescheduleTask(aggregateId, version, triggerDate, Some(assignee), Some(rescheduleReason), Some(payloadUpdate), Some(score))
 
-    val closeTask = CloseTask(aggregateId, version, Some(concluder), Some(closeReason), Some(assignee), Some(payloadUpdate))
+    val closeTask = CloseTask(aggregateId, version, Some(user), Some(closeReason), Some(payloadUpdate))
   }
 
   object readModels {
@@ -93,7 +93,7 @@ object TestModel {
 
     val startedTask = task.copy(version = AggregateVersion(2), status = Started, attempts = 1, assignee = Some(assignee), previousStatus = Some(PreviousStatus(Ready, createdDate)), sort = createdDate.getMillis)
 
-    val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), assignee = Some(concluder), closeReason = Some(closeReason))
+    val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), assignee = None, closeReason = Some(closeReason))
 
     val requeuedTask = task.copy(version = AggregateVersion(2), previousStatus = Some(previousStatus))
 
@@ -109,13 +109,13 @@ object TestModel {
 
     val startedEvent = TaskStarted(aggregateId, AggregateVersion(2), createdDate, Some(assignee), Some(payloadUpdate))
 
-    val closedEvent = TaskClosed(aggregateId, AggregateVersion(3), createdDate, Some(concluder), Some(closeReason), Some(assignee), Some(payloadUpdate))
+    val closedEvent = TaskClosed(aggregateId, AggregateVersion(3), createdDate, Some(user), Some(closeReason), Some(payloadUpdate))
 
-    val requeuedEvent = TaskRequeued(aggregateId, AggregateVersion(4), createdDate, Some(requeueType), Some(assignee), Some(payloadUpdate), Some(score))
+    val requeuedEvent = TaskRequeued(aggregateId, AggregateVersion(4), createdDate, Some(requeueReason), Some(assignee), Some(payloadUpdate), Some(score))
 
     val rescheduledEvent = TaskRescheduled(aggregateId, AggregateVersion(3), createdDate, triggerDate, Some(assignee), Some(rescheduleReason), Some(payloadUpdate), Some(score))
 
-    val unassignedEvent = TaskUnassigned(aggregateId, AggregateVersion(3), createdDate, Some(unassignType), Some(payloadUpdate))
+    val unassignedEvent = TaskUnassigned(aggregateId, AggregateVersion(3), createdDate, Some(unassignReason), Some(payloadUpdate))
 
     val payloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), createdDate, payloadUpdate, Some(updateType), Some(score))
 

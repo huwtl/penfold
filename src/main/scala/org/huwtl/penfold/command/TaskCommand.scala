@@ -25,7 +25,7 @@ case class StartTask(id: AggregateId,
 
 case class RequeueTask(id: AggregateId,
                        version: AggregateVersion,
-                       requeueType: Option[String],
+                       reason: Option[String],
                        assignee: Option[User],
                        payloadUpdate: Option[Patch],
                        scoreUpdate: Option[Long]) extends TaskCommand
@@ -34,15 +34,14 @@ case class RescheduleTask(id: AggregateId,
                           version: AggregateVersion,
                           triggerDate: DateTime,
                           assignee: Option[User],
-                          rescheduleReason: Option[String],
+                          reason: Option[String],
                           payloadUpdate: Option[Patch],
                           scoreUpdate: Option[Long]) extends TaskCommand
 
 case class CloseTask(id: AggregateId,
                      version: AggregateVersion,
-                     concluder: Option[User],
-                     closeReason: Option[String],
-                     assignee: Option[User],
+                     user: Option[User],
+                     reason: Option[String],
                      payloadUpdate: Option[Patch]) extends TaskCommand
 
 case class ArchiveTask(id: AggregateId, version: AggregateVersion) extends TaskCommand
@@ -55,5 +54,5 @@ case class UpdateTaskPayload(id: AggregateId,
 
 case class UnassignTask(id: AggregateId,
                         version: AggregateVersion,
-                        unassignType: Option[String],
+                        reason: Option[String],
                         payloadUpdate: Option[Patch]) extends TaskCommand

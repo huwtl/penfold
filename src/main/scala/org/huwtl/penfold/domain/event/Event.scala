@@ -4,7 +4,7 @@ import org.huwtl.penfold.domain.model.{AggregateType, AggregateVersion, Aggregat
 import org.joda.time.DateTime
 
 trait Event {
-  val version = 1
+  val version = 2
   val aggregateId: AggregateId
   val aggregateVersion: AggregateVersion
   val aggregateType: AggregateType

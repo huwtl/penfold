@@ -8,7 +8,7 @@ class CommandDispatcherTest extends Specification with Mockito {
 
   val triggerTaskCommand = TriggerTask(AggregateId("a1"), AggregateVersion.init)
   val startTaskCommand = StartTask(AggregateId("a1"), AggregateVersion.init, None, None)
-  val closeTaskCommand = CloseTask(AggregateId("a1"), AggregateVersion.init, None, None, None, None)
+  val closeTaskCommand = CloseTask(AggregateId("a1"), AggregateVersion.init, None, None, None)
 
   val triggerTaskHandler = mock[TriggerTaskHandler]
   val startTaskHandler = mock[StartTaskHandler]

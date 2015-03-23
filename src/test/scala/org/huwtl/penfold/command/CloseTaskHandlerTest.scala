@@ -20,9 +20,9 @@ class CloseTaskHandlerTest extends Specification with Mockito {
 
   "close task" in {
     domainRepository.getById[Task](expectedAggregateId) returns startedTask
-    startedTask.close(version, None, None, None, None) returns closedTask
+    startedTask.close(version, None, None, None) returns closedTask
 
-    commandDispatcher.dispatch(CloseTask(expectedAggregateId, version, None, None, None, None))
+    commandDispatcher.dispatch(CloseTask(expectedAggregateId, version, None, None, None))
 
     there was one(domainRepository).add(closedTask)
   }

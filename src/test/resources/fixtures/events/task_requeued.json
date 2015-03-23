@@ -3,10 +3,10 @@
     "aggregateId" : "1",
     "aggregateVersion" : 4,
     "created" : "2014-02-25 13:00:00",
-    "requeueType": "reqType",
+    "reason": "reqType",
     "assignee": "user1",
     "payloadUpdate": {"operations": []},
     "score": 1393336800000,
     "aggregateType" : "Task",
-    "version": 1
+    "version": 2
 }

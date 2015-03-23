@@ -6,5 +6,5 @@
     "assignee": "user1",
     "payloadUpdate": {"operations": []},
     "aggregateType" : "Task",
-    "version": 1
+    "version": 2
 }

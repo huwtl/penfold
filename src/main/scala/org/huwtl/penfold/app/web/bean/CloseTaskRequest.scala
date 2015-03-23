@@ -4,6 +4,6 @@ import org.huwtl.penfold.domain.model.{AggregateVersion, User, AggregateId}
 import org.huwtl.penfold.command.CloseTask
 import org.huwtl.penfold.domain.model.patch.Patch
 
-case class CloseTaskRequest(concluder: Option[User] = None, closeReason: Option[String] = None, assignee: Option[User], payloadUpdate: Option[Patch]) {
-  def toCommand(id: AggregateId, version: AggregateVersion) = CloseTask(id, version, concluder, closeReason, assignee, payloadUpdate)
+case class CloseTaskRequest(user: Option[User] = None, reason: Option[String] = None, payloadUpdate: Option[Patch]) {
+  def toCommand(id: AggregateId, version: AggregateVersion) = CloseTask(id, version, user, reason, payloadUpdate)
 }

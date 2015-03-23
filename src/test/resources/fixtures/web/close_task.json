@@ -1,6 +1,5 @@
 {
-    "concluder": "user1",
-    "closeReason": "type",
-    "assignee": "user1",
+    "user": "user1",
+    "reason": "type",
     "payloadUpdate": {"operations": []}
 }

@@ -7,7 +7,6 @@ import org.huwtl.penfold.domain.model.patch.Patch
 case class TaskClosed(aggregateId: AggregateId,
                       aggregateVersion: AggregateVersion,
                       created: DateTime,
-                      concluder: Option[User],
-                      closeReason: Option[String],
-                      assignee: Option[User],
+                      user: Option[User],
+                      reason: Option[String],
                       payloadUpdate: Option[Patch]) extends TaskEvent
