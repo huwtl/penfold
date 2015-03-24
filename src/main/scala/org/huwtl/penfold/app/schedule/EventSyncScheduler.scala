@@ -2,11 +2,14 @@ package org.huwtl.penfold.app.schedule
 
 import org.huwtl.penfold.readstore.EventNotifiers
 import scala.concurrent.duration.FiniteDuration
+import scala.slick.driver.JdbcDriver.backend.Database
 
-class EventSyncScheduler(notifiers: EventNotifiers, override val frequency: FiniteDuration) extends Scheduler {
+class EventSyncScheduler(notifiers: EventNotifiers, database: Database, override val frequency: FiniteDuration) extends Scheduler {
   override val name = "event sync"
 
   override def process() {
-    notifiers.notifyAllOfEvents()
+    database.withDynSession {
+      notifiers.notifyAllOfEvents()
+    }
   }
 }

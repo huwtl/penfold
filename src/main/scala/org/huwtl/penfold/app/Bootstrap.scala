@@ -36,7 +36,7 @@ class Bootstrap extends LifeCycle {
     val readStoreEventProvider = new NewEventsProvider(postgresEventTracker, eventQueryService)
     val readStoreUpdater = new EventNotifier(readStoreEventProvider, new PostgresReadStoreUpdater(database, postgresEventTracker, objectSerializer))
 
-    val eventNotifiers = new ActorBasedEventNotifiers(new EventNotifiersImpl(List(readStoreUpdater)), noOfWorkers = 3)
+    val eventNotifiers = new EventNotifiersImpl(List(readStoreUpdater))
 
     val domainRepository = new PostgresTransactionalDomainRepository(database, new DomainRepositoryImpl(eventStore, eventNotifiers))
 
@@ -63,7 +63,7 @@ class Bootstrap extends LifeCycle {
     context mount(new TaskResource(readStore, commandDispatcher, new TaskCommandParser(objectSerializer), taskFormatter, config.pageSize, config.authentication), "/tasks/*")
     context mount(new QueueResource(readStore, queueFormatter, config.sortOrdering.mapping, config.pageSize, config.authentication), "/queues/*")
 
-    new EventSyncScheduler(eventNotifiers, config.eventSync).start()
+    new EventSyncScheduler(eventNotifiers, database, config.eventSync).start()
 
     new TaskTriggerScheduler(readStore, commandDispatcher, config.triggeredCheckFrequency).start()
 

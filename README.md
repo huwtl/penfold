@@ -22,7 +22,7 @@ Penfold is spoken to via a Restful API, based on the media type [HAL+JSON](http:
 
 Prerequisites:
 
-* [JVM](https://www.java.com/en/download/) 6+
+* [JVM](https://www.java.com/en/download/) 8+
 * [Postgres database server](http://www.postgresql.org/)
 
 1.
