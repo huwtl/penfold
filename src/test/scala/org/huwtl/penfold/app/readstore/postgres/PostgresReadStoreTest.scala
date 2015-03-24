@@ -92,24 +92,20 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
   "retrieve task by id" in new context {
     setupEntries()
 
-    database.withDynTransaction {
-      readStore.retrieveBy(AggregateId("a")).isDefined must beTrue
-      readStore.retrieveBy(AggregateId("unknown")).isDefined must beFalse
-    }
+    readStore.retrieveBy(AggregateId("a")).isDefined must beTrue
+    readStore.retrieveBy(AggregateId("unknown")).isDefined must beFalse
   }
 
   "retrieve waiting tasks to trigger" in new context {
     dateTimeSource.now returns triggerDate
     setupEntries()
 
-    database.withDynTransaction {
-      val triggeredTasks = new mutable.ListBuffer[String]()
-      readStore.forEachTriggeredTask(task => {
-        triggeredTasks += task.id.value
-      })
+    val triggeredTasks = new mutable.ListBuffer[String]()
+    readStore.forEachTriggeredTask(task => {
+      triggeredTasks += task.id.value
+    })
 
-      triggeredTasks must beEqualTo(mutable.ListBuffer("a", "b", "c", "d"))
-    }
+    triggeredTasks must beEqualTo(mutable.ListBuffer("a", "b", "c", "d"))
   }
 
   "retrieve tasks to timeout" in new context {
@@ -120,14 +116,12 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
     val event4 = TaskCreated(AggregateId("4"), AggregateVersion.init, created.minusSeconds(2), QueueBinding(queueId), created.minusSeconds(2), Payload(Map()), score)
     persist(List(event1, event2, event3, event4))
 
-    database.withDynTransaction {
-      val timedOutTasks = new mutable.ListBuffer[String]()
-      readStore.forEachTimedOutTask(Ready, FiniteDuration(3l, TimeUnit.SECONDS), task => {
-        timedOutTasks += task.id.value
-      })
+    val timedOutTasks = new mutable.ListBuffer[String]()
+    readStore.forEachTimedOutTask(Ready, FiniteDuration(3l, TimeUnit.SECONDS), task => {
+      timedOutTasks += task.id.value
+    })
 
-      timedOutTasks must beEqualTo(mutable.ListBuffer("3", "2"))
-    }
+    timedOutTasks must beEqualTo(mutable.ListBuffer("3", "2"))
   }
 
   "filtering" should {
@@ -135,47 +129,41 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      database.withDynTransaction {
-        readStore.retrieveBy(Filters(List(EQ("payload.a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-        readStore.retrieveBy(Filters(List(EQ("a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-        readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("payload.b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-        readStore.retrieveBy(Filters(List(EQ("payload.unknown", null))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-        readStore.retrieveBy(Filters(List(EQ("payload.unknown", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-        readStore.retrieveBy(Filters(List(EQ("a", "mismatch"), EQ("payload.b", "1"))), pageRequest).entries.map(_.id.value) must beEmpty
-        readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("payload.b", "mismatch"))), pageRequest).entries.map(_.id.value) must beEmpty
-      }
+      readStore.retrieveBy(Filters(List(EQ("payload.a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("a", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("payload.b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("payload.unknown", null))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(EQ("payload.unknown", "123"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(EQ("a", "mismatch"), EQ("payload.b", "1"))), pageRequest).entries.map(_.id.value) must beEmpty
+      readStore.retrieveBy(Filters(List(EQ("a", "123"), EQ("payload.b", "mismatch"))), pageRequest).entries.map(_.id.value) must beEmpty
     }
 
     "filter tasks with less than comparison" in new context {
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      database.withDynTransaction {
-        readStore.retrieveBy(Filters(List(LT("payload.c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-        readStore.retrieveBy(Filters(List(LT("c", "100", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-        readStore.retrieveBy(Filters(List(LT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
-        readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("payload.b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
-        readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("payload.b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-        readStore.retrieveBy(Filters(List(LT("c", "1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-        readStore.retrieveBy(Filters(List(LT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-        readStore.retrieveBy(Filters(List(LT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      }
+      readStore.retrieveBy(Filters(List(LT("payload.c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(LT("c", "100", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("payload.b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f"))
+      readStore.retrieveBy(Filters(List(LT("c", "2", NumericType), EQ("payload.b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", "1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(LT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
     }
 
     "filter tasks with greater than comparison" in new context {
       setupEntries()
       val pageRequest = PageRequest(2)
 
-      database.withDynTransaction {
-        readStore.retrieveBy(Filters(List(GT("payload.c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("c", "b"))
-        readStore.retrieveBy(Filters(List(GT("c", "0", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-        readStore.retrieveBy(Filters(List(GT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
-        readStore.retrieveBy(Filters(List(GT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("d", "c"))
-        readStore.retrieveBy(Filters(List(GT("c", "5", NumericType), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("a"))
-        readStore.retrieveBy(Filters(List(GT("c", "5", NumericType), EQ("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-        readStore.retrieveBy(Filters(List(GT("c", "6", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-        readStore.retrieveBy(Filters(List(GT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
-      }
+      readStore.retrieveBy(Filters(List(GT("payload.c", "3", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("c", "b"))
+      readStore.retrieveBy(Filters(List(GT("c", "0", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(GT("c", "-1", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("f", "e"))
+      readStore.retrieveBy(Filters(List(GT("c", "2", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(List("d", "c"))
+      readStore.retrieveBy(Filters(List(GT("c", "5", NumericType), EQ("b", "1"))), pageRequest).entries.map(_.id.value) must beEqualTo(List("a"))
+      readStore.retrieveBy(Filters(List(GT("c", "5", NumericType), EQ("b", "2"))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(GT("c", "6", NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
+      readStore.retrieveBy(Filters(List(GT("c", null, NumericType))), pageRequest).entries.map(_.id.value) must beEqualTo(Nil)
     }
 
     "apply or operator for multi value filters" in new context {
@@ -194,10 +182,8 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
         PageRequest(5)  ! IN("a", Set(""))                   ! List("4")           |
         PageRequest(5)  ! IN("a", Set("ABC"))                ! List("2", "1")      |> {(page, filter, expected) =>
 
-        database.withDynTransaction {
-          val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(filter)))
-          pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
-        }
+        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(filter)))
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
       }
     }
   }

@@ -24,9 +24,11 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
   }
 
   override def retrieveBy(id: AggregateId) = {
-    val json = sql"""SELECT data FROM tasks WHERE id = ${id.value}""".as[String].firstOption
-    val taskData = json.map(objectSerializer.deserialize[TaskData])
-    taskData.map(_.toTaskProjection)
+    database.withDynSession {
+      val json = sql"""SELECT data FROM tasks WHERE id = ${id.value}""".as[String].firstOption
+      val taskData = json.map(objectSerializer.deserialize[TaskData])
+      taskData.map(_.toTaskProjection)
+    }
   }
 
   override def retrieveByQueue(queueId: QueueId, status: Status, pageRequest: PageRequest, sortOrder: SortOrder, filters: Filters) = {
@@ -35,26 +37,32 @@ class PostgresReadStore(database: Database, paginatedQueryService: PaginatedQuer
   }
 
   override def retrieveBy(filters: Filters, pageRequest: PageRequest) = {
-    retrieveByPage(filters, pageRequest, SortOrder.Desc)
+      retrieveByPage(filters, pageRequest, SortOrder.Desc)
   }
 
   override def forEachTriggeredTask(f: TaskProjectionReference => Unit) {
-    val currentTime = dateTimeSource.now.getMillis
+    database.withDynSession {
+      val currentTime = dateTimeSource.now.getMillis
 
-    val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${Waiting.name} AND (data->>'triggerDate')::bigint <= $currentTime ORDER BY data->>'triggerDate'""".as[String].iterator
-    rows.foreach(row => f(objectSerializer.deserialize[TaskData](row).toTaskProjectionReference))
+      val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${Waiting.name} AND (data->>'triggerDate')::bigint <= $currentTime ORDER BY data->>'triggerDate'""".as[String].iterator
+      rows.foreach(row => f(objectSerializer.deserialize[TaskData](row).toTaskProjectionReference))
+    }
   }
 
   override def forEachTimedOutTask(status: Status, timeoutDuration: FiniteDuration, f: TaskProjectionReference => Unit) {
-    val timeout = dateTimeSource.now.getMillis - timeoutDuration.toMillis
+    database.withDynSession {
+      val timeout = dateTimeSource.now.getMillis - timeoutDuration.toMillis
 
-    val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${status.name} AND (data->>'statusLastModified')::bigint <= $timeout ORDER BY data->>'statusLastModified'""".as[String].iterator
-    rows.foreach(row => {
+      val rows = sql"""SELECT data FROM tasks WHERE data->>'status' = ${status.name} AND (data->>'statusLastModified')::bigint <= $timeout ORDER BY data->>'statusLastModified'""".as[String].iterator
+      rows.foreach(row => {
         f(objectSerializer.deserialize[TaskData](row).toTaskProjectionReference)
-    })
+      })
+    }
   }
 
   private def retrieveByPage(filters: Filters, pageRequest: PageRequest, sortOrder: SortOrder) = {
-    paginatedQueryService.execQuery(filters, pageRequest, sortOrder)
+    database.withDynSession {
+      paginatedQueryService.execQuery(filters, pageRequest, sortOrder)
+    }
   }
 }
