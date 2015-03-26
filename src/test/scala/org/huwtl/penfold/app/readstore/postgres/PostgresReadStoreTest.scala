@@ -1,33 +1,27 @@
 package org.huwtl.penfold.app.readstore.postgres
 
-import org.specs2.specification.Scope
-import org.huwtl.penfold.domain.model._
-import org.joda.time.{Interval, DateTime}
+import java.util.concurrent.TimeUnit
+
 import org.huwtl.penfold.app.support.DateTimeSource
 import org.huwtl.penfold.app.support.json.ObjectSerializer
-import org.huwtl.penfold.domain.event._
-import scala.util.Random
-import org.huwtl.penfold.readstore._
-import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.domain.event.FutureTaskCreated
-import org.huwtl.penfold.domain.model.AggregateId
-import scala.Some
-import org.huwtl.penfold.readstore.PageReference
-import org.huwtl.penfold.readstore.EventRecord
-import org.huwtl.penfold.readstore.EQ
-import org.huwtl.penfold.domain.model.QueueBinding
-import org.specs2.mock.Mockito
+import org.huwtl.penfold.domain.event.{FutureTaskCreated, _}
+import org.huwtl.penfold.domain.model.{AggregateId, QueueBinding, QueueId, _}
+import org.huwtl.penfold.readstore.{EQ, EventRecord, PageReference, _}
 import org.huwtl.penfold.support.PostgresSpecification
+import org.joda.time.DateTime
+import org.specs2.mock.Mockito
+import org.specs2.specification.Scope
+
 import scala.collection.mutable
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import scala.slick.jdbc.{StaticQuery => Q}
-import Q.interpolation
+import org.huwtl.penfold.domain.model.Status.{Ready, Waiting}
 import org.huwtl.penfold.readstore.QueryParamType.NumericType
-import org.huwtl.penfold.domain.model.Status.{Waiting, Ready}
 import org.specs2.matcher.DataTables
 import scala.concurrent.duration.FiniteDuration
-import java.util.concurrent.TimeUnit
+import scala.slick.jdbc.StaticQuery.interpolation
+import scala.slick.jdbc.{StaticQuery => Q}
+import scala.util.Random
 
 class PostgresReadStoreTest extends PostgresSpecification with Mockito with DataTables {
   sequential
@@ -184,6 +178,107 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
 
         val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(filter)))
         pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+      }
+    }
+  }
+
+  "pagination" should {
+    "retrieve tasks by next page in descending order" in new context {
+      val entries = setupEntries()
+
+      "page"                                  | "expected"                         | "hasPrev" | "hasNext" |
+        PageRequest(10)                         ! List("f", "e", "d", "c", "b", "a") ! false     ! false     |
+        PageRequest(6)                          ! List("f", "e", "d", "c", "b", "a") ! false     ! false     |
+        PageRequest(5)                          ! List("f", "e", "d", "c", "b"     ) ! false     ! true      |
+        PageRequest(1)                          ! List("f")                          ! false     ! true      |
+        PageRequest(0)                          ! Nil                                ! false     ! false     |
+        PageRequest(0, forwardFrom(entries(0))) ! Nil                                ! false     ! false     |
+        PageRequest(2, forwardFrom(entries(0))) ! List("e", "d")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(2))) ! List("c", "b")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(1))) ! List("d", "c")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(5))) ! Nil                                ! false     ! false     |
+        PageRequest(2, forwardFrom(entries(4))) ! List("a")                          ! true      ! false     |
+        PageRequest(2, forwardFrom(entries(3))) ! List("b", "a")                     ! true      ! false     |> {(page, expected, hasPrev, hasNext) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Desc)
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+        pageResult.previousPage.isDefined must beEqualTo(hasPrev)
+        pageResult.nextPage.isDefined must beEqualTo(hasNext)
+      }
+    }
+
+    "retrieve tasks by next page in ascending order" in new context {
+      val entries = setupEntries()
+
+      "page"                                    | "expected"                         | "hasPrev" | "hasNext" |
+        PageRequest(10)                         ! List("a", "b", "c", "d", "e", "f") ! false     ! false     |
+        PageRequest(6)                          ! List("a", "b", "c", "d", "e", "f") ! false     ! false     |
+        PageRequest(5)                          ! List("a", "b", "c", "d", "e")      ! false     ! true      |
+        PageRequest(1)                          ! List("a")                          ! false     ! true      |
+        PageRequest(0)                          ! Nil                                ! false     ! false     |
+        PageRequest(0, forwardFrom(entries(5))) ! Nil                                ! false     ! false     |
+        PageRequest(2, forwardFrom(entries(5))) ! List("b", "c")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(3))) ! List("d", "e")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(4))) ! List("c", "d")                     ! true      ! true      |
+        PageRequest(2, forwardFrom(entries(0))) ! Nil                                ! false     ! false     |
+        PageRequest(2, forwardFrom(entries(1))) ! List("f")                          ! true      ! false     |
+        PageRequest(2, forwardFrom(entries(2))) ! List("e", "f")                     ! true      ! false     |> {(page, expected, hasPrev, hasNext) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Asc)
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+        pageResult.previousPage.isDefined must beEqualTo(hasPrev)
+        pageResult.nextPage.isDefined must beEqualTo(hasNext)
+      }
+    }
+
+    "retrieve tasks by previous page in descending order" in new context {
+      val entries = setupEntries()
+
+      "page"                                 | "expected"                         | "hasPrev" | "hasNext" |
+        PageRequest(2, backFrom(entries(5))) ! List("c", "b")                     ! true      ! true      |
+        PageRequest(0, backFrom(entries(5))) ! Nil                                ! false     ! false     |
+        PageRequest(2, backFrom(entries(2))) ! List("f", "e")                     ! false     ! true      |
+        PageRequest(2, backFrom(entries(0))) ! Nil                                ! false     ! false     |
+        PageRequest(2, backFrom(entries(3))) ! List("e", "d")                     ! true      ! true      |> {(page, expected, hasPrev, hasNext) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Desc)
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+        pageResult.previousPage.isDefined must beEqualTo(hasPrev)
+        pageResult.nextPage.isDefined must beEqualTo(hasNext)
+      }
+    }
+
+    "retrieve tasks by previous page in ascending order" in new context {
+      val entries = setupEntries()
+
+      "page"                                 | "expected"                         | "hasPrev" | "hasNext" |
+        PageRequest(2, backFrom(entries(0))) ! List("d", "e")                     ! true      ! true      |
+        PageRequest(0, backFrom(entries(0))) ! Nil                                ! false     ! false     |
+        PageRequest(2, backFrom(entries(3))) ! List("a", "b")                     ! false     ! true      |
+        PageRequest(2, backFrom(entries(5))) ! Nil                                ! false     ! false     |
+        PageRequest(2, backFrom(entries(2))) ! List("b", "c")                     ! true      ! true      |> {(page, expected, hasPrev, hasNext) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Waiting, page, SortOrder.Asc)
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+        pageResult.previousPage.isDefined must beEqualTo(hasPrev)
+        pageResult.nextPage.isDefined must beEqualTo(hasNext)
+      }
+    }
+
+    "retrieve tasks by next page with additional filter" in new context {
+      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "DEF")), score)
+      persist(List(event1, event2, event3))
+
+      "page"            | "expected"       | "hasPrev" | "hasNext" |
+        PageRequest(2)  ! List("2", "1")   ! false     ! false     |
+        PageRequest(1)  ! List("2")        ! false     ! true      |> {(page, expected, hasPrev, hasNext) =>
+
+        val pageResult = readStore.retrieveByQueue(queueId, Ready, page, SortOrder.Desc, Filters(List(EQ("a", "ABC"))))
+        pageResult.entries.map(_.id) must beEqualTo(expected.map(AggregateId))
+        pageResult.previousExists must beEqualTo(hasPrev)
+        pageResult.nextExists must beEqualTo(hasNext)
       }
     }
   }
