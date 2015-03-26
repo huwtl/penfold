@@ -57,12 +57,6 @@ class HalQueueFormatterTest extends Specification {
     parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueueWithPaginationLinks.json"))
   }
 
-  "format queue entry as hal+json" in {
-    val hal = queueFormatter.halFrom(queueId, task1)
-
-    parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueEntry.json"))
-  }
-
   def jsonFromFile(filePath: String) = {
     parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString)
   }
