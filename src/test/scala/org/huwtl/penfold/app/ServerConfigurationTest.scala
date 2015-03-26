@@ -40,10 +40,9 @@ class ServerConfigurationTest extends Specification {
       Map("alias1" -> "path1", "alias2" -> "path2"),
       sortOrdering = SortOrderingConfiguration("Desc", "Desc", "Asc", "Asc"),
       pageSize = 25,
-      eventSync = FiniteDuration(2L, MINUTES),
-      triggeredCheckFrequency = FiniteDuration(1L, MINUTES),
-      archiveTimeout = Some(TaskArchiverConfiguration(FiniteDuration(10L, DAYS), FiniteDuration(1L, MINUTES))),
-      requeueTimeout = Some(TaskRequeueTimeoutConfiguration(FiniteDuration(30L, MINUTES), FiniteDuration(2L, MINUTES)))
+      triggerCheckFrequency = FiniteDuration(1L, MINUTES),
+      archiver = Some(TaskArchiverConfiguration(FiniteDuration(10L, DAYS), FiniteDuration(1L, MINUTES))),
+      startedTaskTimeout = Some(StartedTaskTimeoutConfiguration(FiniteDuration(30L, MINUTES), FiniteDuration(2L, MINUTES)))
     )
 
     val config = loadConfig("full")

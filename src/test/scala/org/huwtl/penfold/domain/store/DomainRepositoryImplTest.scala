@@ -1,8 +1,8 @@
 package org.huwtl.penfold.domain.store
 
+import org.huwtl.penfold.readstore.EventNotifier
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
-import org.huwtl.penfold.readstore.EventNotifiers
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.domain.model.AggregateId
 import org.huwtl.penfold.domain.model.Payload
@@ -19,19 +19,21 @@ class DomainRepositoryImplTest extends Specification with Mockito {
     val timestamp = DateTime.now
 
     val createdTask = Task.create(aggregateId, binding, Payload.empty, None)
+    
+    val events = createdTask.uncommittedEvents 
 
     val eventStore = mock[EventStore]
 
-    val notifiers = mock[EventNotifiers]
+    val notifier = mock[EventNotifier]
 
-    val repo = new DomainRepositoryImpl(eventStore, notifiers)
+    val repo = new DomainRepositoryImpl(eventStore, notifier)
   }
 
   "append new aggregate root events to event store" in new context {
     val task = repo.add(createdTask)
 
     task.uncommittedEvents must beEmpty
-    there was one(notifiers).notifyAllOfEvents()
+    there was one(notifier).notify(events)
   }
 
   "load aggregate by id" in new context {

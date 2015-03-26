@@ -1,35 +1,25 @@
 package org.huwtl.penfold.app.readstore.postgres
 
-import org.huwtl.penfold.readstore.{EventTracker, EventListener, EventRecord}
-import org.huwtl.penfold.domain.model.Status._
-import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId, Payload, Status}
-import org.huwtl.penfold.app.support.json.ObjectSerializer
-import org.huwtl.penfold.domain.event._
 import grizzled.slf4j.Logger
-import scala.Predef._
-import org.huwtl.penfold.domain.event.TaskRequeued
-import org.huwtl.penfold.domain.event.TaskRescheduled
-import org.huwtl.penfold.domain.event.TaskPayloadUpdated
-import org.huwtl.penfold.domain.event.FutureTaskCreated
-import org.huwtl.penfold.domain.event.TaskArchived
-import org.huwtl.penfold.domain.event.TaskTriggered
-import org.huwtl.penfold.domain.event.TaskCreated
-import org.huwtl.penfold.domain.event.TaskStarted
-import org.huwtl.penfold.domain.event.TaskClosed
+import org.huwtl.penfold.app.support.json.ObjectSerializer
+import org.huwtl.penfold.domain.event.{FutureTaskCreated, TaskArchived, TaskClosed, TaskCreated, TaskPayloadUpdated, TaskRequeued, TaskRescheduled, TaskStarted, TaskTriggered, _}
+import org.huwtl.penfold.domain.model.Status._
 import org.huwtl.penfold.domain.model.patch.Patch
+import org.huwtl.penfold.domain.model.{AggregateId, AggregateVersion, Payload, Status}
+import org.huwtl.penfold.readstore.EventListener
 
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{StaticQuery => Q}
 
-class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, objectSerializer: ObjectSerializer) extends EventListener {
+class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
 
   private val success = true
 
-  override def handle(eventRecord: EventRecord) = {
-    val result = eventRecord.event match {
+  override def handle(event: Event) = {
+    val result = event match {
       case e: TaskCreated => handleCreateEvent(e, Ready)
       case e: FutureTaskCreated => handleCreateEvent(e, Waiting)
       case e: TaskTriggered => handleTaskTriggeredEvent(e)
@@ -43,11 +33,7 @@ class PostgresReadStoreUpdater(database: Database, tracker: EventTracker, object
       case _ =>
     }
 
-    logger.info(s"event ${eventRecord.id} handled with result $result")
-
-    tracker.trackEvent(eventRecord.id)
-
-    logger.info(s"event ${eventRecord.id} tracked")
+    logger.info(s"event $event handled with result $result")
 
     success
   }

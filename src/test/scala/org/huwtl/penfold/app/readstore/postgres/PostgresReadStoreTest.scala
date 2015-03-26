@@ -6,7 +6,7 @@ import org.huwtl.penfold.app.support.DateTimeSource
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.domain.event.{FutureTaskCreated, _}
 import org.huwtl.penfold.domain.model.{AggregateId, QueueBinding, QueueId, _}
-import org.huwtl.penfold.readstore.{EQ, EventRecord, PageReference, _}
+import org.huwtl.penfold.readstore.{EQ, PageReference, _}
 import org.huwtl.penfold.support.PostgresSpecification
 import org.joda.time.DateTime
 import org.specs2.mock.Mockito
@@ -31,7 +31,7 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
   def clearDownExistingDatabase() = {
     database.withDynTransaction {
       sqlu"""DELETE FROM tasks""".execute
-      sqlu"""DELETE FROM trackers""".execute
+      sqlu"""DELETE FROM archived""".execute
     }
   }
 
@@ -45,13 +45,13 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
     val dateTimeSource = mock[DateTimeSource]
     val aliases = Aliases(Map(Alias("a") -> Path("payload.a"), Alias("b") -> Path("payload.b"), Alias("c") -> Path("payload.c")))
 
-    val readStoreUpdater = new PostgresReadStoreUpdater(database, new PostgresEventTracker("tracker", database), new ObjectSerializer)
+    val readStoreUpdater = new PostgresReadStoreUpdater(database, new ObjectSerializer)
     val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, new ObjectSerializer, aliases), new ObjectSerializer, dateTimeSource, aliases)
 
     def persist(events: List[Event]) = {
       database.withDynTransaction {
         Random.shuffle(events).zipWithIndex.foreach {
-          case (event, index) => readStoreUpdater.handle(EventRecord(EventSequenceId(index + 1), event))
+          case (event, index) => readStoreUpdater.handle(event)
         }
       }
     }

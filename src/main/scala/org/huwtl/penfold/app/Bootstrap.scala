@@ -8,15 +8,15 @@ import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import org.huwtl.penfold.command._
 import org.huwtl.penfold.domain.store.DomainRepositoryImpl
 import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
-import org.huwtl.penfold.readstore.{EventNotifiersImpl, EventNotifier, NewEventsProvider}
+import org.huwtl.penfold.readstore.EventNotifier
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 import org.huwtl.penfold.app.support.{DateTimeSource, UUIDFactory}
-import org.huwtl.penfold.app.schedule.{RequeueTimeoutScheduler, EventSyncScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
+import org.huwtl.penfold.app.schedule.{StartedTaskTimeoutScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
 import com.codahale.metrics.health.HealthCheckRegistry
 import org.huwtl.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
 import org.huwtl.penfold.app.store.postgres._
-import org.huwtl.penfold.app.readstore.postgres.{PaginatedQueryService, PostgresReadStore, PostgresReadStoreUpdater, PostgresEventTracker}
+import org.huwtl.penfold.app.readstore.postgres.{PaginatedQueryService, PostgresReadStore, PostgresReadStoreUpdater}
 
 class Bootstrap extends LifeCycle {
   override def init(context: ServletContext) {
@@ -30,15 +30,10 @@ class Bootstrap extends LifeCycle {
 
     val database = new PostgresDatabaseInitialiser(config.customReadStoreDbMigrationPath).init(new PostgresConnectionPoolFactory().create(config.database))
     val eventStore = new PostgresEventStore(database, eventSerializer)
-    val eventQueryService = new PostgresDomainEventQueryService(database, eventSerializer)
 
-    val postgresEventTracker = new PostgresEventTracker("readStoreEventTracker", database)
-    val readStoreEventProvider = new NewEventsProvider(postgresEventTracker, eventQueryService)
-    val readStoreUpdater = new EventNotifier(readStoreEventProvider, new PostgresReadStoreUpdater(database, postgresEventTracker, objectSerializer))
+    val readStoreUpdater = new EventNotifier(new PostgresReadStoreUpdater(database, objectSerializer))
 
-    val eventNotifiers = new EventNotifiersImpl(List(readStoreUpdater))
-
-    val domainRepository = new PostgresTransactionalDomainRepository(database, new DomainRepositoryImpl(eventStore, eventNotifiers))
+    val domainRepository = new PostgresTransactionalDomainRepository(database, new DomainRepositoryImpl(eventStore, readStoreUpdater))
 
     val commandDispatcher = new CommandDispatcherFactory(domainRepository, aggregateIdFactory).create
 
@@ -63,16 +58,14 @@ class Bootstrap extends LifeCycle {
     context mount(new TaskResource(readStore, commandDispatcher, new TaskCommandParser(objectSerializer), taskFormatter, config.pageSize, config.authentication), "/tasks/*")
     context mount(new QueueResource(readStore, queueFormatter, config.sortOrdering.mapping, config.pageSize, config.authentication), "/queues/*")
 
-    new EventSyncScheduler(eventNotifiers, database, config.eventSync).start()
+    new TaskTriggerScheduler(readStore, commandDispatcher, config.triggerCheckFrequency).start()
 
-    new TaskTriggerScheduler(readStore, commandDispatcher, config.triggeredCheckFrequency).start()
-
-    if (config.requeueTimeout.isDefined) {
-      new RequeueTimeoutScheduler(readStore, commandDispatcher, config.requeueTimeout.get).start()
+    if (config.startedTaskTimeout.isDefined) {
+      new StartedTaskTimeoutScheduler(readStore, commandDispatcher, config.startedTaskTimeout.get).start()
     }
 
-    if (config.archiveTimeout.isDefined) {
-      new TaskArchiveScheduler(readStore, commandDispatcher, config.archiveTimeout.get).start()
+    if (config.archiver.isDefined) {
+      new TaskArchiveScheduler(readStore, commandDispatcher, config.archiver.get).start()
     }
   }
 }

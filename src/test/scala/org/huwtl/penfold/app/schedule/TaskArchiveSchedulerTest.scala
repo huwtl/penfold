@@ -1,18 +1,15 @@
 package org.huwtl.penfold.app.schedule
 
-import org.specs2.mutable.Specification
-import org.huwtl.penfold.readstore.{TaskProjectionReference, ReadStore}
-import org.specs2.mock.Mockito
-import org.huwtl.penfold.command.{ArchiveTask, CommandDispatcher}
-import org.huwtl.penfold.app.{TaskRequeueTimeoutConfiguration, TaskArchiverConfiguration}
-import org.huwtl.penfold.support.TestModel
-import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
-import org.huwtl.penfold.app.TaskRequeueTimeoutConfiguration
+
 import org.huwtl.penfold.app.TaskArchiverConfiguration
-import org.huwtl.penfold.readstore.TaskProjectionReference
-import org.huwtl.penfold.command.ArchiveTask
-import org.huwtl.penfold.domain.model.Status.{Closed, Started}
+import org.huwtl.penfold.command.CommandDispatcher
+import org.huwtl.penfold.domain.model.Status.Closed
+import org.huwtl.penfold.readstore.{ReadStore, TaskProjectionReference}
+import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
+
+import scala.concurrent.duration.FiniteDuration
 
 class TaskArchiveSchedulerTest extends Specification with Mockito {
 

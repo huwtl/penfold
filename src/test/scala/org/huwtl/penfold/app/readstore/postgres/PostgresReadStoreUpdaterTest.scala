@@ -1,18 +1,17 @@
 package org.huwtl.penfold.app.readstore.postgres
 
-import org.specs2.specification.Scope
-import org.huwtl.penfold.domain.model.{AggregateVersion, Payload}
 import java.util.UUID
-import org.huwtl.penfold.app.support.json.{ObjectSerializer, EventSerializer}
-import org.huwtl.penfold.support.{PostgresSpecification, TestModel}
+
 import org.huwtl.penfold.app.support.DateTimeSource
-import org.huwtl.penfold.domain.model.AggregateId
-import scala.Some
-import org.huwtl.penfold.domain.event.{TaskPayloadUpdated, Event}
-import org.huwtl.penfold.readstore.{EventSequenceId, EventRecord}
+import org.huwtl.penfold.app.support.json.{EventSerializer, ObjectSerializer}
+import org.huwtl.penfold.domain.event.{Event, TaskPayloadUpdated}
 import org.huwtl.penfold.domain.model.Status.Closed
+import org.huwtl.penfold.domain.model.patch.{Patch, Replace, Value}
+import org.huwtl.penfold.domain.model.{AggregateId, AggregateVersion, Payload}
+import org.huwtl.penfold.support.{PostgresSpecification, TestModel}
 import org.joda.time.DateTime
-import org.huwtl.penfold.domain.model.patch.{Value, Replace, Patch}
+import org.specs2.specification.Scope
+
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
@@ -39,12 +38,12 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
     val taskRescheduledEvent = TestModel.events.rescheduledEvent.copy(aggregateId = aggregateId)
     val archivedEvent = TestModel.events.archivedEvent.copy(aggregateId = aggregateId)
     val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, objectSerializer, Aliases.empty), objectSerializer, new DateTimeSource, Aliases.empty)
-    val readStoreUpdater = new PostgresReadStoreUpdater(database, new PostgresEventTracker("tracking", database), objectSerializer)
+    val readStoreUpdater = new PostgresReadStoreUpdater(database, objectSerializer)
 
     def handleEvents(events: Event*) = {
       database.withDynTransaction {
         events.zipWithIndex.foreach {
-          case (event, index) => readStoreUpdater.handle(EventRecord(EventSequenceId(index + 1), event))
+          case (event, index) => readStoreUpdater.handle(event)
         }
       }
     }

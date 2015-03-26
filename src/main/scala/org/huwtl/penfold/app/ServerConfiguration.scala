@@ -15,10 +15,9 @@ case class ServerConfiguration(publicUrl: String,
                                private val readStoreAliases: Map[String, String] = Map.empty,
                                sortOrdering: SortOrderingConfiguration = SortOrderingConfiguration(),
                                pageSize: Int = 10,
-                               eventSync: FiniteDuration = FiniteDuration(15L, TimeUnit.MINUTES),
-                               triggeredCheckFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS),
-                               archiveTimeout: Option[TaskArchiverConfiguration] = None,
-                               requeueTimeout: Option[TaskRequeueTimeoutConfiguration] = None) {
+                               triggerCheckFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS),
+                               archiver: Option[TaskArchiverConfiguration] = None,
+                               startedTaskTimeout: Option[StartedTaskTimeoutConfiguration] = None) {
 
   val readStorePathAliases = Aliases(readStoreAliases.map {
     case (alias, path) => (Alias(alias), Path(path))
@@ -33,7 +32,7 @@ case class DatabaseConfiguration(url: String, username: String, password: String
 
 case class TaskArchiverConfiguration(timeout: FiniteDuration, checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
 
-case class TaskRequeueTimeoutConfiguration(timeout: FiniteDuration, checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
+case class StartedTaskTimeoutConfiguration(timeout: FiniteDuration, checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
 
 case class SortOrderingConfiguration(private val waiting: String = "Asc",
                                      private val ready: String = "Asc",

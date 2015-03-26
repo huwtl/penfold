@@ -1,9 +1,9 @@
 package org.huwtl.penfold.domain.store
 
 import org.huwtl.penfold.domain.model.{Task, AggregateId, AggregateRoot}
-import org.huwtl.penfold.readstore.EventNotifiers
+import org.huwtl.penfold.readstore.EventNotifier
 
-class DomainRepositoryImpl(eventStore: EventStore, notifiers: EventNotifiers) extends DomainRepository {
+class DomainRepositoryImpl(eventStore: EventStore, notifier: EventNotifier) extends DomainRepository {
   override def getById[T <: AggregateRoot](id: AggregateId): T = {
     eventStore.retrieveBy(id) match {
       case Nil => throw new IllegalArgumentException(s"${id.value} does not exist")
@@ -15,7 +15,7 @@ class DomainRepositoryImpl(eventStore: EventStore, notifiers: EventNotifiers) ex
     val uncommittedEvents = aggregateRoot.uncommittedEvents.reverse
     uncommittedEvents.foreach (eventStore.add)
 
-    notifiers.notifyAllOfEvents()
+    notifier.notify(uncommittedEvents)
 
     aggregateRoot.markCommitted
   }

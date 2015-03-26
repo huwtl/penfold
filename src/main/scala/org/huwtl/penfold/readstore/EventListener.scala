@@ -1,5 +1,7 @@
 package org.huwtl.penfold.readstore
 
+import org.huwtl.penfold.domain.event.Event
+
 trait EventListener {
-  def handle(event: EventRecord): Boolean
+  def handle(event: Event): Boolean
 }
