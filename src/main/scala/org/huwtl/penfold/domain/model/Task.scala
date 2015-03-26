@@ -8,15 +8,15 @@ import org.huwtl.penfold.domain.model.Status._
 import org.huwtl.penfold.domain.model.patch.Patch
 
 object Task extends AggregateFactory {
-  def create(aggregateId: AggregateId, queueBinding: QueueBinding, payload: Payload, score: Option[Long]) = {
+  def create(aggregateId: AggregateId, queue: QueueId, payload: Payload, score: Option[Long]) = {
     val currentDateTime = now
     val scoreValue = score getOrElse currentDateTime.getMillis
-    applyTaskCreated(TaskCreated(aggregateId, AggregateVersion.init, currentDateTime, queueBinding, currentDateTime, payload, scoreValue))
+    applyTaskCreated(TaskCreated(aggregateId, AggregateVersion.init, currentDateTime, queue, currentDateTime, payload, scoreValue))
   }
 
-  def create(aggregateId: AggregateId, queueBinding: QueueBinding, triggerDate: DateTime, payload: Payload, score: Option[Long]) = {
+  def create(aggregateId: AggregateId, queue: QueueId, triggerDate: DateTime, payload: Payload, score: Option[Long]) = {
     val scoreValue = score getOrElse triggerDate.getMillis
-    val createdTask = applyFutureTaskCreated(FutureTaskCreated(aggregateId, AggregateVersion.init, now, queueBinding, triggerDate, payload, scoreValue))
+    val createdTask = applyFutureTaskCreated(FutureTaskCreated(aggregateId, AggregateVersion.init, now, queue, triggerDate, payload, scoreValue))
     if (createdTask.triggerDate.isAfterNow) createdTask else createdTask.trigger(createdTask.version)
   }
 
@@ -36,7 +36,7 @@ object Task extends AggregateFactory {
     event.aggregateVersion,
     event.created,
     None,
-    event.queueBinding,
+    event.queue,
     status,
     event.triggerDate,
     event.payload,
@@ -49,7 +49,7 @@ case class Task(uncommittedEvents: List[Event],
                 version: AggregateVersion,
                 created: DateTime,
                 assignee: Option[User],
-                queueBinding: QueueBinding,
+                queue: QueueId,
                 status: Status,
                 triggerDate: DateTime,
                 payload: Payload,

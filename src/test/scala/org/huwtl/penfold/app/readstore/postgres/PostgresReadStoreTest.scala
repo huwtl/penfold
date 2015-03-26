@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import org.huwtl.penfold.app.support.DateTimeSource
 import org.huwtl.penfold.app.support.json.ObjectSerializer
 import org.huwtl.penfold.domain.event.{FutureTaskCreated, _}
-import org.huwtl.penfold.domain.model.{AggregateId, QueueBinding, QueueId, _}
+import org.huwtl.penfold.domain.model.{AggregateId, QueueId, _}
 import org.huwtl.penfold.readstore.{EQ, PageReference, _}
 import org.huwtl.penfold.support.PostgresSpecification
 import org.joda.time.DateTime
@@ -58,7 +58,7 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
 
     def entry(aggregateId: String, triggerDate: DateTime, index: Int) = {
       val payload = Payload(Map("a" -> "123", "b" -> "1", "c" -> index))
-      FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created.plusSeconds(1), QueueBinding(queueId), triggerDate, payload, triggerDate.getMillis)
+      FutureTaskCreated(AggregateId(aggregateId), AggregateVersion.init, created.plusSeconds(1), queueId, triggerDate, payload, triggerDate.getMillis)
     }
 
     def forwardFrom(lastEvent: TaskCreatedEvent) = Some(PageReference(s"${lastEvent.aggregateId.value}~${lastEvent.triggerDate.getMillis}~1"))
@@ -104,10 +104,10 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
 
   "retrieve tasks to timeout" in new context {
     dateTimeSource.now returns created
-    val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created.minusSeconds(1), QueueBinding(queueId), created.minusSeconds(1), Payload(Map()), score)
-    val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created.minusSeconds(3), QueueBinding(queueId), created.minusSeconds(3), Payload(Map()), score)
-    val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created.minusSeconds(4), QueueBinding(queueId), created.minusSeconds(4), Payload(Map()), score)
-    val event4 = TaskCreated(AggregateId("4"), AggregateVersion.init, created.minusSeconds(2), QueueBinding(queueId), created.minusSeconds(2), Payload(Map()), score)
+    val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created.minusSeconds(1), queueId, created.minusSeconds(1), Payload(Map()), score)
+    val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created.minusSeconds(3), queueId, created.minusSeconds(3), Payload(Map()), score)
+    val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created.minusSeconds(4), queueId, created.minusSeconds(4), Payload(Map()), score)
+    val event4 = TaskCreated(AggregateId("4"), AggregateVersion.init, created.minusSeconds(2), queueId, created.minusSeconds(2), Payload(Map()), score)
     persist(List(event1, event2, event3, event4))
 
     val timedOutTasks = new mutable.ListBuffer[String]()
@@ -161,11 +161,11 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
     }
 
     "apply or operator for multi value filters" in new context {
-      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
-      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
-      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "DEF")), score)
-      val event4 = TaskCreated(AggregateId("4"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "")), score)
-      val event5 = TaskCreated(AggregateId("5"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload.empty, score)
+      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, queueId, triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, queueId, triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, queueId, triggerDate, Payload(Map("a" -> "DEF")), score)
+      val event4 = TaskCreated(AggregateId("4"), AggregateVersion.init, created, queueId, triggerDate, Payload(Map("a" -> "")), score)
+      val event5 = TaskCreated(AggregateId("5"), AggregateVersion.init, created, queueId, triggerDate, Payload.empty, score)
       persist(List(event1, event2, event3, event4, event5))
 
       "page"            | "filter"                           | "expected"          |
@@ -266,9 +266,9 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
     }
 
     "retrieve tasks by next page with additional filter" in new context {
-      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
-      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "ABC")), score)
-      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, QueueBinding(queueId), triggerDate, Payload(Map("a" -> "DEF")), score)
+      val event1 = TaskCreated(AggregateId("1"), AggregateVersion.init, created, queueId, triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event2 = TaskCreated(AggregateId("2"), AggregateVersion.init, created, queueId, triggerDate, Payload(Map("a" -> "ABC")), score)
+      val event3 = TaskCreated(AggregateId("3"), AggregateVersion.init, created, queueId, triggerDate, Payload(Map("a" -> "DEF")), score)
       persist(List(event1, event2, event3))
 
       "page"            | "expected"       | "hasPrev" | "hasNext" |

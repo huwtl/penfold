@@ -39,7 +39,7 @@ class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSeria
   }
 
   private def handleCreateEvent(event: TaskCreatedEvent, status: Status) = {
-    val queue = event.queueBinding.id
+    val queue = event.queue
 
     val task = TaskData(event.aggregateId, event.aggregateVersion, event.created.getMillis, queue, status, event.created.getMillis, previousStatus = None, 0, event.triggerDate.getMillis, assignee = None,
       event.score, resolveSortOrder(event, status, event.score).get, event.payload, rescheduleReason = None, closeReason = None)

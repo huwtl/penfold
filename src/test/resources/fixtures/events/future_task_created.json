@@ -3,7 +3,7 @@
     "aggregateId" : "1",
     "aggregateVersion" : 1,
     "created" : "2014-02-25 13:00:00",
-    "queueBinding": {"id": "abc"},
+    "queue": "abc",
     "triggerDate" : "2014-02-25 14:00:00",
     "payload" : {
         "stuff" : "something",

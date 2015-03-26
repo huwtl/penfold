@@ -5,7 +5,6 @@ import org.specs2.mock.Mockito
 import org.huwtl.penfold.domain.store.DomainRepository
 import org.huwtl.penfold.domain.model._
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.domain.model.QueueBinding
 
 class CreateTaskHandlerTest extends Specification with Mockito {
 
@@ -20,7 +19,7 @@ class CreateTaskHandlerTest extends Specification with Mockito {
   "create task" in {
     aggregateIdFactory.create returns expectedAggregateId
 
-    val aggregateId = commandDispatcher.dispatch(new CreateTask(QueueBinding(QueueId("q1")), Payload.empty, None))
+    val aggregateId = commandDispatcher.dispatch(new CreateTask(QueueId("q1"), Payload.empty, None))
 
     there was one(domainRepository).add(any[Task])
     aggregateId must beEqualTo(expectedAggregateId)

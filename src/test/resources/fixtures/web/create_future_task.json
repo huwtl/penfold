@@ -1,5 +1,5 @@
 {
-    "queueBinding": {"id": "abc"},
+    "queue": "abc",
     "triggerDate" : "2014-02-25 14:00:00",
     "payload" : {
         "data" : "value",

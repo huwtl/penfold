@@ -1,31 +1,12 @@
 package org.huwtl.penfold.support
 
-import org.joda.time.DateTime
-import org.huwtl.penfold.domain.model._
-import org.huwtl.penfold.domain.model.Status.{Waiting, Started, Ready, Closed}
-import org.huwtl.penfold.command._
-import org.huwtl.penfold.domain.event.TaskUnassigned
-import org.huwtl.penfold.domain.event.TaskRequeued
-import org.huwtl.penfold.command.UpdateTaskPayload
-import org.huwtl.penfold.command.UnassignTask
-import org.huwtl.penfold.domain.event.TaskRescheduled
-import org.huwtl.penfold.domain.event.TaskPayloadUpdated
-import org.huwtl.penfold.domain.model.QueueId
-import org.huwtl.penfold.domain.event.FutureTaskCreated
-import org.huwtl.penfold.domain.event.TaskArchived
-import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.readstore.TaskProjection
-import org.huwtl.penfold.domain.event.TaskTriggered
-import scala.Some
-import org.huwtl.penfold.domain.event.TaskCreated
-import org.huwtl.penfold.domain.event.TaskStarted
-import org.huwtl.penfold.domain.event.TaskClosed
-import org.huwtl.penfold.domain.model.User
-import org.huwtl.penfold.readstore.PreviousStatus
-import org.huwtl.penfold.command.CreateTask
+import org.huwtl.penfold.command.{CreateFutureTask, CreateTask, UnassignTask, UpdateTaskPayload, _}
+import org.huwtl.penfold.domain.event.{FutureTaskCreated, TaskArchived, TaskClosed, TaskCreated, TaskPayloadUpdated, TaskRequeued, TaskRescheduled, TaskStarted, TaskTriggered, TaskUnassigned}
+import org.huwtl.penfold.domain.model.Status.{Closed, Ready, Started, Waiting}
+import org.huwtl.penfold.domain.model.{AggregateId, QueueId, User, _}
 import org.huwtl.penfold.domain.model.patch.Patch
-import org.huwtl.penfold.command.CreateFutureTask
-import org.huwtl.penfold.domain.model.QueueBinding
+import org.huwtl.penfold.readstore.{PreviousStatus, TaskProjection}
+import org.joda.time.DateTime
 
 object TestModel {
   val createdDate = new DateTime(2014, 2, 25, 13, 0, 0, 0)
@@ -65,9 +46,9 @@ object TestModel {
   val payloadUpdate = Patch(List())
 
   object commands {
-    val createTask = CreateTask(QueueBinding(TestModel.queueId), payload, Some(score))
+    val createTask = CreateTask(TestModel.queueId, payload, Some(score))
 
-    val createFutureTask = CreateFutureTask(QueueBinding(TestModel.queueId), triggerDate, payload, Some(score))
+    val createFutureTask = CreateFutureTask(TestModel.queueId, triggerDate, payload, Some(score))
 
     val unassignTask = UnassignTask(aggregateId, version, Some(unassignReason), Some(payloadUpdate))
 
@@ -83,7 +64,7 @@ object TestModel {
   }
 
   object readModels {
-    val task = TaskProjection(aggregateId, AggregateVersion.init, createdDate, QueueBinding(queueId), Status.Ready, createdDate, None, 0, None, triggerDate, score, score, payload)
+    val task = TaskProjection(aggregateId, AggregateVersion.init, createdDate, queueId, Status.Ready, createdDate, None, 0, None, triggerDate, score, score, payload)
 
     val readyTask = task
 
@@ -101,11 +82,11 @@ object TestModel {
   }
 
   object events {
-    val createdEvent = TaskCreated(aggregateId, AggregateVersion(1), createdDate, QueueBinding(queueId), triggerDate, payload, score)
+    val createdEvent = TaskCreated(aggregateId, AggregateVersion(1), createdDate, queueId, triggerDate, payload, score)
 
     val triggeredEvent = TaskTriggered(aggregateId, AggregateVersion(2), createdDate)
 
-    val futureCreatedEvent = FutureTaskCreated(aggregateId, AggregateVersion(1), createdDate, QueueBinding(queueId), triggerDate, payload, score)
+    val futureCreatedEvent = FutureTaskCreated(aggregateId, AggregateVersion(1), createdDate, queueId, triggerDate, payload, score)
 
     val startedEvent = TaskStarted(aggregateId, AggregateVersion(2), createdDate, Some(assignee), Some(payloadUpdate))
 

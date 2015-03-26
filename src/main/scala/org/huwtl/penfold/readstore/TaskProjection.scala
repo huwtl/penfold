@@ -8,7 +8,7 @@ import org.huwtl.penfold.domain.model.Payload
 case class TaskProjection(id: AggregateId,
                           version: AggregateVersion,
                           created: DateTime,
-                          queueBinding: QueueBinding,
+                          queue: QueueId,
                           status: Status,
                           statusLastModified: DateTime,
                           previousStatus: Option[PreviousStatus],

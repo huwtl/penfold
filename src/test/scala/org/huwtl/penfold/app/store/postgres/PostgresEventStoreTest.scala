@@ -7,7 +7,6 @@ import org.huwtl.penfold.domain.model._
 import org.joda.time.DateTime
 import org.huwtl.penfold.domain.event.{Event, TaskTriggered, TaskCreated}
 import org.huwtl.penfold.domain.model.AggregateId
-import org.huwtl.penfold.domain.model.QueueBinding
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 import org.huwtl.penfold.support.PostgresSpecification
 import org.specs2.specification.Scope
@@ -20,7 +19,7 @@ class PostgresEventStoreTest extends Specification with DataTables with Postgres
     val store = new PostgresEventStore(database, new EventSerializer)
 
     def createdEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {
-      TaskCreated(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), QueueBinding(QueueId("q1")), triggerDate, Payload.empty, triggerDate.getMillis)
+      TaskCreated(aggregateId, aggregateVersion, new DateTime(2014, 4, 3, 12, 0, 0, 0), QueueId("q1"), triggerDate, Payload.empty, triggerDate.getMillis)
     }
 
     def triggeredEvent(aggregateId: AggregateId, aggregateVersion: AggregateVersion): Event = {

@@ -7,11 +7,11 @@ import org.huwtl.penfold.domain.model.patch.Patch
 
 sealed trait TaskCommand extends Command
 
-case class CreateTask(queueBinding: QueueBinding,
+case class CreateTask(queue: QueueId,
                       payload: Payload,
                       score: Option[Long]) extends TaskCommand
 
-case class CreateFutureTask(queueBinding: QueueBinding,
+case class CreateFutureTask(queue: QueueId,
                             triggerDate: DateTime,
                             payload: Payload,
                             score: Option[Long]) extends TaskCommand

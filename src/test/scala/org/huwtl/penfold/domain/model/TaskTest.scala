@@ -21,87 +21,87 @@ class TaskTest extends Specification {
 
   "task creation" should {
     "create new task" in {
-      val createdTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
+      val createdTask = Task.create(AggregateId("1"), queue, Payload.empty, None)
       typesOf(createdTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCreated]))
     }
 
     "create new future task" in {
-      val createdTask = Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None)
+      val createdTask = Task.create(AggregateId("1"), queue, DateTime.now().plusHours(1), Payload.empty, None)
       typesOf(createdTask.uncommittedEvents) must beEqualTo(List(classOf[FutureTaskCreated]))
     }
   }
 
   "task triggering" should {
     "trigger new future task if trigger date in past" in {
-      val createdTask = Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().minusDays(1), Payload.empty, None)
+      val createdTask = Task.create(AggregateId("1"), queue, DateTime.now().minusDays(1), Payload.empty, None)
       typesOf(createdTask.uncommittedEvents) must beEqualTo(List(classOf[TaskTriggered], classOf[FutureTaskCreated]))
     }
 
     "trigger future task" in {
-      val readyTask = Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).trigger(AggregateVersion.init)
+      val readyTask = Task.create(AggregateId("1"), queue, DateTime.now().plusHours(1), Payload.empty, None).trigger(AggregateVersion.init)
       typesOf(readyTask.uncommittedEvents) must beEqualTo(List(classOf[TaskTriggered], classOf[FutureTaskCreated]))
     }
 
     "ensure only waiting tasks can be triggered" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).trigger(TestModel.version) must throwA[AggregateConflictException]
-      Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).trigger(TestModel.version).trigger(TestModel.version.next) must throwA[AggregateConflictException]
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, None, None).trigger(TestModel.version.next) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).trigger(TestModel.version) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, DateTime.now().plusHours(1), Payload.empty, None).trigger(TestModel.version).trigger(TestModel.version.next) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).start(TestModel.version, None, None).trigger(TestModel.version.next) must throwA[AggregateConflictException]
     }
   }
 
   "task starting" should {
     "start task" in {
-      val startedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, None, None)
+      val startedTask = Task.create(AggregateId("1"), queue, Payload.empty, None).start(TestModel.version, None, None)
       typesOf(startedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskStarted], classOf[TaskCreated]))
     }
 
     "ensure only ready tasks can be started" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).start(TestModel.version, None, None) must throwA[AggregateConflictException]
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, None, None).start(TestModel.version.next, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, DateTime.now().plusHours(1), Payload.empty, None).start(TestModel.version, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).start(TestModel.version, None, None).start(TestModel.version.next, None, None) must throwA[AggregateConflictException]
     }
   }
 
   "task closure" should {
     "close task" in {
-      val closeTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).close(TestModel.version, Some(user), Some(closeReason), None)
+      val closeTask = Task.create(AggregateId("1"), queue, Payload.empty, None).close(TestModel.version, Some(user), Some(closeReason), None)
       typesOf(closeTask.uncommittedEvents) must beEqualTo(List(classOf[TaskClosed], classOf[TaskCreated]))
     }
 
     "ensure archived tasks cannot be closed" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).close(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).close(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
   "task requeuing" should {
     "requeue task" in {
-      val requeuedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, Some(user), None).requeue(TestModel.version.next, None, None, None, None)
+      val requeuedTask = Task.create(AggregateId("1"), queue, Payload.empty, None).start(TestModel.version, Some(user), None).requeue(TestModel.version.next, None, None, None, None)
       typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[TaskStarted], classOf[TaskCreated]))
     }
 
     "requeue waiting task" in {
-      val requeuedTask = Task.create(AggregateId("1"), QueueBinding(queue), DateTime.now().plusHours(1), Payload.empty, None).requeue(TestModel.version, None, None, None, None)
+      val requeuedTask = Task.create(AggregateId("1"), queue, DateTime.now().plusHours(1), Payload.empty, None).requeue(TestModel.version, None, None, None, None)
       typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[FutureTaskCreated]))
     }
 
     "ensure ready, archived tasks cannot be requeued" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).requeue(TestModel.version, None, None, None, None) must throwA[AggregateConflictException]
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).requeue(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).requeue(TestModel.version, None, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).requeue(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
   "task rescheduling" should {
     "reschedule task" in {
-      val rescheduleTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, Some(user), None).reschedule(TestModel.version.next, DateTime.now().plusHours(1), Some(user), Some("type"), None, None)
+      val rescheduleTask = Task.create(AggregateId("1"), queue, Payload.empty, None).start(TestModel.version, Some(user), None).reschedule(TestModel.version.next, DateTime.now().plusHours(1), Some(user), Some("type"), None, None)
       typesOf(rescheduleTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRescheduled], classOf[TaskStarted], classOf[TaskCreated]))
     }
 
     "ensure archived tasks cannot be rescheduled" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).reschedule(TestModel.version.next, DateTime.now().plusHours(1), None, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).reschedule(TestModel.version.next, DateTime.now().plusHours(1), None, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
   "task paylod updating" should {
-    val readyTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
+    val readyTask = Task.create(AggregateId("1"), queue, Payload.empty, None)
 
     "update task payload" in {
       val updatedTask = readyTask.updatePayload(AggregateVersion.init, Patch(Nil), None, None)
@@ -127,18 +127,18 @@ class TaskTest extends Specification {
 
   "task archiving" should {
     "archive task" in {
-      val archivedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version)
+      val archivedTask = Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version)
       typesOf(archivedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskArchived], classOf[TaskCreated]))
     }
 
     "ensure cannot archive an already archived task" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).archive(TestModel.version).archive(TestModel.version.next) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).archive(TestModel.version.next) must throwA[AggregateConflictException]
     }
   }
 
   "task unassignment" should {
     "unassign ready task" in {
-      val unassignedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
+      val unassignedTask = Task.create(AggregateId("1"), queue, Payload.empty, None)
         .start(TestModel.version, Some(user), None)
         .requeue(TestModel.version.next, None, Some(user), None, None)
         .unassign(TestModel.version.next.next, None, None)
@@ -147,7 +147,7 @@ class TaskTest extends Specification {
     }
 
     "unassign waiting task" in {
-      val unassignedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
+      val unassignedTask = Task.create(AggregateId("1"), queue, Payload.empty, None)
         .start(TestModel.version, Some(user), None)
         .reschedule(TestModel.version.next, TestModel.triggerDate, Some(user), None, None, None)
         .unassign(TestModel.version.next.next, None, None)
@@ -156,14 +156,14 @@ class TaskTest extends Specification {
     }
 
     "only ready and waiting tasks can be unassigned" in {
-      val task = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
+      val task = Task.create(AggregateId("1"), queue, Payload.empty, None)
       task.archive(TestModel.version).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
       task.start(TestModel.version, None, None).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
       task.close(TestModel.version, None, None, None).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
     }
 
     "only assigned tasks can be unassigned" in {
-      Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
+      Task.create(AggregateId("1"), queue, Payload.empty, None)
         .start(TestModel.version, None, None)
         .reschedule(TestModel.version.next, TestModel.triggerDate, None, None, None, None)
         .unassign(TestModel.version.next.next, None, None) must throwA[AggregateConflictException]
@@ -171,9 +171,9 @@ class TaskTest extends Specification {
   }
 
   "prevent concurrent task updates" in {
-    val waitingTaskAtVersion1 = Task.create(AggregateId("1"), QueueBinding(queue), TestModel.triggerDate, Payload.empty, None)
-    val readyTaskAtVersion3 = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, None, None).requeue(TestModel.version.next, None, None, None, None)
-    val startedTaskAtVersion2 = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, None, None)
+    val waitingTaskAtVersion1 = Task.create(AggregateId("1"), queue, TestModel.triggerDate, Payload.empty, None)
+    val readyTaskAtVersion3 = Task.create(AggregateId("1"), queue, Payload.empty, None).start(TestModel.version, None, None).requeue(TestModel.version.next, None, None, None, None)
+    val startedTaskAtVersion2 = Task.create(AggregateId("1"), queue, Payload.empty, None).start(TestModel.version, None, None)
 
     waitingTaskAtVersion1.trigger(AggregateVersion(1)) must throwA[AggregateConflictException]
     waitingTaskAtVersion1.archive(AggregateVersion(1)) must throwA[AggregateConflictException]

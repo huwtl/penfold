@@ -93,9 +93,7 @@ POST: /tasks  HTTP 1.1
 Content-Type: application/json;domain-command=CreateFutureTask
     
 {
-    "queueBinding": {
-        "id": "greenback"
-    },
+    "queue": "greenback",
     "triggerDate": "yyyy-MM-dd HH:mm:ss",
     "payload": {
         "customer": { 
@@ -116,7 +114,6 @@ The links section of the response lists what actions and views are available for
 * UpdateTaskPayload - link where requests should be sent to make changes to the task payload (POST)
 * CloseTask - link where requests should be sent to close the task (POST)
 
-```
 201 Created
 Content-Type: application/hal+json
 
@@ -140,9 +137,7 @@ Content-Type: application/hal+json
             "email": "bob@email.com"
         }
     },
-    "queueBinding": {
-        "id": "greenback"
-    },
+    "queue": "greenback",
     "status": "waiting",
     "triggerDate": "2014-07-11 16:05:00",
     "version": 1
@@ -170,47 +165,38 @@ When your task is "ready", then you should see a response similar to below.
             "href": "http://localhost:8080/queues/greenback/ready"
         }
     },
+    "id": "greenback",
     "_embedded": {
-        "queue": {
+        "tasks": [
+          {
             "_links": {
                 "self": {
-                    "href": "http://localhost:8080/queues/greenback/ready/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+                },
+                "CloseTask": {
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
+                },
+                "StartTask": {
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
+                },
+                "UpdateTaskPayload": {
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
                 }
             },
-            "taskId": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
-            "_embedded": {
-                "task": {
-                    "_links": {
-                        "self": {
-                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
-                        },
-                        "CloseTask": {
-                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
-                        },
-                        "StartTask": {
-                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
-                        },
-                        "UpdateTaskPayload": {
-                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
-                        }
-                    },
-                    "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
-                    "payload": {
-                        "customer": {
-                            "id": 1,
-                            "name": "bob",
-                            "email": "bob@email.com"
-                        }
-                    },
-                    "queueBinding": {
-                        "id": "greenback"
-                    },
-                    "status": "ready",
-                    "triggerDate": "2014-07-11 16:05:00",
-                    "version": 2
+            "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+            "payload": {
+                "customer": {
+                    "id": 1,
+                    "name": "bob",
+                    "email": "bob@email.com"
                 }
-            }
-        }
+            },
+            "queue": "greenback",
+            "status": "ready",
+            "triggerDate": "2014-07-11 16:05:00",
+            "version": 2
+          }
+        ]
     }
 }
 ```
@@ -253,9 +239,7 @@ The task has now been started, you will notice in the POST response that the tas
             "email": "bob@email.com"
         }
     },
-    "queueBinding": {
-        "id": "greenback"
-    },
+    "queue": "greenback",
     "status": "started",
     "triggerDate": "2014-07-11 16:05:00",
     "version": 3
@@ -290,9 +274,7 @@ The task should now be closed.
             "email": "bob@email.com"
         }
     },
-    "queueBinding": {
-        "id": "greenback"
-    },
+    "queue": "greenback",
     "status": "closed",
     "triggerDate": "2014-07-11 16:05:00",
     "version": 4

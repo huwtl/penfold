@@ -14,11 +14,11 @@ class DomainRepositoryImplTest extends Specification with Mockito {
   class context extends Scope {
     val aggregateId = AggregateId("a1")
 
-    val binding = QueueBinding(QueueId("q1"))
+    val queueId = QueueId("q1")
 
     val timestamp = DateTime.now
 
-    val createdTask = Task.create(aggregateId, binding, Payload.empty, None)
+    val createdTask = Task.create(aggregateId, queueId, Payload.empty, None)
     
     val events = createdTask.uncommittedEvents 
 
@@ -38,7 +38,7 @@ class DomainRepositoryImplTest extends Specification with Mockito {
 
   "load aggregate by id" in new context {
     eventStore.retrieveBy(aggregateId) returns List(
-      TaskCreated(aggregateId, AggregateVersion.init, timestamp, binding, timestamp, Payload.empty, timestamp.getMillis),
+      TaskCreated(aggregateId, AggregateVersion.init, timestamp, queueId, timestamp, Payload.empty, timestamp.getMillis),
       TaskTriggered(aggregateId, AggregateVersion.init.next, timestamp)
     )
 
