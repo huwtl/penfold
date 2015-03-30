@@ -6,7 +6,7 @@ import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 import grizzled.slf4j.Logger
 import scala.util.Try
 import org.huwtl.penfold.app.TaskArchiverConfiguration
-import org.huwtl.penfold.domain.model.Status.Closed
+import org.huwtl.penfold.domain.model.Status.{Cancelled, Closed}
 
 class TaskArchiveScheduler(readStore: ReadStore, commandDispatcher: CommandDispatcher, config: TaskArchiverConfiguration) extends Scheduler {
   private lazy val logger = Logger(getClass)
@@ -17,6 +17,7 @@ class TaskArchiveScheduler(readStore: ReadStore, commandDispatcher: CommandDispa
 
   override def process() {
     readStore.forEachTimedOutTask(Closed, config.timeout, archiveTask)
+    readStore.forEachTimedOutTask(Cancelled, config.timeout, archiveTask)
   }
 
   private def archiveTask(task: TaskProjectionReference) {

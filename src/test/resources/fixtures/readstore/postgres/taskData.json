@@ -20,6 +20,7 @@
       "bool": true
     }
   },
-  "rescheduleReason": "user2",
-  "closeReason": "user3"
+  "rescheduleReason": "reason1",
+  "cancelReason": "reason2",
+  "closeReason": "reason3"
 }

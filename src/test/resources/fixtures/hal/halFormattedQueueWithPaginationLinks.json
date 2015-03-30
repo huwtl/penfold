@@ -20,6 +20,9 @@
           "self": {
             "href": "http://host/tasks/2"
           },
+          "CancelTask": {
+            "href": "http://host/tasks/2/1"
+          },
           "CloseTask": {
             "href": "http://host/tasks/2/1"
           },
@@ -55,6 +58,9 @@
         "_links": {
           "self": {
             "href": "http://host/tasks/1"
+          },
+          "CancelTask": {
+            "href": "http://host/tasks/1/1"
           },
           "CloseTask": {
             "href": "http://host/tasks/1/1"

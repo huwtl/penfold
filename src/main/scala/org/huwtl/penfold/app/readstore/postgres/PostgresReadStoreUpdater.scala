@@ -27,6 +27,7 @@ class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSeria
       case e: TaskRequeued => handleTaskRequeuedEvent(e)
       case e: TaskRescheduled => handleTaskRescheduledEvent(e)
       case e: TaskClosed => handleTaskClosedEvent(e)
+      case e: TaskCancelled => handleTaskCancelledEvent(e)
       case e: TaskUnassigned => handleUnassignedEvent(e)
       case e: TaskPayloadUpdated => handleUpdatePayloadEvent(e)
       case e: TaskArchived => handleArchiveEvent(e)
@@ -42,7 +43,7 @@ class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSeria
     val queue = event.queue
 
     val task = TaskData(event.aggregateId, event.aggregateVersion, event.created.getMillis, queue, status, event.created.getMillis, previousStatus = None, 0, event.triggerDate.getMillis, assignee = None,
-      event.score, resolveSortOrder(event, status, event.score).get, event.payload, rescheduleReason = None, closeReason = None)
+      event.score, resolveSortOrder(event, status, event.score).get, event.payload, rescheduleReason = None, cancelReason = None, closeReason = None)
 
     val taskJson = objectSerializer.serialize(task)
 
@@ -111,6 +112,21 @@ class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSeria
           statusLastModified = event.created.getMillis,
           sort = event.created.getMillis,
           closeReason = event.reason,
+          assignee = None,
+          payload = patchPayloadIfExists(task, event.payloadUpdate))
+      }
+    }
+  }
+
+  private def handleTaskCancelledEvent(event: TaskCancelled) = {
+    handleTaskUpdate(event) {
+      task => {
+        task.copy(
+          previousStatus = Some(updatePreviousStatus(task)),
+          status = Cancelled,
+          statusLastModified = event.created.getMillis,
+          sort = event.created.getMillis,
+          cancelReason = event.reason,
           assignee = None,
           payload = patchPayloadIfExists(task, event.payloadUpdate))
       }

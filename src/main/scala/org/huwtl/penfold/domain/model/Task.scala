@@ -65,7 +65,7 @@ case class Task(uncommittedEvents: List[Event],
 
   def updatePayload(expectedVersion: AggregateVersion, payloadUpdate: Patch, updateType: Option[String], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
-    checkConflict(status != Closed && status != Archived, s"Cannot update payload for a closed/archived task ($aggregateId), but was $status")
+    checkConflict(status != Cancelled && status != Closed && status != Archived, s"Cannot update payload for a cancelled, closed or archived task ($aggregateId), but was $status")
     applyTaskPayloadUpdated(TaskPayloadUpdated(aggregateId, version.next, now, payloadUpdate, updateType, score))
   }
 
@@ -77,19 +77,25 @@ case class Task(uncommittedEvents: List[Event],
 
   def close(expectedVersion: AggregateVersion, user: Option[User], reason: Option[String], payloadUpdate: Option[Patch]): Task = {
     checkVersion(expectedVersion)
-    checkConflict(status != Closed && status != Archived, s"Cannot close an archived or already closed task ($aggregateId), but was $status")
+    checkConflict(status != Cancelled && status != Closed && status != Archived, s"Cannot close an cancelled, archived or already closed task ($aggregateId), but was $status")
     applyTaskClosed(TaskClosed(aggregateId, version.next, now, user, reason, payloadUpdate))
+  }
+
+  def cancel(expectedVersion: AggregateVersion, user: Option[User], reason: Option[String], payloadUpdate: Option[Patch]): Task = {
+    checkVersion(expectedVersion)
+    checkConflict(status != Cancelled && status != Closed && status != Archived, s"Cannot cancel an archived, closed or already cancelled task ($aggregateId), but was $status")
+    applyTaskCancelled(TaskCancelled(aggregateId, version.next, now, user, reason, payloadUpdate))
   }
 
   def requeue(expectedVersion: AggregateVersion, reason: Option[String], assignee: Option[User], payloadUpdate: Option[Patch], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
-    checkConflict(status != Ready && status != Archived, s"Cannot requeue a ready or archived task ($aggregateId), but was $status")
+    checkConflict(status != Cancelled && status != Ready && status != Archived, s"Cannot requeue a ready, cancelled or archived task ($aggregateId), but was $status")
     applyTaskRequeued(TaskRequeued(aggregateId, version.next, now, reason, assignee, payloadUpdate, score))
   }
 
   def reschedule(expectedVersion: AggregateVersion, triggerDate: DateTime, assignee: Option[User], reason: Option[String], payloadUpdate: Option[Patch], score: Option[Long]): Task = {
     checkVersion(expectedVersion)
-    checkConflict(status != Archived, s"Cannot reschedule an archived task ($aggregateId)")
+    checkConflict(status != Cancelled && status != Archived, s"Cannot reschedule an cancelled or archived task ($aggregateId)")
     applyTaskRescheduled(TaskRescheduled(aggregateId, version.next, now, triggerDate, assignee, reason, payloadUpdate, score))
   }
 
@@ -112,6 +118,7 @@ case class Task(uncommittedEvents: List[Event],
     case event: TaskTriggered => applyTaskTriggered(event)
     case event: TaskStarted => applyTaskStarted(event)
     case event: TaskClosed => applyTaskClosed(event)
+    case event: TaskCancelled => applyTaskCancelled(event)
     case event: TaskPayloadUpdated => applyTaskPayloadUpdated(event)
     case event: TaskRequeued => applyTaskRequeued(event)
     case event: TaskRescheduled => applyTaskRescheduled(event)
@@ -125,6 +132,8 @@ case class Task(uncommittedEvents: List[Event],
   private def applyTaskStarted(event: TaskStarted) = copy(event :: uncommittedEvents, version = event.aggregateVersion, status = Started, assignee = event.assignee, payload = optPayloadUpdate(event.payloadUpdate))
 
   private def applyTaskClosed(event: TaskClosed) = copy(event :: uncommittedEvents, version = event.aggregateVersion, status = Closed, payload = optPayloadUpdate(event.payloadUpdate))
+
+  private def applyTaskCancelled(event: TaskCancelled) = copy(event :: uncommittedEvents, version = event.aggregateVersion, status = Cancelled, payload = optPayloadUpdate(event.payloadUpdate))
 
   private def applyTaskUnassigned(event: TaskUnassigned) = copy(event :: uncommittedEvents, version = event.aggregateVersion, assignee = None, payload = optPayloadUpdate(event.payloadUpdate))
 

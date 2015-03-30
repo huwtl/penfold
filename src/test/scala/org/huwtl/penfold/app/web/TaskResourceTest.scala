@@ -129,6 +129,15 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     }
   }
 
+  "return 200 when cancelling task" in {
+    commandDispatcher.dispatch(TestModel.commands.cancelTask) returns expectedTask.id
+    readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
+
+    post("/tasks/1/1", textFromFile("fixtures/web/cancel_task.json"), headers = validAuthHeader + commandTypeHeader("CancelTask")) {
+      status must beEqualTo(200)
+    }
+  }
+
   "return 400 when missing content-type header from task creation request" in {
     commandDispatcher.dispatch(TestModel.commands.createTask) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)

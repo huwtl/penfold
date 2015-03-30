@@ -34,6 +34,7 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
     val taskTriggeredEvent = TestModel.events.triggeredEvent.copy(aggregateId = aggregateId)
     val taskUnassignedEvent = TestModel.events.unassignedEvent.copy(aggregateId = aggregateId, aggregateVersion = AggregateVersion(5))
     val taskClosedEvent = TestModel.events.closedEvent.copy(aggregateId = aggregateId)
+    val taskCancelledEvent = TestModel.events.cancelEvent.copy(aggregateId = aggregateId)
     val taskRequeuedEvent = TestModel.events.requeuedEvent.copy(aggregateId = aggregateId)
     val taskRescheduledEvent = TestModel.events.rescheduledEvent.copy(aggregateId = aggregateId)
     val archivedEvent = TestModel.events.archivedEvent.copy(aggregateId = aggregateId)
@@ -92,6 +93,16 @@ class PostgresReadStoreUpdaterTest extends PostgresSpecification {
       val task = readStore.retrieveBy(aggregateId)
 
       task must beEqualTo(Some(TestModel.readModels.closedTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
+    }
+  }
+
+  "cancel task" in new context {
+    handleEvents(taskCreatedEvent, taskStartedEvent, taskCancelledEvent)
+
+    database.withDynTransaction {
+      val task = readStore.retrieveBy(aggregateId)
+
+      task must beEqualTo(Some(TestModel.readModels.cancelledTask.copy(id = aggregateId, version = AggregateVersion(3), payload = payload)))
     }
   }
 

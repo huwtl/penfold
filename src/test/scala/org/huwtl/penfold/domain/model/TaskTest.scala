@@ -70,6 +70,29 @@ class TaskTest extends Specification {
     "ensure archived tasks cannot be closed" in {
       Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).close(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
     }
+
+    "ensure cancelled tasks cannot be closed" in {
+      Task.create(AggregateId("1"), queue, Payload.empty, None).cancel(TestModel.version, None, None, None).close(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
+    }
+  }
+
+  "task cancellation" should {
+    "cancel task" in {
+      val cancelledTask = Task.create(AggregateId("1"), queue, Payload.empty, None).cancel(TestModel.version, Some(user), Some(closeReason), None)
+      typesOf(cancelledTask.uncommittedEvents) must beEqualTo(List(classOf[TaskCancelled], classOf[TaskCreated]))
+    }
+
+    "ensure archived tasks cannot be cancelled" in {
+      Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).cancel(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
+    }
+
+    "ensure closed tasks cannot be cancelled" in {
+      Task.create(AggregateId("1"), queue, Payload.empty, None).close(TestModel.version, None, None, None).cancel(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
+    }
+
+    "ensure cancelled tasks cannot be cancelled again" in {
+      Task.create(AggregateId("1"), queue, Payload.empty, None).cancel(TestModel.version, None, None, None).cancel(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
+    }
   }
 
   "task requeuing" should {
@@ -83,9 +106,10 @@ class TaskTest extends Specification {
       typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[FutureTaskCreated]))
     }
 
-    "ensure ready, archived tasks cannot be requeued" in {
+    "ensure ready, archived, closed tasks cannot be requeued" in {
       Task.create(AggregateId("1"), queue, Payload.empty, None).requeue(TestModel.version, None, None, None, None) must throwA[AggregateConflictException]
       Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).requeue(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).cancel(TestModel.version, None, None, None).requeue(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
@@ -97,6 +121,10 @@ class TaskTest extends Specification {
 
     "ensure archived tasks cannot be rescheduled" in {
       Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).reschedule(TestModel.version.next, DateTime.now().plusHours(1), None, None, None, None) must throwA[AggregateConflictException]
+    }
+
+    "ensure cancelled tasks cannot be rescheduled" in {
+      Task.create(AggregateId("1"), queue, Payload.empty, None).cancel(TestModel.version, None, None, None).reschedule(TestModel.version.next, DateTime.now().plusHours(1), None, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
@@ -114,13 +142,17 @@ class TaskTest extends Specification {
         .updatePayload(AggregateVersion.init, Patch(Nil), None, None) must throwA[AggregateConflictException]
     }
 
-    "ensure closed, archived tasks cannot accept updated payload" in {
+    "ensure closed, archived, cancelled tasks cannot accept updated payload" in {
       readyTask
         .close(TestModel.version, None, None, None)
         .updatePayload(TestModel.version.next, Patch(Nil), None, None) must throwA[AggregateConflictException]
 
       readyTask
         .archive(TestModel.version)
+        .updatePayload(TestModel.version.next, Patch(Nil), None, None) must throwA[AggregateConflictException]
+
+      readyTask
+        .cancel(TestModel.version, None, None, None)
         .updatePayload(TestModel.version.next, Patch(Nil), None, None) must throwA[AggregateConflictException]
     }
   }

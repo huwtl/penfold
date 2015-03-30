@@ -44,6 +44,12 @@ case class CloseTask(id: AggregateId,
                      reason: Option[String],
                      payloadUpdate: Option[Patch]) extends TaskCommand
 
+case class CancelTask(id: AggregateId,
+                     version: AggregateVersion,
+                     user: Option[User],
+                     reason: Option[String],
+                     payloadUpdate: Option[Patch]) extends TaskCommand
+
 case class ArchiveTask(id: AggregateId, version: AggregateVersion) extends TaskCommand
 
 case class UpdateTaskPayload(id: AggregateId,

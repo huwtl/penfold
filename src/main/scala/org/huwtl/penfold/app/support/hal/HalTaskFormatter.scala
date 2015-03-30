@@ -1,16 +1,14 @@
 package org.huwtl.penfold.app.support.hal
 
+import java.net.URI
+
+import com.theoryinpractise.halbuilder.api.Representation
 import com.theoryinpractise.halbuilder.api.RepresentationFactory._
 import com.theoryinpractise.halbuilder.json.JsonRepresentationFactory
-import org.joda.time.format.DateTimeFormat
-import java.net.URI
-import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
-import org.huwtl.penfold.readstore._
-import org.huwtl.penfold.domain.model.Status._
-import com.theoryinpractise.halbuilder.api.Representation
 import org.huwtl.penfold.app.support.JavaMapUtil
-import org.huwtl.penfold.readstore.PageRequest
-import org.huwtl.penfold.readstore.TaskProjection
+import org.huwtl.penfold.domain.model.Status._
+import org.huwtl.penfold.readstore.{PageRequest, TaskProjection, _}
+import org.joda.time.format.DateTimeFormat
 
 class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedRepresentationProvider {
   private val representationFactory = new JsonRepresentationFactory().withFlag(COALESCE_ARRAYS)
@@ -41,6 +39,10 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       representation.withProperty("closeReason", task.closeReason.get)
     }
 
+    if (task.cancelReason.isDefined) {
+      representation.withProperty("cancelReason", task.cancelReason.get)
+    }
+
     if (task.previousStatus.isDefined) {
       representation.withProperty("previousStatus", JavaMapUtil.deepConvertToJavaMap(previousStatusToMap(task.previousStatus.get)))
     }
@@ -57,23 +59,26 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
 
     representation.withLink("queue", s"${baseQueueLink.toString}/$queueIdParam/${task.status.name}")
 
-    if (task.status != Closed) {
-      representation.withLink("UpdateTaskPayload", taskUpdateUrl)
-      representation.withLink("CloseTask", taskUpdateUrl)
-    }
+    if (task.status != Cancelled) {
+      if (task.status != Closed) {
+        representation.withLink("UpdateTaskPayload", taskUpdateUrl)
+        representation.withLink("CloseTask", taskUpdateUrl)
+        representation.withLink("CancelTask", taskUpdateUrl)
+      }
 
-    representation.withLink("RescheduleTask", taskUpdateUrl)
+      representation.withLink("RescheduleTask", taskUpdateUrl)
 
-    if (task.status != Ready) {
-      representation.withLink("RequeueTask", taskUpdateUrl)
-    }
+      if (task.status != Ready) {
+        representation.withLink("RequeueTask", taskUpdateUrl)
+      }
 
-    if (task.assignee.isDefined && (task.status == Waiting || task.status == Ready)) {
-      representation.withLink("UnassignTask", taskUpdateUrl)
-    }
+      if (task.assignee.isDefined && (task.status == Waiting || task.status == Ready)) {
+        representation.withLink("UnassignTask", taskUpdateUrl)
+      }
 
-    if (task.status == Ready) {
-      representation.withLink("StartTask", taskUpdateUrl)
+      if (task.status == Ready) {
+        representation.withLink("StartTask", taskUpdateUrl)
+      }
     }
   }
 

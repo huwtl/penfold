@@ -28,6 +28,7 @@ class TaskDataSerializerTest extends Specification with DataTables {
                                  TestModel.triggerDate.getMillis,
                                  TestModel.payload,
                                  None,
+                                 None,
                                  None)
 
   val taskDataFull = TaskData(TestModel.aggregateId,
@@ -43,8 +44,9 @@ class TaskDataSerializerTest extends Specification with DataTables {
                               TestModel.triggerDate.getMillis,
                               TestModel.triggerDate.getMillis,
                               TestModel.payload,
-                              Some("user2"),
-                              Some("user3"))
+                              Some("reason1"),
+                              Some("reason2"),
+                              Some("reason3"))
 
   val serializer = new ObjectSerializer
 

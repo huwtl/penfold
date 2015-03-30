@@ -23,6 +23,7 @@ class EventSerializer {
       classOf[TaskRequeued] ::
       classOf[TaskRescheduled] ::
       classOf[TaskClosed] ::
+      classOf[TaskCancelled] ::
       classOf[TaskArchived] ::
       Nil
     )

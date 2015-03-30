@@ -40,6 +40,10 @@ class HalTaskFormatterTest extends Specification {
     hal(closedTask) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedClosedTask.json"))
   }
 
+  "format cancelled task as hal+json" in {
+    hal(cancelledTask) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCancelledTask.json"))
+  }
+
   "format filtered tasks hal+json" in {
     halTasks(filters) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredTasks.json"))
   }
