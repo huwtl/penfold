@@ -13,6 +13,7 @@
       "href": "http://host/queues/abc/closed"
     }
   },
+  "created": "2014-02-25 13:00:00",
   "attempts": 1,
   "id": "1",
   "version": 3,

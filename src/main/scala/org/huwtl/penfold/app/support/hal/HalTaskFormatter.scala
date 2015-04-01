@@ -21,6 +21,7 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       .withProperty("version", task.version.number)
       .withProperty("status", task.status.name)
       .withProperty("statusLastModified", dateFormatter.print(task.statusLastModified))
+      .withProperty("created", dateFormatter.print(task.created))
       .withProperty("attempts", task.attempts)
       .withProperty("triggerDate", dateFormatter.print(task.triggerDate))
       .withProperty("score", task.score)

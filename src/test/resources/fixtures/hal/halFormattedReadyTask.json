@@ -22,6 +22,7 @@
       "href": "http://host/queues/abc/ready"
     }
   },
+  "created": "2014-02-25 13:00:00",
   "attempts": 0,
   "id": "1",
   "version": 1,
