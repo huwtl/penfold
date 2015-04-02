@@ -75,10 +75,10 @@ case class Task(uncommittedEvents: List[Event],
     applyTaskStarted(TaskStarted(aggregateId, version.next, now, assignee, payloadUpdate))
   }
 
-  def close(expectedVersion: AggregateVersion, user: Option[User], reason: Option[String], payloadUpdate: Option[Patch]): Task = {
+  def close(expectedVersion: AggregateVersion, user: Option[User], reason: Option[String], resultType: Option[CloseResultType], payloadUpdate: Option[Patch]): Task = {
     checkVersion(expectedVersion)
     checkConflict(status != Cancelled && status != Closed && status != Archived, s"Cannot close an cancelled, archived or already closed task ($aggregateId), but was $status")
-    applyTaskClosed(TaskClosed(aggregateId, version.next, now, user, reason, payloadUpdate))
+    applyTaskClosed(TaskClosed(aggregateId, version.next, now, user, reason, resultType, payloadUpdate))
   }
 
   def cancel(expectedVersion: AggregateVersion, user: Option[User], reason: Option[String], payloadUpdate: Option[Patch]): Task = {

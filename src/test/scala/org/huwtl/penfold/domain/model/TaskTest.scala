@@ -10,6 +10,7 @@ import org.huwtl.penfold.domain.exceptions.AggregateConflictException
 import org.huwtl.penfold.domain.model.patch.Patch
 import scala.None
 import org.huwtl.penfold.support.TestModel
+import org.huwtl.penfold.domain.model.CloseResultType.Success
 
 class TaskTest extends Specification {
 
@@ -63,16 +64,16 @@ class TaskTest extends Specification {
 
   "task closure" should {
     "close task" in {
-      val closeTask = Task.create(AggregateId("1"), queue, Payload.empty, None).close(TestModel.version, Some(user), Some(closeReason), None)
+      val closeTask = Task.create(AggregateId("1"), queue, Payload.empty, None).close(TestModel.version, Some(user), Some(closeReason), Some(Success), None)
       typesOf(closeTask.uncommittedEvents) must beEqualTo(List(classOf[TaskClosed], classOf[TaskCreated]))
     }
 
     "ensure archived tasks cannot be closed" in {
-      Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).close(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).close(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
     }
 
     "ensure cancelled tasks cannot be closed" in {
-      Task.create(AggregateId("1"), queue, Payload.empty, None).cancel(TestModel.version, None, None, None).close(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).cancel(TestModel.version, None, None, None).close(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
@@ -87,7 +88,7 @@ class TaskTest extends Specification {
     }
 
     "ensure closed tasks cannot be cancelled" in {
-      Task.create(AggregateId("1"), queue, Payload.empty, None).close(TestModel.version, None, None, None).cancel(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
+      Task.create(AggregateId("1"), queue, Payload.empty, None).close(TestModel.version, None, None, None, None).cancel(TestModel.version.next, None, None, None) must throwA[AggregateConflictException]
     }
 
     "ensure cancelled tasks cannot be cancelled again" in {
@@ -144,7 +145,7 @@ class TaskTest extends Specification {
 
     "ensure closed, archived, cancelled tasks cannot accept updated payload" in {
       readyTask
-        .close(TestModel.version, None, None, None)
+        .close(TestModel.version, None, None, None, None)
         .updatePayload(TestModel.version.next, Patch(Nil), None, None) must throwA[AggregateConflictException]
 
       readyTask
@@ -191,7 +192,7 @@ class TaskTest extends Specification {
       val task = Task.create(AggregateId("1"), queue, Payload.empty, None)
       task.archive(TestModel.version).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
       task.start(TestModel.version, None, None).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
-      task.close(TestModel.version, None, None, None).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
+      task.close(TestModel.version, None, None, None, None).unassign(TestModel.version.next, None, None) must throwA[AggregateConflictException]
     }
 
     "only assigned tasks can be unassigned" in {
@@ -211,7 +212,7 @@ class TaskTest extends Specification {
     waitingTaskAtVersion1.archive(AggregateVersion(1)) must throwA[AggregateConflictException]
     readyTaskAtVersion3.start(AggregateVersion(2), None, None) must throwA[AggregateConflictException]
     readyTaskAtVersion3.reschedule(AggregateVersion(2), TestModel.triggerDate, None, None, None, None) must throwA[AggregateConflictException]
-    readyTaskAtVersion3.close(AggregateVersion(2), None, None, None) must throwA[AggregateConflictException]
+    readyTaskAtVersion3.close(AggregateVersion(2), None, None, None, None) must throwA[AggregateConflictException]
     startedTaskAtVersion2.requeue(AggregateVersion(1), None, None, None, None) must throwA[AggregateConflictException]
     startedTaskAtVersion2.unassign(AggregateVersion(1), None, None) must throwA[AggregateConflictException]
   }

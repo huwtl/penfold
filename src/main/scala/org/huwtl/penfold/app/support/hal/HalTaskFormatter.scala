@@ -40,6 +40,10 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       representation.withProperty("closeReason", task.closeReason.get)
     }
 
+    if (task.closeResultType.isDefined) {
+      representation.withProperty("closeResultType", task.closeResultType.get.name)
+    }
+
     if (task.cancelReason.isDefined) {
       representation.withProperty("cancelReason", task.cancelReason.get)
     }

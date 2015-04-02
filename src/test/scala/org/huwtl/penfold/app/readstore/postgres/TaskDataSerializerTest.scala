@@ -9,6 +9,7 @@ import org.joda.time.DateTime
 import org.huwtl.penfold.domain.model.Status.{Ready, Started}
 import org.huwtl.penfold.support.TestModel
 import scala.Some
+import org.huwtl.penfold.domain.model.CloseResultType.Success
 
 class TaskDataSerializerTest extends Specification with DataTables {
 
@@ -29,6 +30,7 @@ class TaskDataSerializerTest extends Specification with DataTables {
                                  TestModel.payload,
                                  None,
                                  None,
+                                 None,
                                  None)
 
   val taskDataFull = TaskData(TestModel.aggregateId,
@@ -46,7 +48,8 @@ class TaskDataSerializerTest extends Specification with DataTables {
                               TestModel.payload,
                               Some("reason1"),
                               Some("reason2"),
-                              Some("reason3"))
+                              Some("reason3"),
+                              Some(Success))
 
   val serializer = new ObjectSerializer
 

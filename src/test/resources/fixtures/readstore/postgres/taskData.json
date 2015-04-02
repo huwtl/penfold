@@ -22,5 +22,6 @@
   },
   "rescheduleReason": "reason1",
   "cancelReason": "reason2",
-  "closeReason": "reason3"
+  "closeReason": "reason3",
+  "closeResultType": "success"
 }

@@ -7,6 +7,7 @@ import org.huwtl.penfold.domain.model.{AggregateId, QueueId, User, _}
 import org.huwtl.penfold.domain.model.patch.Patch
 import org.huwtl.penfold.readstore.{PreviousStatus, TaskProjection}
 import org.joda.time.DateTime
+import org.huwtl.penfold.domain.model.CloseResultType.Success
 
 object TestModel {
   val createdDate = new DateTime(2014, 2, 25, 13, 0, 0, 0)
@@ -60,7 +61,7 @@ object TestModel {
 
     val rescheduleTask = RescheduleTask(aggregateId, version, triggerDate, Some(assignee), Some(rescheduleReason), Some(payloadUpdate), Some(score))
 
-    val closeTask = CloseTask(aggregateId, version, Some(user), Some(closeReason), Some(payloadUpdate))
+    val closeTask = CloseTask(aggregateId, version, Some(user), Some(closeReason), Some(Success), Some(payloadUpdate))
 
     val cancelTask = CancelTask(aggregateId, version, Some(user), Some(closeReason), Some(payloadUpdate))
   }
@@ -76,7 +77,7 @@ object TestModel {
 
     val startedTask = task.copy(version = AggregateVersion(2), status = Started, attempts = 1, assignee = Some(assignee), previousStatus = Some(PreviousStatus(Ready, createdDate)), sort = createdDate.getMillis)
 
-    val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), assignee = None, closeReason = Some(closeReason))
+    val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), assignee = None, closeReason = Some(closeReason), closeResultType = Some(Success))
 
     val cancelledTask = startedTask.copy(version = AggregateVersion(3), status = Cancelled, previousStatus = Some(previousStatus), assignee = None, cancelReason = Some(closeReason))
 
@@ -94,7 +95,7 @@ object TestModel {
 
     val startedEvent = TaskStarted(aggregateId, AggregateVersion(2), createdDate, Some(assignee), Some(payloadUpdate))
 
-    val closedEvent = TaskClosed(aggregateId, AggregateVersion(3), createdDate, Some(user), Some(closeReason), Some(payloadUpdate))
+    val closedEvent = TaskClosed(aggregateId, AggregateVersion(3), createdDate, Some(user), Some(closeReason), Some(Success), Some(payloadUpdate))
 
     val cancelEvent = TaskCancelled(aggregateId, AggregateVersion(3), createdDate, Some(user), Some(closeReason), Some(payloadUpdate))
 

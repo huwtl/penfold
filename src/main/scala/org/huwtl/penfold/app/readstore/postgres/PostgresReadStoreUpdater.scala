@@ -43,7 +43,7 @@ class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSeria
     val queue = event.queue
 
     val task = TaskData(event.aggregateId, event.aggregateVersion, event.created.getMillis, queue, status, event.created.getMillis, previousStatus = None, 0, event.triggerDate.getMillis, assignee = None,
-      event.score, resolveSortOrder(event, status, event.score).get, event.payload, rescheduleReason = None, cancelReason = None, closeReason = None)
+      event.score, resolveSortOrder(event, status, event.score).get, event.payload, rescheduleReason = None, cancelReason = None, closeReason = None, closeResultType = None)
 
     val taskJson = objectSerializer.serialize(task)
 
@@ -112,6 +112,7 @@ class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSeria
           statusLastModified = event.created.getMillis,
           sort = event.created.getMillis,
           closeReason = event.reason,
+          closeResultType = event.resultType,
           assignee = None,
           payload = patchPayloadIfExists(task, event.payloadUpdate))
       }
@@ -162,7 +163,7 @@ class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSeria
   private def handleTaskUpdate(event: Event)(updatedFields: TaskData => TaskData) = {
     existing(event.aggregateId, event.aggregateVersion) match {
       case Some(task) =>
-        val defaultsApplied = task.copy(version = event.aggregateVersion, rescheduleReason = None, closeReason = None)
+        val defaultsApplied = task.copy(version = event.aggregateVersion, rescheduleReason = None, closeReason = None, closeResultType = None, cancelReason = None)
         val updatedTaskJson = objectSerializer.serialize(updatedFields(defaultsApplied))
         sqlu"""UPDATE tasks SET data = $updatedTaskJson::json WHERE id = ${event.aggregateId.value} AND (data->>'version')::bigint = ${event.aggregateVersion.previous.number}""".execute
       case None =>
