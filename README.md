@@ -38,6 +38,11 @@ penfold {
   publicUrl = "http://localhost:8080"
 
   httpPort = 8080
+  
+  authentication {
+    username = usr
+    password = pswd
+  }
 
   database {
     url = "jdbc:postgresql://<HOST:<PORT>/<NAME_OF_EMPTY_DATABASE>"
