@@ -7,11 +7,11 @@ import com.qmetric.penfold.domain.model.patch.Patch
 
 sealed trait TaskCommand extends Command
 
-case class CreateTask(queueBinding: QueueBinding,
+case class CreateTask(queue: QueueId,
                       payload: Payload,
                       score: Option[Long]) extends TaskCommand
 
-case class CreateFutureTask(queueBinding: QueueBinding,
+case class CreateFutureTask(queue: QueueId,
                             triggerDate: DateTime,
                             payload: Payload,
                             score: Option[Long]) extends TaskCommand
@@ -25,7 +25,7 @@ case class StartTask(id: AggregateId,
 
 case class RequeueTask(id: AggregateId,
                        version: AggregateVersion,
-                       requeueType: Option[String],
+                       reason: Option[String],
                        assignee: Option[User],
                        payloadUpdate: Option[Patch],
                        scoreUpdate: Option[Long]) extends TaskCommand
@@ -34,15 +34,21 @@ case class RescheduleTask(id: AggregateId,
                           version: AggregateVersion,
                           triggerDate: DateTime,
                           assignee: Option[User],
-                          rescheduleType: Option[String],
+                          reason: Option[String],
                           payloadUpdate: Option[Patch],
                           scoreUpdate: Option[Long]) extends TaskCommand
 
 case class CloseTask(id: AggregateId,
                      version: AggregateVersion,
-                     concluder: Option[User],
-                     conclusionType: Option[String],
-                     assignee: Option[User],
+                     user: Option[User],
+                     reason: Option[String],
+                     resultType: Option[CloseResultType],
+                     payloadUpdate: Option[Patch]) extends TaskCommand
+
+case class CancelTask(id: AggregateId,
+                     version: AggregateVersion,
+                     user: Option[User],
+                     reason: Option[String],
                      payloadUpdate: Option[Patch]) extends TaskCommand
 
 case class ArchiveTask(id: AggregateId, version: AggregateVersion) extends TaskCommand
@@ -55,5 +61,5 @@ case class UpdateTaskPayload(id: AggregateId,
 
 case class UnassignTask(id: AggregateId,
                         version: AggregateVersion,
-                        unassignType: Option[String],
+                        reason: Option[String],
                         payloadUpdate: Option[Patch]) extends TaskCommand

@@ -13,7 +13,6 @@ import com.qmetric.penfold.readstore.PageResult
 import com.qmetric.penfold.support.TestModel
 import com.qmetric.penfold.domain.model.Status.Waiting
 import com.qmetric.penfold.domain.model.AggregateId
-import scala.Some
 import com.qmetric.penfold.app.AuthenticationCredentials
 import com.qmetric.penfold.readstore.PageRequest
 
@@ -126,6 +125,15 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
     post("/tasks/1/1", textFromFile("fixtures/web/close_task.json"), headers = validAuthHeader + commandTypeHeader("CloseTask")) {
+      status must beEqualTo(200)
+    }
+  }
+
+  "return 200 when cancelling task" in {
+    commandDispatcher.dispatch(TestModel.commands.cancelTask) returns expectedTask.id
+    readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
+
+    post("/tasks/1/1", textFromFile("fixtures/web/cancel_task.json"), headers = validAuthHeader + commandTypeHeader("CancelTask")) {
       status must beEqualTo(200)
     }
   }

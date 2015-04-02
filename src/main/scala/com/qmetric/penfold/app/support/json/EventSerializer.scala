@@ -23,6 +23,7 @@ class EventSerializer {
       classOf[TaskRequeued] ::
       classOf[TaskRescheduled] ::
       classOf[TaskClosed] ::
+      classOf[TaskCancelled] ::
       classOf[TaskArchived] ::
       Nil
     )
@@ -32,6 +33,7 @@ class EventSerializer {
     new PayloadJsonSerializer +
     new DateTimeJsonSerializer +
     new StatusJsonSerializer +
+    new CloseResultTypeJsonSerializer +
     new AggregateTypeJsonSerializer +
     new IdJsonSerializer +
     new VersionJsonSerializer +

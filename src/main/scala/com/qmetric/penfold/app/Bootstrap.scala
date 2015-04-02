@@ -6,18 +6,18 @@ import com.qmetric.penfold.app.web._
 import java.net.URI
 import com.qmetric.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import com.qmetric.penfold.command._
-import com.qmetric.penfold.domain.store.DomainRepository
+import com.qmetric.penfold.domain.store.DomainRepositoryImpl
 import com.qmetric.penfold.app.support.json.{ObjectSerializer, EventSerializer}
-import com.qmetric.penfold.readstore.{EventNotifiersImpl, EventNotifier, NewEventsProvider}
+import com.qmetric.penfold.readstore.EventNotifier
 import com.typesafe.config.ConfigFactory
-import net.ceedubs.ficus.FicusConfig._
+import net.ceedubs.ficus.Ficus._
+import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 import com.qmetric.penfold.app.support.{DateTimeSource, UUIDFactory}
-import com.qmetric.penfold.app.schedule.{ReadyTaskAssignmentTimeoutScheduler, EventSyncScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
+import com.qmetric.penfold.app.schedule.{StartedTaskTimeoutScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
 import com.codahale.metrics.health.HealthCheckRegistry
 import com.qmetric.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
-import com.qmetric.penfold.app.readstore.mongodb._
-import com.qmetric.penfold.app.store.jdbc._
-import com.mongodb.casbah.Imports._
+import com.qmetric.penfold.app.store.postgres._
+import com.qmetric.penfold.app.readstore.postgres.{PaginatedQueryService, PostgresReadStore, PostgresReadStoreUpdater}
 
 class Bootstrap extends LifeCycle {
   override def init(context: ServletContext) {
@@ -29,28 +29,16 @@ class Bootstrap extends LifeCycle {
 
     val aggregateIdFactory = new UUIDFactory
 
-    val domainJdbcPool = new JdbcDatabaseInitialiser().init(new JdbcConnectionPoolFactory().create(config.domainJdbcConnectionPool))
-    val eventStore = new JdbcEventStore(domainJdbcPool, eventSerializer)
-    val eventQueryService = new JdbcDomainEventQueryService(domainJdbcPool, eventSerializer)
+    val database = new PostgresDatabaseInitialiser(config.customReadStoreDbMigrationPath).init(new PostgresConnectionPoolFactory().create(config.database))
+    val eventStore = new PostgresEventStore(database, eventSerializer)
 
-    val readStoreServers = config.readStoreMongoDatabaseServers.servers.map(server => new ServerAddress(server.host, server.port))
-    val readStoreDatabase = MongoClient(readStoreServers)(config.readStoreMongoDatabaseServers.databaseName)
-    val readStoreEventProvider = new NewEventsProvider(new MongoNextExpectedEventIdProvider("readStoreEventTracker", readStoreDatabase), eventQueryService)
-    val readStoreUpdater = new EventNotifier(readStoreEventProvider, new MongoReadStoreUpdater(readStoreDatabase, new MongoEventTracker("readStoreEventTracker", readStoreDatabase), objectSerializer))
+    val readStoreUpdater = new EventNotifier(new PostgresReadStoreUpdater(database, objectSerializer))
 
-    val indexes = Indexes(config.readStoreIndexes)
-
-    new IndexWriter().write(readStoreDatabase, indexes, config)
-
-    val eventNotifiers = new ActorBasedEventNotifiers(new EventNotifiersImpl(List(readStoreUpdater)), noOfWorkers = 3)
-
-    val domainRepository = new DomainRepository(eventStore, eventNotifiers)
+    val domainRepository = new PostgresTransactionalDomainRepository(database, new DomainRepositoryImpl(eventStore, readStoreUpdater))
 
     val commandDispatcher = new CommandDispatcherFactory(domainRepository, aggregateIdFactory).create
 
-    val mongoTaskParser = new MongoTaskMapper(objectSerializer)
-
-    val readStore = new MongoReadStore(readStoreDatabase, indexes, mongoTaskParser, new PaginatedQueryService(readStoreDatabase, mongoTaskParser), new DateTimeSource)
+    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, objectSerializer, config.readStorePathAliases), objectSerializer, new DateTimeSource, config.readStorePathAliases)
 
     val baseUrl = URI.create(config.publicUrl)
 
@@ -71,16 +59,14 @@ class Bootstrap extends LifeCycle {
     context mount(new TaskResource(readStore, commandDispatcher, new TaskCommandParser(objectSerializer), taskFormatter, config.pageSize, config.authentication), "/tasks/*")
     context mount(new QueueResource(readStore, queueFormatter, config.sortOrdering.mapping, config.pageSize, config.authentication), "/queues/*")
 
-    new EventSyncScheduler(eventNotifiers, config.eventSync).start()
+    new TaskTriggerScheduler(readStore, commandDispatcher, config.triggerCheckFrequency).start()
 
-    new TaskTriggerScheduler(readStore, commandDispatcher, config.triggeredCheckFrequency).start()
-
-    if (config.readyTaskAssignmentTimeout.isDefined) {
-      new ReadyTaskAssignmentTimeoutScheduler(readStore, commandDispatcher, config.readyTaskAssignmentTimeout.get).start()
+    if (config.startedTaskTimeout.isDefined) {
+      new StartedTaskTimeoutScheduler(readStore, commandDispatcher, config.startedTaskTimeout.get).start()
     }
 
-    if (config.taskArchiver.isDefined) {
-      new TaskArchiveScheduler(readStore, commandDispatcher, config.taskArchiver.get).start()
+    if (config.archiver.isDefined) {
+      new TaskArchiveScheduler(readStore, commandDispatcher, config.archiver.get).start()
     }
   }
 }

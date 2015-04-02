@@ -30,17 +30,6 @@ class QueueResource(readStore: ReadStore,
     }
   }
 
-  get("/:queue/:status/:id") {
-    statusMatch {
-      status => {
-        readStore.retrieveBy(AggregateId(params("id"))) match {
-          case Some(task) => Ok(halFormatter.halFrom(QueueId(queueIdParam), task))
-          case None => errorResponse(NotFound(s"$status task not found"))
-        }
-      }
-    }
-  }
-
   override protected def validCredentials: Option[AuthenticationCredentials] = authenticationCredentials
 
   private def statusMatch(func: Status => ActionResult) = {

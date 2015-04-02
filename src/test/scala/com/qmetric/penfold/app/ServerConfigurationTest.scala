@@ -3,10 +3,10 @@ package com.qmetric.penfold.app
 import org.specs2.mutable.Specification
 
 import com.typesafe.config.ConfigFactory
-import net.ceedubs.ficus.FicusConfig._
+import net.ceedubs.ficus.Ficus._
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
-import com.qmetric.penfold.app.readstore.mongodb.{IndexField, Index}
+import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 
 class ServerConfigurationTest extends Specification {
 
@@ -16,19 +16,14 @@ class ServerConfigurationTest extends Specification {
 
   val authCredentials = AuthenticationCredentials("user", "secret")
 
-  val jdbcUrl = "jdbc:hsqldb:mem:penfold;sql.syntax_mys=true"
-
-  val indexes = List(
-    Index(Some("index1"), List(IndexField("field1", "payload.field1"))),
-    Index(Some("index2"), List(IndexField("field1", "payload.field1"), IndexField("field2", "payload.field2", multiKey = true))))
+  val dbUrl = "jdbc:hsqldb:mem:penfold"
 
   "load minimally populated config file" in {
     val expectedConfig = ServerConfiguration(
       publicUrl,
       httpPort,
       None,
-      JdbcConnectionPool(jdbcUrl, "user", "", "org.hsqldb.jdbcDriver"),
-      MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 12345)))
+      DatabaseConfiguration(dbUrl, "user", "", "org.postgresql.Driver")
     )
 
     val config = loadConfig("minimal")
@@ -41,15 +36,14 @@ class ServerConfigurationTest extends Specification {
       publicUrl,
       httpPort,
       Some(authCredentials),
-      JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
-      MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 12345))),
-      readStoreIndexes = indexes,
+      DatabaseConfiguration(dbUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
+      Some("/tmp"),
+      Map("alias1" -> "path1", "alias2" -> "path2"),
       sortOrdering = SortOrderingConfiguration("Desc", "Desc", "Asc", "Asc"),
       pageSize = 25,
-      eventSync = FiniteDuration(2L, MINUTES),
-      triggeredCheckFrequency = FiniteDuration(1L, MINUTES),
-      taskArchiver = Some(TaskArchiverConfiguration("archiveTimeout", FiniteDuration(1L, MINUTES))),
-      readyTaskAssignmentTimeout = Some(TaskAssignmentTimeoutConfiguration("assignmentTimeout", FiniteDuration(2L, MINUTES)))
+      triggerCheckFrequency = FiniteDuration(1L, MINUTES),
+      archiver = Some(TaskArchiverConfiguration(FiniteDuration(10L, DAYS), FiniteDuration(1L, MINUTES))),
+      startedTaskTimeout = Some(StartedTaskTimeoutConfiguration(FiniteDuration(30L, MINUTES), FiniteDuration(2L, MINUTES)))
     )
 
     val config = loadConfig("full")

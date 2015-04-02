@@ -20,6 +20,7 @@ class EventSerializerTest extends Specification with DataTables {
   val taskRequeuedEvent = TestModel.events.requeuedEvent
   val taskRescheduledEvent = TestModel.events.rescheduledEvent
   val taskClosedEvent = TestModel.events.closedEvent
+  val taskCancelledEvent = TestModel.events.cancelEvent
   val taskArchivedEvent = TestModel.events.archivedEvent
   val serializer = new EventSerializer
 
@@ -34,6 +35,7 @@ class EventSerializerTest extends Specification with DataTables {
     "task_requeued.json"        !! taskRequeuedEvent       |
     "task_rescheduled.json"     !! taskRescheduledEvent    |
     "task_closed.json"          !! taskClosedEvent         |
+    "task_cancelled.json"       !! taskCancelledEvent      |
     "task_archived.json"        !! taskArchivedEvent       |> {
       (jsonPath, expectedEvent) =>
         val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/$jsonPath")).mkString
@@ -53,9 +55,10 @@ class EventSerializerTest extends Specification with DataTables {
     taskRequeuedEvent       !! "task_requeued.json"        |
     taskRescheduledEvent    !! "task_rescheduled.json"     |
     taskClosedEvent         !! "task_closed.json"          |
+    taskCancelledEvent      !! "task_cancelled.json"          |
     taskArchivedEvent       !! "task_archived.json"        |> {
       (event, expectedJsonPath) =>
-        val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/${expectedJsonPath}")).mkString))
+        val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/$expectedJsonPath")).mkString))
         val json = serializer.serialize(event)
         json must beEqualTo(expectedJson)
     }

@@ -1,5 +1,5 @@
 {
-    "requeueType": "reqType",
+    "reason": "reqType",
     "assignee": "user1",
     "payloadUpdate": {"operations": []},
     "scoreUpdate": 1393336800000

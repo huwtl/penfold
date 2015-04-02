@@ -1,7 +1,7 @@
 package com.qmetric.penfold.app.schedule
 
 import com.qmetric.penfold.command.{CommandDispatcher, TriggerTask}
-import com.qmetric.penfold.readstore.{TaskRecordReference, ReadStore}
+import com.qmetric.penfold.readstore.{TaskProjectionReference, ReadStore}
 import scala.concurrent.duration.FiniteDuration
 import com.qmetric.penfold.domain.exceptions.AggregateConflictException
 import grizzled.slf4j.Logger
@@ -13,10 +13,10 @@ class TaskTriggerScheduler(readStore: ReadStore, commandDispatcher: CommandDispa
   override val name: String = "task trigger"
 
   override def process() {
-    readStore.retrieveTasksToTrigger.foreach(triggerTask)
+    readStore.forEachTriggeredTask(triggerTask)
   }
 
-  private def triggerTask(task: TaskRecordReference) {
+  private def triggerTask(task: TaskProjectionReference) {
     Try(commandDispatcher.dispatch(TriggerTask(task.id, task.version))) recover {
       case e: AggregateConflictException => logger.info("conflict triggering task", e)
       case e: Exception => logger.error("error triggering task", e)

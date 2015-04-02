@@ -1,13 +1,13 @@
 package com.qmetric.penfold.app.web.bean
 
-import com.qmetric.penfold.domain.model.{QueueBinding, Payload}
-import org.joda.time.DateTime
 import com.qmetric.penfold.command.CreateFutureTask
+import com.qmetric.penfold.domain.model.{QueueId, Payload}
+import org.joda.time.DateTime
 
 case class CreateFutureTaskRequest(triggerDate: DateTime,
                                    payload: Payload,
-                                   queueBinding: QueueBinding,
+                                   queue: QueueId,
                                    score: Option[Long]) {
 
-  def toCommand = CreateFutureTask(queueBinding, triggerDate, payload, score)
+  def toCommand = CreateFutureTask(queue, triggerDate, payload, score)
 }

@@ -84,15 +84,6 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
     }
   }
 
-  "return 200 with hal+json formatted queue entry response" in {
-    readStore.retrieveBy(expectedTask1.id) returns Some(expectedTask1)
-
-    get(s"/queues/abc/ready/${expectedTask1.id.value}", headers = validAuthHeader) {
-      status must beEqualTo(200)
-      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueEntry.json"))
-    }
-  }
-
   "return 404 when queue entry not found" in {
     readStore.retrieveBy(AggregateId("5")) returns None
 

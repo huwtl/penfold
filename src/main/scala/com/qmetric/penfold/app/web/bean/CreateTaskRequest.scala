@@ -1,11 +1,11 @@
 package com.qmetric.penfold.app.web.bean
 
-import com.qmetric.penfold.domain.model.{QueueBinding, Payload}
 import com.qmetric.penfold.command.CreateTask
+import com.qmetric.penfold.domain.model.{QueueId, Payload}
 
 case class CreateTaskRequest(payload: Payload,
-                             queueBinding: QueueBinding,
+                             queue: QueueId,
                              score: Option[Long]) {
 
-  def toCommand = CreateTask(queueBinding, payload, score)
+  def toCommand = CreateTask(queue, payload, score)
 }

@@ -1,60 +1,92 @@
 {
-    "_links": {
-        "self": {"href": "http://host/queues/abc/ready?q=%5B%7B%22op%22%3A%22EQ%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%2C%22dataType%22%3A%22STRING%22%7D%5D"}
-    },
-    "_embedded": {
-        "queue": [
-            {
-                "_links": {
-                    "self": {"href": "http://host/queues/abc/ready/2"}
-                },
-                "taskId": "2",
-                "_embedded": {
-                    "task": {
-                        "_links": {
-                            "self": {"href": "http://host/tasks/2"},
-                            "CloseTask": {"href": "http://host/tasks/2/1"},
-                            "RescheduleTask": {"href": "http://host/tasks/2/1"},
-                            "StartTask": {"href": "http://host/tasks/2/1"},
-                            "UpdateTaskPayload": {"href": "http://host/tasks/2/1"},
-                            "queue": {"href": "http://host/queues/abc/ready"}
-                        },
-                        "id": "2",
-                        "version": 1,
-                        "payload": {"data": "value", "inner": {"bool": true}},
-                        "status": "ready",
-                        "statusLastModified": "2014-02-25 13:00:00",
-                        "triggerDate": "2014-02-25 14:00:00",
-                        "queueBinding": {"id": "abc"},
-                        "score": 1393336800000
-                    }
-                }
-            },
-            {
-                "_links": {
-                    "self": {"href": "http://host/queues/abc/ready/1"}
-                },
-                "taskId": "1",
-                "_embedded": {
-                    "task": {
-                        "_links": {
-                            "self": {"href": "http://host/tasks/1"},
-                            "CloseTask": {"href": "http://host/tasks/1/1"},
-                            "RescheduleTask": {"href": "http://host/tasks/1/1"},
-                            "StartTask": {"href": "http://host/tasks/1/1"},
-                            "UpdateTaskPayload": {"href": "http://host/tasks/1/1"},
-                            "queue": {"href": "http://host/queues/abc/ready"}
-                        },
-                        "id": "1",
-                        "version": 1,
-                        "payload": {"data": "value", "inner": {"bool": true}},
-                        "queueBinding": {"id": "abc"},
-                        "status": "ready",
-                        "statusLastModified": "2014-02-25 13:00:00",
-                        "triggerDate": "2014-02-25 14:00:00",
-                        "score": 1393336800000
-                    }
-                }
-            }
+  "_links": {
+    "self": {
+      "href": "http://host/queues/abc/ready?q=%5B%7B%22op%22%3A%22EQ%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%2C%22dataType%22%3A%22STRING%22%7D%5D"
+    }
+  },
+  "id": "abc",
+  "_embedded": {
+    "tasks": [
+      {
+        "_links": {
+          "self": {
+            "href": "http://host/tasks/2"
+          },
+          "CancelTask": {
+            "href": "http://host/tasks/2/1"
+          },
+          "CloseTask": {
+            "href": "http://host/tasks/2/1"
+          },
+          "RescheduleTask": {
+            "href": "http://host/tasks/2/1"
+          },
+          "StartTask": {
+            "href": "http://host/tasks/2/1"
+          },
+          "UpdateTaskPayload": {
+            "href": "http://host/tasks/2/1"
+          },
+          "queue": {
+            "href": "http://host/queues/abc/ready"
+          }
+        },
+        "created": "2014-02-25 13:00:00",
+        "attempts": 0,
+        "id": "2",
+        "version": 1,
+        "payload": {
+          "data": "value",
+          "inner": {
+            "bool": true
+          }
+        },
+        "status": "ready",
+        "statusLastModified": "2014-02-25 13:00:00",
+        "triggerDate": "2014-02-25 14:00:00",
+        "queue": "abc",
+        "score": 1393336800000
+      },
+      {
+        "_links": {
+          "self": {
+            "href": "http://host/tasks/1"
+          },
+          "CancelTask": {
+            "href": "http://host/tasks/1/1"
+          },
+          "CloseTask": {
+            "href": "http://host/tasks/1/1"
+          },
+          "RescheduleTask": {
+            "href": "http://host/tasks/1/1"
+          },
+          "StartTask": {
+            "href": "http://host/tasks/1/1"
+          },
+          "UpdateTaskPayload": {
+            "href": "http://host/tasks/1/1"
+          },
+          "queue": {
+            "href": "http://host/queues/abc/ready"
+          }
+        },
+        "created": "2014-02-25 13:00:00",
+        "attempts": 0,
+        "id": "1",
+        "version": 1,
+        "payload": {
+          "data": "value",
+          "inner": {
+            "bool": true
+          }
+        },
+        "queue": "abc",
+        "status": "ready",
+        "statusLastModified": "2014-02-25 13:00:00",
+        "triggerDate": "2014-02-25 14:00:00",
+        "score": 1393336800000
+      }
     ]
-}}
+  }
+}

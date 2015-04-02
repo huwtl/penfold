@@ -7,7 +7,7 @@ import org.json4s.jackson.JsonMethods._
 import org.specs2.mutable.Specification
 import com.qmetric.penfold.domain.model._
 import com.qmetric.penfold.readstore._
-import com.qmetric.penfold.readstore.TaskRecord
+import com.qmetric.penfold.readstore.TaskProjection
 import scala.Some
 import com.qmetric.penfold.support.TestModel._
 import com.qmetric.penfold.support.TestModel.readModels._
@@ -40,6 +40,10 @@ class HalTaskFormatterTest extends Specification {
     hal(closedTask) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedClosedTask.json"))
   }
 
+  "format cancelled task as hal+json" in {
+    hal(cancelledTask) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedCancelledTask.json"))
+  }
+
   "format filtered tasks hal+json" in {
     halTasks(filters) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredTasks.json"))
   }
@@ -64,7 +68,7 @@ class HalTaskFormatterTest extends Specification {
     ))
   }
 
-  private def hal(task: TaskRecord) = {
+  private def hal(task: TaskProjection) = {
     parse(taskFormatter.halFrom(task))
   }
 

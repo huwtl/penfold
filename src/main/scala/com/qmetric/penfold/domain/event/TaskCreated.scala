@@ -8,7 +8,7 @@ import com.qmetric.penfold.domain.model.Payload
 case class TaskCreated(aggregateId: AggregateId,
                        aggregateVersion: AggregateVersion,
                        created: DateTime,
-                       queueBinding: QueueBinding,
+                       queue: QueueId,
                        triggerDate: DateTime,
                        payload: Payload,
                        score: Long) extends TaskCreatedEvent

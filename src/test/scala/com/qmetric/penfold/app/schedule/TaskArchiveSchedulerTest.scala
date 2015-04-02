@@ -1,22 +1,25 @@
 package com.qmetric.penfold.app.schedule
 
-import org.specs2.mutable.Specification
-import com.qmetric.penfold.readstore.{TaskRecordReference, ReadStore}
-import org.specs2.mock.Mockito
-import com.qmetric.penfold.command.{ArchiveTask, CommandDispatcher}
+import java.util.concurrent.TimeUnit._
+
 import com.qmetric.penfold.app.TaskArchiverConfiguration
-import com.qmetric.penfold.support.TestModel
+import com.qmetric.penfold.command.CommandDispatcher
+import com.qmetric.penfold.domain.model.Status.Closed
+import com.qmetric.penfold.readstore.{ReadStore, TaskProjectionReference}
+import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
+
+import scala.concurrent.duration.FiniteDuration
 
 class TaskArchiveSchedulerTest extends Specification with Mockito {
 
-  "periodically archive old tasks" in {
+  "archive closed tasks on timeout" in {
     val readStore = mock[ReadStore]
     val commandDispatcher = mock[CommandDispatcher]
-    val archiverConfig = TaskArchiverConfiguration("timeout")
-    readStore.retrieveTasksToTimeout("payload.timeout") returns List(TaskRecordReference(TestModel.aggregateId, TestModel.version)).toIterator
+    val config = TaskArchiverConfiguration(FiniteDuration(1L, MINUTES))
 
-    new TaskArchiveScheduler(readStore, commandDispatcher, archiverConfig).process()
+    new TaskArchiveScheduler(readStore, commandDispatcher, config).process()
 
-    there was one(commandDispatcher).dispatch(ArchiveTask(TestModel.aggregateId, TestModel.version))
+    there was one(readStore).forEachTimedOutTask(===(Closed), ===(FiniteDuration(1L, MINUTES)), any[TaskProjectionReference => Unit])
   }
 }
