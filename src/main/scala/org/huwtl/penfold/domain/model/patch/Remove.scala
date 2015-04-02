@@ -21,6 +21,7 @@ case class Remove(path: String) extends PatchOperation {
       def removeAt(index: Int, list: List[Any]) = list.patch(index, Nil, 1)
 
       pathNames match {
+        case Nil => Nil
         case (pathName :: Nil) => removeAt(pathName.toInt, listElems)
         case (pathName :: remainingPathNames) => {
           listElems(pathName.toInt) match {

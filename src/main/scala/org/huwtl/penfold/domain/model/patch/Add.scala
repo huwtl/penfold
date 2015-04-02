@@ -23,6 +23,7 @@ case class Add(path: String, value: Value) extends PatchOperation {
       def insertAt(value: Any, index: Int, list: List[Any]) = list.patch(index, List(value), 0)
 
       pathNames match {
+        case Nil => Nil
         case (pathName :: Nil) => insertAt(value.content, pathName.toInt, listElems)
         case (pathName :: remainingPathNames) => {
           listElems(pathName.toInt) match {

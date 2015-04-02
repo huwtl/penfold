@@ -3,7 +3,7 @@ language: scala
 script: "sbt clean test"
 
 scala:
-   - "2.10.3"
+   - "2.11.6"
 
 jdk:
   - oraclejdk8

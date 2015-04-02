@@ -3,9 +3,10 @@ package org.huwtl.penfold.app
 import org.specs2.mutable.Specification
 
 import com.typesafe.config.ConfigFactory
-import net.ceedubs.ficus.FicusConfig._
+import net.ceedubs.ficus.Ficus._
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
+import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 
 class ServerConfigurationTest extends Specification {
 

@@ -25,4 +25,6 @@ with PgSearchSupport {
   with SearchAssistants
 }
 
-object MyPostgresDriver extends MyPostgresDriver
+object MyPostgresDriver extends MyPostgresDriver{
+  override def pgjson = "json"
+}
