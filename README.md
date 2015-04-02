@@ -103,7 +103,6 @@ Content-Type: application/json;domain-command=CreateFutureTask
         }
     }
 }
-    
 ```
 
 You should see a response similar to below. The response lists the attributes of your newly created task, including an auto generated unique task ID.
@@ -114,6 +113,7 @@ The links section of the response lists what actions and views are available for
 * UpdateTaskPayload - link where requests should be sent to make changes to the task payload (POST)
 * CloseTask - link where requests should be sent to close the task (POST)
 
+```
 201 Created
 Content-Type: application/hal+json
 
