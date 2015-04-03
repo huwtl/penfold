@@ -5,16 +5,15 @@ CREATE TABLE tasks
 );
 
 CREATE UNIQUE INDEX tasks_id_idx ON tasks((data->>'id'));
-CREATE INDEX tasks_version_idx ON tasks(cast(data->>'version' AS BIGINT));
 CREATE INDEX tasks_status_idx ON tasks((data->>'status'));
 CREATE INDEX tasks_queue_idx ON tasks((data->>'queue'));
-CREATE INDEX tasks_assignee_idx ON tasks((data->>'assignee'));
 CREATE INDEX tasks_created_idx ON tasks (cast(data->>'created' AS BIGINT));
 CREATE INDEX tasks_attempts_idx ON tasks (cast(data->>'attempts' AS BIGINT));
 CREATE INDEX tasks_status_modified_idx ON tasks (cast(data->>'statusLastModified' AS BIGINT));
+CREATE INDEX tasks_close_result_idx ON tasks((data->>'closeResultType'));
 CREATE INDEX tasks_trigger_idx ON tasks (cast(data->>'triggerDate' AS BIGINT));
-CREATE INDEX tasks_score_idx ON tasks (cast(data->>'score' AS BIGINT));
-CREATE INDEX tasks_sort_idx ON tasks (cast(data->>'sort' AS BIGINT));
+CREATE INDEX tasks_sort_id_idx ON tasks (cast(data->>'sort' AS BIGINT), id);
+CREATE INDEX tasks_sort_id_asc_desc_idx ON tasks (cast(data->>'sort' AS BIGINT), id DESC);
 
 CREATE TABLE archived
 (
