@@ -24,7 +24,7 @@ Prerequisites:
 * [Postgres database server](http://www.postgresql.org/)
 
 1.
-Download the latest penfold JAR file from [Maven Central](http://search.maven.org/). The JAR can be found under "org.huwtl.penfold"
+Download the latest penfold JAR file [here](https://github.com/huwtl/penfold/releases/latest).
 
 2.
 Create a new empty database on your Postgres database server
