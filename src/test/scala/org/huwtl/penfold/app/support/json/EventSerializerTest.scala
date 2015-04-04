@@ -1,14 +1,12 @@
 package org.huwtl.penfold.app.support.json
 
-import org.specs2.mutable.Specification
-import scala.io.Source._
-import org.json4s.jackson.JsonMethods._
 import org.huwtl.penfold.domain.model.Payload
+import org.huwtl.penfold.domain.model.patch.{Add, Patch, Value}
+import org.huwtl.penfold.support.{JsonFixtures, TestModel}
 import org.specs2.matcher.DataTables
-import org.huwtl.penfold.domain.model.patch.{Patch, Value, Add}
-import org.huwtl.penfold.support.TestModel
+import org.specs2.mutable.Specification
 
-class EventSerializerTest extends Specification with DataTables {
+class EventSerializerTest extends Specification with DataTables with JsonFixtures {
   val payload = Payload(Map("stuff" -> "something", "nested" -> Map("inner" -> true)))
   val payloadUpdate = Patch(List(Add("/a/b", Value("1"))))
   val taskCreatedEvent = TestModel.events.createdEvent.copy(payload = payload)
@@ -38,7 +36,7 @@ class EventSerializerTest extends Specification with DataTables {
     "task_cancelled.json"       !! taskCancelledEvent      |
     "task_archived.json"        !! taskArchivedEvent       |> {
       (jsonPath, expectedEvent) =>
-        val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/$jsonPath")).mkString
+        val json = jsonFixtureAsString(s"fixtures/events/$jsonPath")
         val actualEvent = serializer.deserialize(json)
         actualEvent must beEqualTo(expectedEvent)
     }
@@ -58,8 +56,8 @@ class EventSerializerTest extends Specification with DataTables {
     taskCancelledEvent      !! "task_cancelled.json"          |
     taskArchivedEvent       !! "task_archived.json"        |> {
       (event, expectedJsonPath) =>
-        val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/events/$expectedJsonPath")).mkString))
-        val json = serializer.serialize(event)
+        val expectedJson = jsonFixture(s"fixtures/events/$expectedJsonPath")
+        val json = asJson(serializer.serialize(event))
         json must beEqualTo(expectedJson)
     }
   }

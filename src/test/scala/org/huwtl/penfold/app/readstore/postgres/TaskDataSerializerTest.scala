@@ -1,17 +1,14 @@
 package org.huwtl.penfold.app.readstore.postgres
 
-import org.specs2.mutable.Specification
-import org.specs2.matcher.DataTables
-import scala.io.Source._
-import org.json4s.jackson.JsonMethods._
 import org.huwtl.penfold.app.support.json.ObjectSerializer
-import org.joda.time.DateTime
-import org.huwtl.penfold.domain.model.Status.{Ready, Started}
-import org.huwtl.penfold.support.TestModel
-import scala.Some
 import org.huwtl.penfold.domain.model.CloseResultType.Success
+import org.huwtl.penfold.domain.model.Status.{Ready, Started}
+import org.huwtl.penfold.support.{JsonFixtures, TestModel}
+import org.joda.time.DateTime
+import org.specs2.matcher.DataTables
+import org.specs2.mutable.Specification
 
-class TaskDataSerializerTest extends Specification with DataTables {
+class TaskDataSerializerTest extends Specification with DataTables with JsonFixtures {
 
   val prevStatus = PreviousStatus(Started, new DateTime(2014, 2, 25, 13, 0, 0, 0).getMillis)
 
@@ -58,7 +55,7 @@ class TaskDataSerializerTest extends Specification with DataTables {
     "taskData.json"        !! taskDataFull       |
     "taskDataMinimal.json" !! taskDataMinimal |> {
       (jsonPath, expected) =>
-        val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/readstore/postgres/$jsonPath")).mkString
+        val json = jsonFixtureAsString(s"fixtures/readstore/postgres/$jsonPath")
         val actualTaskData = serializer.deserialize[TaskData](json)
         actualTaskData must beEqualTo(expected)
     }
@@ -69,8 +66,8 @@ class TaskDataSerializerTest extends Specification with DataTables {
       taskDataFull    !! "taskData.json"        |
       taskDataMinimal !! "taskDataMinimal.json" |> {
       (task, expected) =>
-        val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/readstore/postgres/$expected")).mkString))
-        val actualJson = serializer.serialize(task)
+        val expectedJson = jsonFixture(s"fixtures/readstore/postgres/$expected")
+        val actualJson = asJson(serializer.serialize(task))
         actualJson must beEqualTo(expectedJson)
     }
   }

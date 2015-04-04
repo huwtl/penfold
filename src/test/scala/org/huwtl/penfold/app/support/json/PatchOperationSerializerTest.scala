@@ -1,12 +1,11 @@
 package org.huwtl.penfold.app.support.json
 
-import org.specs2.mutable.Specification
-import scala.io.Source._
-import org.json4s.jackson.JsonMethods._
+import org.huwtl.penfold.domain.model.patch.{Add, Remove, Replace, Value}
+import org.huwtl.penfold.support.JsonFixtures
 import org.specs2.matcher.DataTables
-import org.huwtl.penfold.domain.model.patch.{Replace, Remove, Value, Add}
+import org.specs2.mutable.Specification
 
-class PatchOperationSerializerTest extends Specification with DataTables {
+class PatchOperationSerializerTest extends Specification with DataTables with JsonFixtures {
 
   val addOperation = Add("/a/b", Value("1"))
   val addOperationWithNumberic = Add("/a/b", Value(1))
@@ -24,7 +23,7 @@ class PatchOperationSerializerTest extends Specification with DataTables {
       "remove.json"                 !! removeOperation           |
       "replace.json"                !! replaceOperation          |> {
       (jsonPath, expectedEvent) =>
-        val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/patch/$jsonPath")).mkString
+        val json = jsonFixtureAsString(s"fixtures/patch/$jsonPath")
         val actualEvent = serializer.deserialize(json)
         actualEvent must beEqualTo(expectedEvent)
     }
@@ -38,8 +37,8 @@ class PatchOperationSerializerTest extends Specification with DataTables {
     removeOperation           !!  "remove.json"               |
     replaceOperation          !!  "replace.json"              |> {
       (op, expected) =>
-        val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/patch/${expected}")).mkString))
-        val json = serializer.serialize(op)
+        val expectedJson = jsonFixture(s"fixtures/patch/${expected}")
+        val json = asJson(serializer.serialize(op))
         json must beEqualTo(expectedJson)
     }
   }
