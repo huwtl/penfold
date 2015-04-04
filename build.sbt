@@ -2,7 +2,7 @@ organization := "org.huwtl"
 
 name := "penfold"
 
-version := "0.1.8-SNAPSHOT"
+version := "1.0.0"
 
 scalaVersion := "2.11.6"
 
