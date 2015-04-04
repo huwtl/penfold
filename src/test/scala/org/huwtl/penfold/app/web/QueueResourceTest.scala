@@ -1,22 +1,17 @@
 package org.huwtl.penfold.app.web
 
-import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import java.net.URI
-import org.json4s.jackson.JsonMethods._
-import scala.io.Source._
+
+import org.huwtl.penfold.app.AuthenticationCredentials
+import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
+import org.huwtl.penfold.command.CommandDispatcher
+import org.huwtl.penfold.domain.model.{AggregateId, _}
+import org.huwtl.penfold.readstore.{PageRequest, PageResult, _}
+import org.huwtl.penfold.support.{JsonFixtures, TestModel}
 import org.scalatra.test.specs2.MutableScalatraSpec
 import org.specs2.mock.Mockito
-import org.huwtl.penfold.domain.model._
-import org.huwtl.penfold.readstore._
-import org.huwtl.penfold.command.CommandDispatcher
-import org.huwtl.penfold.domain.model.AggregateId
-import scala.Some
-import org.huwtl.penfold.readstore.PageRequest
-import org.huwtl.penfold.readstore.PageResult
-import org.huwtl.penfold.app.AuthenticationCredentials
-import org.huwtl.penfold.support.TestModel
 
-class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification {
+class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification with JsonFixtures {
   sequential
 
   val expectedTask1 = TestModel.readModels.task.copy(id = AggregateId("1"))
@@ -45,7 +40,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
     get("/queues/abc/ready", headers = validAuthHeader) {
       status must beEqualTo(200)
-      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueue.json"))
+      asJson(body) must beEqualTo(jsonFixture("fixtures/hal/halFormattedQueue.json"))
     }
   }
 
@@ -55,7 +50,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
     get("/queues/abc/ready?q=%5B%7B%22op%22%3A%22EQ%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%2C%22dataType%22%3A%22STRING%22%7D%5D", headers = validAuthHeader) {
       status must beEqualTo(200)
-      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueue.json"))
+      asJson(body) must beEqualTo(jsonFixture("fixtures/hal/halFormattedFilteredQueue.json"))
     }
   }
 
@@ -65,7 +60,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
     get("/queues/abc/ready?q=%5B%7B%22op%22%3A%22IN%22%2C%22key%22%3A%22data%22%2C%22values%22%3A%5Bnull%2C%22value1%22%2C%22value2%22%5D%2C%22dataType%22%3A%22STRING%22%7D%5D", headers = validAuthHeader) {
       status must beEqualTo(200)
-      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedMultiParamFilteredQueue.json"))
+      asJson(body) must beEqualTo(jsonFixture("fixtures/hal/halFormattedMultiParamFilteredQueue.json"))
     }
   }
 
@@ -74,7 +69,7 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
     get(s"/queues/abc/ready?page=3~1393336800000~0", headers = validAuthHeader) {
       status must beEqualTo(200)
-      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueWithPaginationLinks.json"))
+      asJson(body) must beEqualTo(jsonFixture("fixtures/hal/halFormattedQueueWithPaginationLinks.json"))
     }
   }
 
@@ -94,14 +89,6 @@ class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpe
 
   "return 401 when invalid auth credentials" in {
     get("/queues", headers = authHeader(validCredentials.username, "invalid")) {status must beEqualTo(401)}
-  }
-
-  def jsonFromFile(filePath: String) = {
-    parse(textFromFile(filePath))
-  }
-
-  def textFromFile(filePath: String) = {
-    fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString
   }
 
   def validAuthHeader = authHeader(validCredentials.username, validCredentials.password)

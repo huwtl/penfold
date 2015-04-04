@@ -1,16 +1,11 @@
 package org.huwtl.penfold.app.support.json
 
-import org.specs2.mutable.Specification
+import org.huwtl.penfold.readstore.{EQ, GT, IN, LT, _}
+import org.huwtl.penfold.support.JsonFixtures
 import org.specs2.matcher.DataTables
-import scala.io.Source._
-import org.huwtl.penfold.readstore._
-import org.json4s.jackson.JsonMethods._
-import org.huwtl.penfold.readstore.GT
-import org.huwtl.penfold.readstore.IN
-import org.huwtl.penfold.readstore.EQ
-import org.huwtl.penfold.readstore.LT
+import org.specs2.mutable.Specification
 
-class ObjectSerializerTest extends Specification with DataTables {
+class ObjectSerializerTest extends Specification with DataTables with JsonFixtures {
   val serializer = new ObjectSerializer
 
   "deserialise filter" in {
@@ -24,7 +19,7 @@ class ObjectSerializerTest extends Specification with DataTables {
       "gtFilter.json"         !! GT("name", "100", QueryParamType.NumericType)           |
       "gtFilterMinimal.json"  !! GT("name", null, QueryParamType.NumericType)            |> {
       (jsonPath, expected) =>
-        val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/filter/$jsonPath")).mkString
+        val json = jsonFixtureAsString(s"fixtures/filter/$jsonPath")
         val actualFilter = serializer.deserialize[Filter](json)
         actualFilter must beEqualTo(expected)
     }
@@ -37,8 +32,8 @@ class ObjectSerializerTest extends Specification with DataTables {
       LT("name", "100", QueryParamType.NumericType)           !! "ltFilter.json"   |
       GT("name", "100", QueryParamType.NumericType)           !! "gtFilter.json"   |> {
       (filter, expected) =>
-        val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/filter/$expected")).mkString))
-        val actualJson = serializer.serialize(filter)
+        val expectedJson = jsonFixture(s"fixtures/filter/$expected")
+        val actualJson = asJson(serializer.serialize(filter))
         actualJson must beEqualTo(expectedJson)
     }
   }
