@@ -75,6 +75,7 @@ A task has a status:
 * waiting - task has been scheduled in the future and is waiting to become ready in its assigned queue
 * ready - task is available for starting
 * started - the task has been started
+* cancelled - the task has been cancelled
 * closed - the task has been closed
 
 You can view all tasks by queue and status. For the purpose of this tutorial we will use a queue named "greenback".
@@ -83,6 +84,7 @@ You can view all tasks by queue and status. For the purpose of this tutorial we 
 GET: /queues/greenback/waiting  HTTP 1.1
 GET: /queues/greenback/ready  HTTP 1.1
 GET: /queues/greenback/started  HTTP 1.1
+GET: /queues/greenback/cancelled  HTTP 1.1
 GET: /queues/greenback/closed  HTTP 1.1
 ```
 

@@ -1,17 +1,15 @@
 package com.qmetric.penfold.app.support.hal
 
 import java.net.URI
-import scala.io.Source._
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
+
 import org.specs2.mutable.Specification
 import com.qmetric.penfold.domain.model._
 import com.qmetric.penfold.readstore._
 import com.qmetric.penfold.domain.model.AggregateId
 import com.qmetric.penfold.readstore.PageResult
-import com.qmetric.penfold.support.TestModel
+import com.qmetric.penfold.support.{JsonFixtures, TestModel}
 
-class HalQueueFormatterTest extends Specification {
+class HalQueueFormatterTest extends Specification with JsonFixtures {
 
   val filters = Filters(List(EQ("data", "a value")))
 
@@ -30,34 +28,30 @@ class HalQueueFormatterTest extends Specification {
   "format queue as hal+json" in {
     val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task2, task1), None, None))
 
-    parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueue.json"))
+    asJson(hal) must beEqualTo(jsonFixture("fixtures/hal/halFormattedQueue.json"))
   }
 
   "format queue as hal+json with pagination links" in {
     val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task2, task1), Some(PageReference("2~1393336800000~0")), Some(PageReference("1~1393336800000~1"))))
 
-    parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedQueueWithPaginationLinks.json"))
+    asJson(hal) must beEqualTo(jsonFixture("fixtures/hal/halFormattedQueueWithPaginationLinks.json"))
   }
 
   "format filtered queue as hal+json" in {
     val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task2, task1), None, None), filters)
 
-    parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueue.json"))
+    asJson(hal) must beEqualTo(jsonFixture("fixtures/hal/halFormattedFilteredQueue.json"))
   }
 
   "format filtered queue as hal+json with encoded filter value" in {
     val filters = Filters(List(EQ("data", "zzz%^&*ee$")))
     val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task2, task1), None, None), filters)
-    parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueueWithEncodedFilterValue.json"))
+    asJson(hal) must beEqualTo(jsonFixture("fixtures/hal/halFormattedFilteredQueueWithEncodedFilterValue.json"))
   }
 
   "format filtered queue as hal+json with pagination links" in {
     val hal = queueFormatter.halFrom(queueId, status, pageRequest, PageResult(List(task2, task1), Some(PageReference("2~1393336800000~0")), Some(PageReference("1~1393336800000~1"))), filters)
 
-    parse(hal) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredQueueWithPaginationLinks.json"))
-  }
-
-  def jsonFromFile(filePath: String) = {
-    parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString)
+    asJson(hal) must beEqualTo(jsonFixture("fixtures/hal/halFormattedFilteredQueueWithPaginationLinks.json"))
   }
 }

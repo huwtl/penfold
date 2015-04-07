@@ -1,12 +1,11 @@
 package com.qmetric.penfold.app.support.json
 
 import org.specs2.mutable.Specification
-import scala.io.Source._
-import org.json4s.jackson.JsonMethods._
 import org.specs2.matcher.DataTables
 import com.qmetric.penfold.domain.model.patch.{Replace, Remove, Value, Add}
+import com.qmetric.penfold.support.JsonFixtures
 
-class PatchOperationSerializerTest extends Specification with DataTables {
+class PatchOperationSerializerTest extends Specification with DataTables with JsonFixtures {
 
   val addOperation = Add("/a/b", Value("1"))
   val addOperationWithNumberic = Add("/a/b", Value(1))
@@ -24,7 +23,7 @@ class PatchOperationSerializerTest extends Specification with DataTables {
       "remove.json"                 !! removeOperation           |
       "replace.json"                !! replaceOperation          |> {
       (jsonPath, expectedEvent) =>
-        val json = fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/patch/$jsonPath")).mkString
+        val json = jsonFixtureAsString(s"fixtures/patch/$jsonPath")
         val actualEvent = serializer.deserialize(json)
         actualEvent must beEqualTo(expectedEvent)
     }
@@ -32,14 +31,14 @@ class PatchOperationSerializerTest extends Specification with DataTables {
 
   "serialise patch operation" in {
     "op"                      ||  "expected"                  |
-    addOperation              !!  "add.json"                  |
-    addOperationWithNumberic  !!  "addWithNumericValue.json"  |
-    addOperationWithComplex   !!  "addWithComplexValue.json"  |
-    removeOperation           !!  "remove.json"               |
-    replaceOperation          !!  "replace.json"              |> {
+      addOperation              !!  "add.json"                  |
+      addOperationWithNumberic  !!  "addWithNumericValue.json"  |
+      addOperationWithComplex   !!  "addWithComplexValue.json"  |
+      removeOperation           !!  "remove.json"               |
+      replaceOperation          !!  "replace.json"              |> {
       (op, expected) =>
-        val expectedJson = compact(parse(fromInputStream(getClass.getClassLoader.getResourceAsStream(s"fixtures/patch/${expected}")).mkString))
-        val json = serializer.serialize(op)
+        val expectedJson = jsonFixture(s"fixtures/patch/$expected")
+        val json = asJson(serializer.serialize(op))
         json must beEqualTo(expectedJson)
     }
   }
