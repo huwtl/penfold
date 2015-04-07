@@ -11,8 +11,6 @@ The primary purposes that penfold was built for:
 
 Penfold is deployed as a standalone server, or mulitple standalone servers for a clustered environment.
 
-Penfold enforces immutability in its implementation, and of its use of data with [CQRS and event sourcing](http://codebetter.com/gregyoung/2010/02/16/cqrs-task-based-uis-event-sourcing-agh/).
-
 Penfold is spoken to via a Restful API, based on the media type [HAL+JSON](http://stateless.co/hal_specification.html).
 
 
