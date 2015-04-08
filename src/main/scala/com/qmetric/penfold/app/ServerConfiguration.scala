@@ -11,19 +11,19 @@ case class ServerConfiguration(publicUrl: String,
                                httpPort: Int,
                                authentication: Option[AuthenticationCredentials],
                                database: DatabaseConfiguration,
-                               private val readStoreDbMigrationPath : Option[String] = None,
-                               private val readStoreAliases: Map[String, String] = Map.empty,
+                               private val customDbMigrationPath : Option[String] = None,
+                               private val queryAliases: Map[String, String] = Map.empty,
                                sortOrdering: SortOrderingConfiguration = SortOrderingConfiguration(),
                                pageSize: Int = 10,
                                triggerCheckFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS),
                                archiver: Option[TaskArchiverConfiguration] = None,
                                startedTaskTimeout: Option[StartedTaskTimeoutConfiguration] = None) {
 
-  val readStorePathAliases = Aliases(readStoreAliases.map {
+  val queryPathAliases = Aliases(queryAliases.map {
     case (alias, path) => (Alias(alias), Path(path))
   })
 
-  val customReadStoreDbMigrationPath = readStoreDbMigrationPath.map(CustomDbMigrationPath)
+  val dbMigrationPath = customDbMigrationPath.map(CustomDbMigrationPath)
 }
 
 case class AuthenticationCredentials(username: String, password: String)

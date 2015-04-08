@@ -29,7 +29,7 @@ class Bootstrap extends LifeCycle {
 
     val aggregateIdFactory = new UUIDFactory
 
-    val database = new PostgresDatabaseInitialiser(config.customReadStoreDbMigrationPath).init(new PostgresConnectionPoolFactory().create(config.database))
+    val database = new PostgresDatabaseInitialiser(config.dbMigrationPath).init(new PostgresConnectionPoolFactory().create(config.database))
     val eventStore = new PostgresEventStore(database, eventSerializer)
 
     val readStoreUpdater = new EventNotifier(new PostgresReadStoreUpdater(database, objectSerializer))
@@ -38,7 +38,7 @@ class Bootstrap extends LifeCycle {
 
     val commandDispatcher = new CommandDispatcherFactory(domainRepository, aggregateIdFactory).create
 
-    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, objectSerializer, config.readStorePathAliases), objectSerializer, new DateTimeSource, config.readStorePathAliases)
+    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, objectSerializer, config.queryPathAliases), objectSerializer, new DateTimeSource, config.queryPathAliases)
 
     val baseUrl = URI.create(config.publicUrl)
 
