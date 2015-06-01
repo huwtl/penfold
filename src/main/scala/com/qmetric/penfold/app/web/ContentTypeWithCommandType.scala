@@ -1,7 +1,5 @@
 package com.qmetric.penfold.app.web
 
-import java.lang.IllegalArgumentException
-
 case class ContentTypeWithCommandType(contentType: Option[String]) {
 
   private val contentTypeRegex = "application/json.*;.*domain-command=([a-zA-Z]+).*".r

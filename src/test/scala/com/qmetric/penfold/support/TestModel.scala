@@ -4,22 +4,13 @@ import org.joda.time.DateTime
 import com.qmetric.penfold.domain.model._
 import com.qmetric.penfold.domain.model.Status.{Waiting, Started, Ready, Closed}
 import com.qmetric.penfold.command._
-import com.qmetric.penfold.domain.event.TaskUnassigned
-import com.qmetric.penfold.domain.event.TaskRequeued
+import com.qmetric.penfold.domain.event._
 import com.qmetric.penfold.command.UpdateTaskPayload
 import com.qmetric.penfold.command.UnassignTask
-import com.qmetric.penfold.domain.event.TaskRescheduled
-import com.qmetric.penfold.domain.event.TaskPayloadUpdated
 import com.qmetric.penfold.domain.model.QueueId
-import com.qmetric.penfold.domain.event.FutureTaskCreated
-import com.qmetric.penfold.domain.event.TaskArchived
 import com.qmetric.penfold.domain.model.AggregateId
 import com.qmetric.penfold.readstore.TaskRecord
-import com.qmetric.penfold.domain.event.TaskTriggered
 import scala.Some
-import com.qmetric.penfold.domain.event.TaskCreated
-import com.qmetric.penfold.domain.event.TaskStarted
-import com.qmetric.penfold.domain.event.TaskClosed
 import com.qmetric.penfold.domain.model.User
 import com.qmetric.penfold.readstore.PreviousStatus
 import com.qmetric.penfold.command.CreateTask
@@ -47,6 +38,8 @@ object TestModel {
   val updateType = "updateType"
 
   val unassignType = "unassignType"
+
+  val reassignType = "reassignType"
 
   val rescheduleType = "schType"
 
@@ -116,6 +109,8 @@ object TestModel {
     val rescheduledEvent = TaskRescheduled(aggregateId, AggregateVersion(3), createdDate, triggerDate, Some(assignee), Some(rescheduleType), Some(payloadUpdate), Some(score))
 
     val unassignedEvent = TaskUnassigned(aggregateId, AggregateVersion(3), createdDate, Some(unassignType), Some(payloadUpdate))
+
+    val reassignedEvent = TaskReassigned(aggregateId, AggregateVersion(3), createdDate, assignee, Some(reassignType), Some(payloadUpdate))
 
     val payloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), createdDate, payloadUpdate, Some(updateType), Some(score))
 

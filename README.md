@@ -49,6 +49,10 @@ penfold {
 
   readStoreMongoDatabaseServers {
     databaseName = <DATABASE_NAME>
+    credentials {
+      username = <USERNAME>
+      password = <PASSWORD>
+    }
     servers = [
       {
         host = "127.0.0.1"

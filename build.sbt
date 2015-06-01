@@ -33,7 +33,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" % "slick_2.10" % "2.0.1",
   "c3p0" % "c3p0" % "0.9.1.2",
   "mysql" % "mysql-connector-java" % "5.1.30",
-  "org.mongodb" %% "casbah" % "2.7.0",
+  "org.mongodb" %% "casbah" % "2.8.1",
   "com.googlecode.flyway" % "flyway-core" % "2.3.1",
   "org.hsqldb" % "hsqldb" % "2.3.2",
   "com.typesafe.akka" %% "akka-actor" % "2.2.4",

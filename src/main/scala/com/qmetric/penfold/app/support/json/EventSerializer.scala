@@ -20,6 +20,7 @@ class EventSerializer {
       classOf[TaskTriggered] ::
       classOf[TaskStarted] ::
       classOf[TaskUnassigned] ::
+      classOf[TaskReassigned] ::
       classOf[TaskRequeued] ::
       classOf[TaskRescheduled] ::
       classOf[TaskClosed] ::

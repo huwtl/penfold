@@ -33,8 +33,9 @@ class Bootstrap extends LifeCycle {
     val eventStore = new JdbcEventStore(domainJdbcPool, eventSerializer)
     val eventQueryService = new JdbcDomainEventQueryService(domainJdbcPool, eventSerializer)
 
+    val mongoCredentials = if (config.readStoreMongoDatabaseServers.credentials.isDefined) List(MongoCredential.createCredential(config.readStoreMongoDatabaseServers.credentials.get.username, config.readStoreMongoDatabaseServers.databaseName, config.readStoreMongoDatabaseServers.credentials.get.password.toCharArray)) else List.empty
     val readStoreServers = config.readStoreMongoDatabaseServers.servers.map(server => new ServerAddress(server.host, server.port))
-    val readStoreDatabase = MongoClient(readStoreServers)(config.readStoreMongoDatabaseServers.databaseName)
+    val readStoreDatabase = MongoClient(readStoreServers, mongoCredentials)(config.readStoreMongoDatabaseServers.databaseName)
     val readStoreEventProvider = new NewEventsProvider(new MongoNextExpectedEventIdProvider("readStoreEventTracker", readStoreDatabase), eventQueryService)
     val readStoreUpdater = new EventNotifier(readStoreEventProvider, new MongoReadStoreUpdater(readStoreDatabase, new MongoEventTracker("readStoreEventTracker", readStoreDatabase), objectSerializer))
 

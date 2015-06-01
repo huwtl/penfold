@@ -71,6 +71,10 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       representation.withLink("UnassignTask", taskUpdateUrl)
     }
 
+    if (task.status == Started) {
+      representation.withLink("ReassignTask", taskUpdateUrl)
+    }
+
     if (task.status == Ready) {
       representation.withLink("StartTask", taskUpdateUrl)
     }

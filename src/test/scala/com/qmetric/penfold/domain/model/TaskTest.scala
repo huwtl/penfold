@@ -172,6 +172,21 @@ class TaskTest extends Specification {
     }
   }
 
+  "task reassignment" should {
+    "reassign started task" in {
+      val reassignedTask = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
+        .start(TestModel.version, Some(assignee), None)
+        .reassign(TestModel.version.next, assignee, None, None)
+
+      typesOf(reassignedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskReassigned], classOf[TaskStarted], classOf[TaskCreated]))
+    }
+
+    "only started tasks can be reassigned" in {
+      val task = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None)
+      task.reassign(TestModel.version.next, assignee, None, None) must throwA[AggregateConflictException]
+    }
+  }
+
   "prevent concurrent task updates" in {
     val waitingTaskAtVersion1 = Task.create(AggregateId("1"), QueueBinding(queue), TestModel.triggerDate, Payload.empty, None)
     val readyTaskAtVersion3 = Task.create(AggregateId("1"), QueueBinding(queue), Payload.empty, None).start(TestModel.version, None, None).requeue(TestModel.version.next, None, None, None, None)

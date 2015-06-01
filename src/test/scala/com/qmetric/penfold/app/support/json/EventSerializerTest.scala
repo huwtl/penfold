@@ -17,6 +17,7 @@ class EventSerializerTest extends Specification with DataTables {
   val taskTriggeredEvent = TestModel.events.triggeredEvent
   val taskStartedEvent = TestModel.events.startedEvent
   val taskUnassignedEvent = TestModel.events.unassignedEvent
+  val taskReassignedEvent = TestModel.events.reassignedEvent
   val taskRequeuedEvent = TestModel.events.requeuedEvent
   val taskRescheduledEvent = TestModel.events.rescheduledEvent
   val taskClosedEvent = TestModel.events.closedEvent
@@ -31,6 +32,7 @@ class EventSerializerTest extends Specification with DataTables {
     "task_triggered.json"       !! taskTriggeredEvent      |
     "task_started.json"         !! taskStartedEvent        |
     "task_unassigned.json"      !! taskUnassignedEvent     |
+    "task_reassigned.json"      !! taskReassignedEvent     |
     "task_requeued.json"        !! taskRequeuedEvent       |
     "task_rescheduled.json"     !! taskRescheduledEvent    |
     "task_closed.json"          !! taskClosedEvent         |
@@ -50,6 +52,7 @@ class EventSerializerTest extends Specification with DataTables {
     taskTriggeredEvent      !! "task_triggered.json"       |
     taskStartedEvent        !! "task_started.json"         |
     taskUnassignedEvent     !! "task_unassigned.json"      |
+    taskReassignedEvent     !! "task_reassigned.json"      |
     taskRequeuedEvent       !! "task_requeued.json"        |
     taskRescheduledEvent    !! "task_rescheduled.json"     |
     taskClosedEvent         !! "task_closed.json"          |

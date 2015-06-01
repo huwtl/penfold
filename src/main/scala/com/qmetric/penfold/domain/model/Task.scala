@@ -100,6 +100,12 @@ case class Task(uncommittedEvents: List[Event],
     applyTaskUnassigned(TaskUnassigned(aggregateId, version.next, now, unassignType, payloadUpdate))
   }
 
+  def reassign(expectedVersion: AggregateVersion, assignee: User, reassignType: Option[String], payloadUpdate: Option[Patch]): Task = {
+    checkVersion(expectedVersion)
+    checkConflict(status == Started, s"Can only reassign a started task ($aggregateId), but was $status")
+    applyTaskReassigned(TaskReassigned(aggregateId, version.next, now, assignee, reassignType, payloadUpdate))
+  }
+
   def archive(expectedVersion: AggregateVersion): Task = {
     checkVersion(expectedVersion)
     checkConflict(status != Archived, s"Cannot archive a task ($aggregateId) when already archived")
@@ -116,6 +122,7 @@ case class Task(uncommittedEvents: List[Event],
     case event: TaskRequeued => applyTaskRequeued(event)
     case event: TaskRescheduled => applyTaskRescheduled(event)
     case event: TaskUnassigned => applyTaskUnassigned(event)
+    case event: TaskReassigned => applyTaskReassigned(event)
     case event: TaskArchived => applyTaskArchived(event)
     case event => unhandled(event)
   }
@@ -127,6 +134,8 @@ case class Task(uncommittedEvents: List[Event],
   private def applyTaskClosed(event: TaskClosed) = copy(event :: uncommittedEvents, version = event.aggregateVersion, status = Closed, assignee = event.assignee, payload = optPayloadUpdate(event.payloadUpdate))
 
   private def applyTaskUnassigned(event: TaskUnassigned) = copy(event :: uncommittedEvents, version = event.aggregateVersion, assignee = None, payload = optPayloadUpdate(event.payloadUpdate))
+
+  private def applyTaskReassigned(event: TaskReassigned) = copy(event :: uncommittedEvents, version = event.aggregateVersion, assignee = Some(event.assignee), payload = optPayloadUpdate(event.payloadUpdate))
 
   private def applyTaskPayloadUpdated(event: TaskPayloadUpdated) = copy(
     event :: uncommittedEvents,

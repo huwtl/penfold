@@ -28,6 +28,7 @@ class TaskCommandParser(jsonConverter: ObjectSerializer) {
       case "RescheduleTask" => jsonConverter.deserialize[RescheduleTaskRequest](json).toCommand(id, version)
       case "CloseTask" => jsonConverter.deserialize[CloseTaskRequest](json).toCommand(id, version)
       case "UnassignTask" => jsonConverter.deserialize[UnassignTaskRequest](json).toCommand(id, version)
+      case "ReassignTask" => jsonConverter.deserialize[ReassignTaskRequest](json).toCommand(id, version)
       case "UpdateTaskPayload" => jsonConverter.deserialize[UpdateTaskPayloadRequest](json).toCommand(id, version)
       case _ => throwUnknownTypeException(commandType)
     }

@@ -45,7 +45,7 @@ class JdbcDomainEventQueryService(database: Database, serializer: EventSerialize
 
     foundEvent match {
       case None => {
-        logger.warn(s"assumed gap in consecutive event id numbering for missing event ${id.value}, skipping event")
+        logger.info(s"assumed gap in consecutive event id numbering for missing event ${id.value}, skipping event")
         None
       }
       case some => some

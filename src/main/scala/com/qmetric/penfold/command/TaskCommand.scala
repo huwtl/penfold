@@ -57,3 +57,9 @@ case class UnassignTask(id: AggregateId,
                         version: AggregateVersion,
                         unassignType: Option[String],
                         payloadUpdate: Option[Patch]) extends TaskCommand
+
+case class ReassignTask(id: AggregateId,
+                        version: AggregateVersion,
+                        assignee: User,
+                        reassignType: Option[String],
+                        payloadUpdate: Option[Patch]) extends TaskCommand

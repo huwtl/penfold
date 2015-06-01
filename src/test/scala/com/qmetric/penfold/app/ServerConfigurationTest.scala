@@ -28,7 +28,7 @@ class ServerConfigurationTest extends Specification {
       httpPort,
       None,
       JdbcConnectionPool(jdbcUrl, "user", "", "org.hsqldb.jdbcDriver"),
-      MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 12345)))
+      MongoDatabaseServers("dbname", None, List(MongoDatabaseServer("127.0.0.1", 12345)))
     )
 
     val config = loadConfig("minimal")
@@ -42,7 +42,7 @@ class ServerConfigurationTest extends Specification {
       httpPort,
       Some(authCredentials),
       JdbcConnectionPool(jdbcUrl, "user", "secret", "org.hsqldb.jdbcDriver", 10),
-      MongoDatabaseServers("dbname", List(MongoDatabaseServer("127.0.0.1", 12345))),
+      MongoDatabaseServers("dbname", Some(Credentials("usr", "pwd")), List(MongoDatabaseServer("127.0.0.1", 12345))),
       readStoreIndexes = indexes,
       sortOrdering = SortOrderingConfiguration("Desc", "Desc", "Asc", "Asc"),
       pageSize = 25,

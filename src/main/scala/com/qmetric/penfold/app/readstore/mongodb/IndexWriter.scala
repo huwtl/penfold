@@ -23,6 +23,6 @@ class IndexWriter {
 
   private def createReadStoreIndex(dbConnection: MongoDB, name: Option[String], attributePaths: List[String]) {
     val options = MongoDBObject("background" -> true) ++ (if (name.isDefined) MongoDBObject("name" -> name.get) else MongoDBObject())
-    dbConnection("tasks").ensureIndex(MongoDBObject(attributePaths.map(_ -> 1)), options)
+    dbConnection("tasks").createIndex(MongoDBObject(attributePaths.map(_ -> 1)), options)
   }
 }

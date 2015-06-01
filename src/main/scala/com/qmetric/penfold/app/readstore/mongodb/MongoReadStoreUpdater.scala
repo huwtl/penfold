@@ -48,6 +48,7 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
       case e: TaskRescheduled => handleTaskRescheduledEvent(e)
       case e: TaskClosed => handleTaskClosedEvent(e)
       case e: TaskUnassigned => handleUnassignedEvent(e)
+      case e: TaskReassigned => handleReassignedEvent(e)
       case e: TaskPayloadUpdated => handleUpdatePayloadEvent(e)
       case e: TaskArchived => handleArchiveEvent(e)
       case _ =>
@@ -164,6 +165,15 @@ class MongoReadStoreUpdater(database: MongoDB, tracker: EventTracker, objectSeri
     handleTaskUpdate(event) {task =>
       Map(
         "assignee" -> None,
+        "payload" -> patchPayloadIfExists(task, event.payloadUpdate)
+      )
+    }
+  }
+
+  private def handleReassignedEvent(event: TaskReassigned) = {
+    handleTaskUpdate(event) {task =>
+      Map(
+        "assignee" -> event.assignee.username,
         "payload" -> patchPayloadIfExists(task, event.payloadUpdate)
       )
     }
