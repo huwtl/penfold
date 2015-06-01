@@ -22,9 +22,9 @@ class IndexWriterTest extends Specification with Mockito {
 
     indexWriter.write(mongo, indexes, new ServerConfiguration(null, 0, None, null, null, null, null, 0, null, null, Some(TaskArchiverConfiguration("archiveTimeout")), Some(TaskAssignmentTimeoutConfiguration("assignmentTimeout"))))
 
-    there was one(mongoCollection).ensureIndex(MongoDBObject("payload.test" -> 1), MongoDBObject("background" -> true))
-    there was one(mongoCollection).ensureIndex(MongoDBObject("payload.test2" -> 1), MongoDBObject("background" -> true, "name" -> "indexName"))
-    there was one(mongoCollection).ensureIndex(MongoDBObject("payload.archiveTimeout" -> 1), MongoDBObject("background" -> true))
-    there was one(mongoCollection).ensureIndex(MongoDBObject("status" -> 1) ++ MongoDBObject("payload.assignmentTimeout" -> 1), MongoDBObject("background" -> true))
+    there was one(mongoCollection).createIndex(MongoDBObject("payload.test" -> 1), MongoDBObject("background" -> true))
+    there was one(mongoCollection).createIndex(MongoDBObject("payload.test2" -> 1), MongoDBObject("background" -> true, "name" -> "indexName"))
+    there was one(mongoCollection).createIndex(MongoDBObject("payload.archiveTimeout" -> 1), MongoDBObject("background" -> true))
+    there was one(mongoCollection).createIndex(MongoDBObject("status" -> 1) ++ MongoDBObject("payload.assignmentTimeout" -> 1), MongoDBObject("background" -> true))
   }
 }
