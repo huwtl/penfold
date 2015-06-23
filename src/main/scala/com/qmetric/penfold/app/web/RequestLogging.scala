@@ -11,7 +11,7 @@ trait RequestLogging extends ScalatraServlet {
   }
 
   after() {
-    logger.info(s"$logMessage - finished (${response.getStatus})")
+    logger.info(s"$logMessage - finished")
   }
 
   private def logMessage: String =
