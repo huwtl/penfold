@@ -12,7 +12,7 @@ class QueueResource(readStore: ReadStore,
                     halFormatter: HalQueueFormatter,
                     sortOrderMapping: SortOrderMapping,
                     pageSize: Int,
-                    authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport {
+                    authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport with RequestLogging {
 
   before() {
     contentType = HAL_JSON
