@@ -71,12 +71,6 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
         representation.withLink("CancelTask", taskUpdateUrl)
       }
 
-      representation.withLink("RescheduleTask", taskUpdateUrl)
-
-      if (task.status != Ready) {
-        representation.withLink("RequeueTask", taskUpdateUrl)
-      }
-
       if (task.assignee.isDefined && (task.status == Waiting || task.status == Ready)) {
         representation.withLink("UnassignTask", taskUpdateUrl)
       }
@@ -84,6 +78,12 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
       if (task.status == Ready) {
         representation.withLink("StartTask", taskUpdateUrl)
       }
+    }
+
+    representation.withLink("RescheduleTask", taskUpdateUrl)
+
+    if (task.status != Ready) {
+      representation.withLink("RequeueTask", taskUpdateUrl)
     }
   }
 
