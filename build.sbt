@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
   "org.scalatra" % "scalatra-scalate_2.11" % "2.3.1",
   "org.scalatra" % "scalatra-jetty_2.11" % "2.3.1",
   "ch.qos.logback" % "logback-classic" % "1.1.3" % "runtime",
-  "org.eclipse.jetty" % "jetty-webapp" % "9.3.0.M2" % "container,compile",
+  "org.eclipse.jetty" % "jetty-webapp" % "9.2.11.v20150529" % "container,compile",
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
   "com.theoryinpractise" % "halbuilder-core" % "4.0.3",
   "com.theoryinpractise" % "halbuilder-json" % "4.0.2",
