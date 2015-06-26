@@ -11,7 +11,10 @@ import com.qmetric.penfold.domain.model.patch.Patch
 import scala.None
 import com.qmetric.penfold.support.TestModel
 import com.qmetric.penfold.domain.model.CloseResultType.Success
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class TaskTest extends Specification {
 
   val queue = QueueId("abc")

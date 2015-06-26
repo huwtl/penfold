@@ -5,7 +5,10 @@ import org.specs2.mock.Mockito
 import com.qmetric.penfold.domain.store.DomainRepository
 import com.qmetric.penfold.domain.model._
 import com.qmetric.penfold.domain.model.AggregateId
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class CreateTaskHandlerTest extends Specification with Mockito {
 
   val expectedAggregateId = AggregateId("a1")

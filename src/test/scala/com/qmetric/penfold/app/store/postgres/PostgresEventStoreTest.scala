@@ -10,7 +10,10 @@ import com.qmetric.penfold.domain.model.AggregateId
 import com.qmetric.penfold.domain.exceptions.AggregateConflictException
 import com.qmetric.penfold.support.PostgresSpecification
 import org.specs2.specification.Scope
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class PostgresEventStoreTest extends Specification with DataTables with PostgresSpecification {
 
   class context extends Scope {

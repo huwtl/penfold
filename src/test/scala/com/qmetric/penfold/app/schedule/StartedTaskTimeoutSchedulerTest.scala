@@ -8,7 +8,10 @@ import java.util.concurrent.TimeUnit._
 import com.qmetric.penfold.app.StartedTaskTimeoutConfiguration
 import org.specs2.mock.Mockito
 import com.qmetric.penfold.domain.model.Status.Started
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class StartedTaskTimeoutSchedulerTest extends Specification with Mockito {
 
   "requeue started tasks on timeout" in {

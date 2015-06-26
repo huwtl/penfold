@@ -8,7 +8,10 @@ import com.qmetric.penfold.domain.model.CloseResultType.Success
 import org.joda.time.DateTime
 import org.specs2.matcher.DataTables
 import org.specs2.mutable.Specification
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class TaskDataSerializerTest extends Specification with DataTables with JsonFixtures {
 
   val prevStatus = PreviousStatus(Started, new DateTime(2014, 2, 25, 13, 0, 0, 0).getMillis)

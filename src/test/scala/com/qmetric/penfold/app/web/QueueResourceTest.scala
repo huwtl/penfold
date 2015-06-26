@@ -15,7 +15,10 @@ import com.qmetric.penfold.domain.model.AggregateId
 import com.qmetric.penfold.readstore.SortOrderMapping
 import scala.Some
 import com.qmetric.penfold.app.AuthenticationCredentials
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification with JsonFixtures {
   sequential
 

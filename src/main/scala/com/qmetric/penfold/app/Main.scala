@@ -24,7 +24,7 @@ class Main() {
     val server = new Server(config.httpPort)
     val context = new WebAppContext()
     context setContextPath "/"
-    context.setResourceBase(Try(getClass.getClassLoader.getResource("webapp").toExternalForm) getOrElse "src/main/webapp" )
+    context.setResourceBase(Try(getClass.getClassLoader.getResource("src/main/webapp").toExternalForm) getOrElse "src/main/webapp" )
     context.addEventListener(new ScalatraListener)
     context.addServlet(classOf[DefaultServlet], "/")
 

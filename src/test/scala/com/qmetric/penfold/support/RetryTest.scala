@@ -4,7 +4,10 @@ import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class RetryTest extends Specification with Mockito {
 
   "should not retry when result is Some(x) on first attempt" in {

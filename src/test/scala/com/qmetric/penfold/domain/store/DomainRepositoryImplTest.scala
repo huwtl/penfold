@@ -9,7 +9,10 @@ import com.qmetric.penfold.domain.model.Payload
 import com.qmetric.penfold.domain.event.{TaskTriggered, TaskCreated}
 import org.joda.time.DateTime
 import org.specs2.specification.Scope
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class DomainRepositoryImplTest extends Specification with Mockito {
   class context extends Scope {
     val aggregateId = AggregateId("a1")

@@ -4,7 +4,10 @@ import org.specs2.mutable.Specification
 import com.qmetric.penfold.domain.model.Status
 import com.qmetric.penfold.readstore.SortOrder.Asc
 import com.qmetric.penfold.readstore.SortOrder.Desc
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class SortOrderMappingTest extends Specification {
 
   "map status to suitable sort order" in {

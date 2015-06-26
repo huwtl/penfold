@@ -1,7 +1,10 @@
 package com.qmetric.penfold.app.web
 
 import org.specs2.mutable.Specification
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class ContentTypeWithCommandTypeTest extends Specification {
 
   "extract command type from content type header value" in {

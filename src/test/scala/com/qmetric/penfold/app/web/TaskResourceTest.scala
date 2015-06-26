@@ -13,7 +13,10 @@ import com.qmetric.penfold.domain.model.Status.Waiting
 import com.qmetric.penfold.domain.model.AggregateId
 import com.qmetric.penfold.app.AuthenticationCredentials
 import com.qmetric.penfold.readstore.PageRequest
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification with JsonFixtures {
   sequential
 

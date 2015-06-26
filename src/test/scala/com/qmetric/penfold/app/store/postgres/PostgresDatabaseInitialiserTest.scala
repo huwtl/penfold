@@ -5,7 +5,10 @@ import org.specs2.mock.Mockito
 import com.googlecode.flyway.core.Flyway
 import javax.sql.DataSource
 import scala.slick.driver.JdbcDriver.backend.Database
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class PostgresDatabaseInitialiserTest extends Specification with Mockito {
   "init database schema" in {
     val flyway = mock[Flyway]

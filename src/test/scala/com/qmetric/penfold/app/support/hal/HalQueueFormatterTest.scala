@@ -8,7 +8,10 @@ import com.qmetric.penfold.readstore._
 import com.qmetric.penfold.domain.model.AggregateId
 import com.qmetric.penfold.readstore.PageResult
 import com.qmetric.penfold.support.{JsonFixtures, TestModel}
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class HalQueueFormatterTest extends Specification with JsonFixtures {
 
   val filters = Filters(List(EQ("data", "a value")))

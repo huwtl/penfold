@@ -10,7 +10,10 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
 import scala.concurrent.duration.FiniteDuration
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class TaskArchiveSchedulerTest extends Specification with Mockito {
 
   "archive closed tasks on timeout" in {

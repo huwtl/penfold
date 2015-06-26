@@ -11,7 +11,10 @@ import com.qmetric.penfold.support.TestModel._
 import com.qmetric.penfold.support.TestModel.readModels._
 import com.qmetric.penfold.support.{JsonFixtures, TestModel}
 import com.qmetric.penfold.domain.model.Status.Ready
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class HalTaskFormatterTest extends Specification with JsonFixtures {
 
   val filters = Filters(List(EQ("data", "a value")))

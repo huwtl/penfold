@@ -4,7 +4,10 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 import com.qmetric.penfold.domain.model.patch.{Replace, Remove, Value, Add}
 import com.qmetric.penfold.support.JsonFixtures
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class PatchOperationSerializerTest extends Specification with DataTables with JsonFixtures {
 
   val addOperation = Add("/a/b", Value("1"))

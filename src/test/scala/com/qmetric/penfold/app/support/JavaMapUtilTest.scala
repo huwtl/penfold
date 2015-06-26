@@ -2,7 +2,10 @@ package com.qmetric.penfold.app.support
 
 import org.specs2.mutable.Specification
 import com.google.common.collect.{ImmutableMap, ImmutableList}
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class JavaMapUtilTest extends Specification {
 
   "simple scala map to java map" in {

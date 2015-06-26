@@ -7,7 +7,10 @@ import net.ceedubs.ficus.Ficus._
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
 import net.ceedubs.ficus.readers.ArbitraryTypeReader._
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class ServerConfigurationTest extends Specification {
 
   val publicUrl = "http://localhost:9762"

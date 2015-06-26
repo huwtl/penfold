@@ -4,7 +4,10 @@ import com.qmetric.penfold.domain.event.Event
 import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
 import org.specs2.specification.Scope
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class EventNotifierTest extends Specification with Mockito {
 
   class context extends Scope {

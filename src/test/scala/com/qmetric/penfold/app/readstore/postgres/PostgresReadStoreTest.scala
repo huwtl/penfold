@@ -22,7 +22,10 @@ import scala.concurrent.duration.FiniteDuration
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.util.Random
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class PostgresReadStoreTest extends PostgresSpecification with Mockito with DataTables {
   sequential
 

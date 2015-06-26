@@ -16,7 +16,10 @@ import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{StaticQuery => Q}
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class PostgresReadStoreUpdaterTest extends PostgresSpecification {
   sequential
 

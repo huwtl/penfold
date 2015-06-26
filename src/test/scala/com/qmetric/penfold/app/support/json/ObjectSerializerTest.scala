@@ -7,7 +7,10 @@ import com.qmetric.penfold.readstore._
 import com.qmetric.penfold.readstore.LT
 import com.qmetric.penfold.readstore.IN
 import com.qmetric.penfold.readstore.EQ
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class ObjectSerializerTest extends Specification with DataTables with JsonFixtures {
   val serializer = new ObjectSerializer
 
