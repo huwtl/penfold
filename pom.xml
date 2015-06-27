@@ -3,7 +3,7 @@
 
     <groupId>com.qmetric</groupId>
     <artifactId>penfold</artifactId>
-    <version>1.0.6.2-SNAPSHOT</version>
+    <version>1.0.7-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>penfold</name>
@@ -15,6 +15,7 @@
         <scalatra.version>2.3.1</scalatra.version>
         <scala.binary.version>2.11</scala.binary.version>
         <scala.version>2.11.6</scala.version>
+        <jetty.version>9.2.11.v20150529</jetty.version>
     </properties>
 
     <parent>
@@ -87,13 +88,13 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-webapp</artifactId>
-            <version>9.2.11.v20150529</version>
+            <version>${jetty.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
-            <version>9.2.11.v20150529</version>
+            <version>${jetty.version}</version>
         </dependency>
 
         <dependency>
@@ -265,7 +266,6 @@
                 <configuration>
                     <filters>
                         <filter>
-                            <!-- To allow using signed jars in uber jar without throwing java.lang.SecurityException -->
                             <artifact>*:*</artifact>
                             <excludes>
                                 <exclude>META-INF/*.SF</exclude>
@@ -274,7 +274,6 @@
                             </excludes>
                         </filter>
                     </filters>
-                    <!-- Additional configuration. -->
                 </configuration>
             </plugin>
             <plugin>
@@ -314,21 +313,6 @@
             <id>TypesafeReleases</id>
             <name>Typesafe Releases</name>
             <url>http://repo.typesafe.com/typesafe/releases</url>
-        </repository>
-        <repository>
-            <id>FuseSourceSnapshotRepository</id>
-            <name>FuseSource Snapshot Repository</name>
-            <url>http://repo.fusesource.com/nexus/content/repositories/snapshots/</url>
-        </repository>
-        <repository>
-            <id>ScalaToolsMaven2Repository</id>
-            <name>Scala-Tools Maven2 Repository</name>
-            <url>http://scala-tools.org/repo-releases/</url>
-        </repository>
-        <repository>
-            <id>scala-tools.org</id>
-            <name>Scala-Tools Maven2 Repository</name>
-            <url>http://scala-tools.org/repo-releases</url>
         </repository>
     </repositories>
 

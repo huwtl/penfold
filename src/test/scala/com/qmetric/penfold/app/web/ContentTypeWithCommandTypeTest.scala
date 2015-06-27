@@ -1,11 +1,8 @@
 package com.qmetric.penfold.app.web
 
-import org.specs2.mutable.Specification
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class ContentTypeWithCommandTypeTest extends Specification {
+class ContentTypeWithCommandTypeTest extends SpecificationWithJUnit {
 
   "extract command type from content type header value" in {
     ((contentType: String) => ContentTypeWithCommandType(Some(contentType)).extractedCommandType must beEqualTo("StartTask")) forall Seq(

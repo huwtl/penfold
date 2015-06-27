@@ -1,16 +1,12 @@
 package com.qmetric.penfold.command
 
-import org.specs2.mutable.Specification
-import com.qmetric.penfold.domain.model._
+import com.qmetric.penfold.domain.model.{AggregateId, _}
 import com.qmetric.penfold.domain.store.DomainRepository
-import org.specs2.mock.Mockito
 import org.joda.time.DateTime
-import com.qmetric.penfold.domain.model.AggregateId
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class CreateFutureTaskHandlerTest extends Specification with Mockito {
+class CreateFutureTaskHandlerTest extends SpecificationWithJUnit with Mockito {
 
   val expectedAggregateId = AggregateId("a1")
 

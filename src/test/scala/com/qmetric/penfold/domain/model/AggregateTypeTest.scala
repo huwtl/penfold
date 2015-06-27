@@ -1,11 +1,8 @@
 package com.qmetric.penfold.domain.model
 
-import org.specs2.mutable.Specification
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class AggregateTypeTest extends Specification {
+class AggregateTypeTest extends SpecificationWithJUnit {
   "parse from string" in {
     AggregateType.from("Task") must beSome(AggregateType.Task)
     AggregateType.from("unknown") must beNone

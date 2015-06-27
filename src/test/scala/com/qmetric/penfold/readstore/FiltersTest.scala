@@ -1,11 +1,8 @@
 package com.qmetric.penfold.readstore
 
-import org.specs2.mutable.Specification
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class FiltersTest extends Specification {
+class FiltersTest extends SpecificationWithJUnit {
   "filters take multi params" in {
     val multiValues: Set[String] = Set("1", "2")
     val filters = Filters(List(IN("a", multiValues)))

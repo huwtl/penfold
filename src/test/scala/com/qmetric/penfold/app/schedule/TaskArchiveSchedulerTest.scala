@@ -7,14 +7,11 @@ import com.qmetric.penfold.command.CommandDispatcher
 import com.qmetric.penfold.domain.model.Status.Closed
 import com.qmetric.penfold.readstore.{ReadStore, TaskProjectionReference}
 import org.specs2.mock.Mockito
-import org.specs2.mutable.Specification
+import org.specs2.mutable.SpecificationWithJUnit
 
 import scala.concurrent.duration.FiniteDuration
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
-@RunWith(classOf[JUnitRunner])
-class TaskArchiveSchedulerTest extends Specification with Mockito {
+class TaskArchiveSchedulerTest extends SpecificationWithJUnit with Mockito {
 
   "archive closed tasks on timeout" in {
     val readStore = mock[ReadStore]

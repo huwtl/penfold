@@ -1,25 +1,18 @@
 package com.qmetric.penfold.app.web
 
-import com.qmetric.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import java.net.URI
 
+import com.qmetric.penfold.app.AuthenticationCredentials
+import com.qmetric.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
+import com.qmetric.penfold.command.CommandDispatcher
+import com.qmetric.penfold.domain.model.{AggregateId, Status}
+import com.qmetric.penfold.readstore.{PageRequest, SortOrderMapping, _}
+import com.qmetric.penfold.support.{JsonFixtures, TestModel}
 import org.scalatra.test.specs2.MutableScalatraSpec
 import org.specs2.mock.Mockito
-import com.qmetric.penfold.support.JsonFixtures
-import com.qmetric.penfold.domain.model.Status
-import com.qmetric.penfold.readstore._
-import com.qmetric.penfold.support.TestModel
-import com.qmetric.penfold.command.CommandDispatcher
-import com.qmetric.penfold.readstore.PageRequest
-import com.qmetric.penfold.domain.model.AggregateId
-import com.qmetric.penfold.readstore.SortOrderMapping
-import scala.Some
-import com.qmetric.penfold.app.AuthenticationCredentials
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification with JsonFixtures {
+class QueueResourceTest extends SpecificationWithJUnit with MutableScalatraSpec with Mockito with WebAuthSpecification with JsonFixtures {
   sequential
 
   val expectedTask1 = TestModel.readModels.task.copy(id = AggregateId("1"))

@@ -1,20 +1,15 @@
 package com.qmetric.penfold.app.store.postgres
 
-import org.specs2.mutable.Specification
-import org.specs2.matcher.DataTables
 import com.qmetric.penfold.app.support.json.EventSerializer
-import com.qmetric.penfold.domain.model._
-import org.joda.time.DateTime
-import com.qmetric.penfold.domain.event.{Event, TaskTriggered, TaskCreated}
-import com.qmetric.penfold.domain.model.AggregateId
+import com.qmetric.penfold.domain.event.{Event, TaskCreated, TaskTriggered}
 import com.qmetric.penfold.domain.exceptions.AggregateConflictException
+import com.qmetric.penfold.domain.model.{AggregateId, _}
 import com.qmetric.penfold.support.PostgresSpecification
+import org.joda.time.DateTime
+import org.specs2.matcher.DataTables
 import org.specs2.specification.Scope
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
-@RunWith(classOf[JUnitRunner])
-class PostgresEventStoreTest extends Specification with DataTables with PostgresSpecification {
+class PostgresEventStoreTest extends PostgresSpecification with DataTables {
 
   class context extends Scope {
     val triggerDate = new DateTime(2014, 4, 3, 13, 0, 0, 0)

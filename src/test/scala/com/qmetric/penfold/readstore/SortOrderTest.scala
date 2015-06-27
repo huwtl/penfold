@@ -1,11 +1,8 @@
 package com.qmetric.penfold.readstore
 
-import org.specs2.mutable.Specification
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class SortOrderTest extends Specification {
+class SortOrderTest extends SpecificationWithJUnit {
 
   "know how to parse from string" in {
     SortOrder.from("Asc") must beEqualTo(SortOrder.Asc)

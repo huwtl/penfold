@@ -1,21 +1,14 @@
 package com.qmetric.penfold.domain.model
 
-import org.specs2.mutable.Specification
-import com.qmetric.penfold.domain.event._
-import org.joda.time.DateTime
-import com.qmetric.penfold.domain.event.TaskCreated
-import com.qmetric.penfold.domain.event.TaskTriggered
-import com.qmetric.penfold.domain.event.TaskStarted
+import com.qmetric.penfold.domain.event.{TaskCreated, TaskStarted, TaskTriggered, _}
 import com.qmetric.penfold.domain.exceptions.AggregateConflictException
-import com.qmetric.penfold.domain.model.patch.Patch
-import scala.None
-import com.qmetric.penfold.support.TestModel
 import com.qmetric.penfold.domain.model.CloseResultType.Success
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import com.qmetric.penfold.domain.model.patch.Patch
+import com.qmetric.penfold.support.TestModel
+import org.joda.time.DateTime
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class TaskTest extends Specification {
+class TaskTest extends SpecificationWithJUnit {
 
   val queue = QueueId("abc")
 

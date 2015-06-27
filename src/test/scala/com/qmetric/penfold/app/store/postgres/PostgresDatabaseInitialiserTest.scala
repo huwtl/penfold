@@ -1,15 +1,14 @@
 package com.qmetric.penfold.app.store.postgres
 
-import org.specs2.mutable.Specification
-import org.specs2.mock.Mockito
-import com.googlecode.flyway.core.Flyway
 import javax.sql.DataSource
-import scala.slick.driver.JdbcDriver.backend.Database
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
-@RunWith(classOf[JUnitRunner])
-class PostgresDatabaseInitialiserTest extends Specification with Mockito {
+import com.googlecode.flyway.core.Flyway
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+
+import scala.slick.driver.JdbcDriver.backend.Database
+
+class PostgresDatabaseInitialiserTest extends SpecificationWithJUnit with Mockito {
   "init database schema" in {
     val flyway = mock[Flyway]
     val dataSource = mock[DataSource]

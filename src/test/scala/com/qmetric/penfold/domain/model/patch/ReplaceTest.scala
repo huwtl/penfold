@@ -1,12 +1,9 @@
 package com.qmetric.penfold.domain.model.patch
 
-import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class ReplaceTest extends Specification with DataTables {
+class ReplaceTest extends SpecificationWithJUnit with DataTables {
 
   "apply replace operation" in {
     "existing"                                || "operation"                                || "expected"                                |

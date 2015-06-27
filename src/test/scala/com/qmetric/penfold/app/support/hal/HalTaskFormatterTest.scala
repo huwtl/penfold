@@ -2,20 +2,15 @@ package com.qmetric.penfold.app.support.hal
 
 import java.net.URI
 
-import org.specs2.mutable.Specification
+import com.qmetric.penfold.domain.model.Status.Ready
 import com.qmetric.penfold.domain.model._
-import com.qmetric.penfold.readstore._
-import com.qmetric.penfold.readstore.TaskProjection
-import scala.Some
+import com.qmetric.penfold.readstore.{TaskProjection, _}
 import com.qmetric.penfold.support.TestModel._
 import com.qmetric.penfold.support.TestModel.readModels._
 import com.qmetric.penfold.support.{JsonFixtures, TestModel}
-import com.qmetric.penfold.domain.model.Status.Ready
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class HalTaskFormatterTest extends Specification with JsonFixtures {
+class HalTaskFormatterTest extends SpecificationWithJUnit with JsonFixtures {
 
   val filters = Filters(List(EQ("data", "a value")))
 

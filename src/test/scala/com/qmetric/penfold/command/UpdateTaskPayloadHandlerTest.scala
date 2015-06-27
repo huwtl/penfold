@@ -1,15 +1,12 @@
 package com.qmetric.penfold.command
 
-import org.specs2.mutable.Specification
-import org.specs2.mock.Mockito
-import com.qmetric.penfold.domain.model.{Task, AggregateVersion, AggregateId}
-import com.qmetric.penfold.domain.store.DomainRepository
 import com.qmetric.penfold.domain.model.patch.Patch
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import com.qmetric.penfold.domain.model.{AggregateId, AggregateVersion, Task}
+import com.qmetric.penfold.domain.store.DomainRepository
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class UpdateTaskPayloadHandlerTest extends Specification with Mockito {
+class UpdateTaskPayloadHandlerTest extends SpecificationWithJUnit with Mockito {
   val expectedAggregateId = AggregateId("a1")
 
   val originalTask = mock[Task]

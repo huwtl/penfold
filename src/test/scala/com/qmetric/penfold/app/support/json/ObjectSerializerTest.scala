@@ -1,17 +1,11 @@
 package com.qmetric.penfold.app.support.json
 
-import org.specs2.matcher.DataTables
-import org.specs2.mutable.Specification
+import com.qmetric.penfold.readstore.{EQ, IN, LT, _}
 import com.qmetric.penfold.support.JsonFixtures
-import com.qmetric.penfold.readstore._
-import com.qmetric.penfold.readstore.LT
-import com.qmetric.penfold.readstore.IN
-import com.qmetric.penfold.readstore.EQ
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.matcher.DataTables
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class ObjectSerializerTest extends Specification with DataTables with JsonFixtures {
+class ObjectSerializerTest extends SpecificationWithJUnit with DataTables with JsonFixtures {
   val serializer = new ObjectSerializer
 
   "deserialise filter" in {

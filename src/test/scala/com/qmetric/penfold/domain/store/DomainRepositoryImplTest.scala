@@ -1,19 +1,14 @@
 package com.qmetric.penfold.domain.store
 
+import com.qmetric.penfold.domain.event.{TaskCreated, TaskTriggered}
+import com.qmetric.penfold.domain.model.{AggregateId, Payload, _}
 import com.qmetric.penfold.readstore.EventNotifier
-import org.specs2.mutable.Specification
-import org.specs2.mock.Mockito
-import com.qmetric.penfold.domain.model._
-import com.qmetric.penfold.domain.model.AggregateId
-import com.qmetric.penfold.domain.model.Payload
-import com.qmetric.penfold.domain.event.{TaskTriggered, TaskCreated}
 import org.joda.time.DateTime
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
-@RunWith(classOf[JUnitRunner])
-class DomainRepositoryImplTest extends Specification with Mockito {
+class DomainRepositoryImplTest extends SpecificationWithJUnit with Mockito {
   class context extends Scope {
     val aggregateId = AggregateId("a1")
 

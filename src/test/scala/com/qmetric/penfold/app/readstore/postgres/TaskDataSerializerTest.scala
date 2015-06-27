@@ -1,18 +1,14 @@
 package com.qmetric.penfold.app.readstore.postgres
 
 import com.qmetric.penfold.app.support.json.ObjectSerializer
+import com.qmetric.penfold.domain.model.CloseResultType.Success
 import com.qmetric.penfold.domain.model.Status.{Ready, Started}
 import com.qmetric.penfold.support.{JsonFixtures, TestModel}
-import scala.Some
-import com.qmetric.penfold.domain.model.CloseResultType.Success
 import org.joda.time.DateTime
 import org.specs2.matcher.DataTables
-import org.specs2.mutable.Specification
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class TaskDataSerializerTest extends Specification with DataTables with JsonFixtures {
+class TaskDataSerializerTest extends SpecificationWithJUnit with DataTables with JsonFixtures {
 
   val prevStatus = PreviousStatus(Started, new DateTime(2014, 2, 25, 13, 0, 0, 0).getMillis)
 

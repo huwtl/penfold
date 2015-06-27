@@ -1,11 +1,8 @@
 package com.qmetric.penfold.app.support
 
-import org.specs2.mutable.Specification
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class UUIDFactoryTest extends Specification {
+class UUIDFactoryTest extends SpecificationWithJUnit {
   val idFactory = new UUIDFactory
 
   "create unique id" in {

@@ -1,18 +1,17 @@
 package com.qmetric.penfold.app.schedule
 
-import org.specs2.mutable.Specification
-import com.qmetric.penfold.readstore.{TaskProjectionReference, ReadStore}
-import com.qmetric.penfold.command.CommandDispatcher
-import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
-import com.qmetric.penfold.app.StartedTaskTimeoutConfiguration
-import org.specs2.mock.Mockito
-import com.qmetric.penfold.domain.model.Status.Started
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
-@RunWith(classOf[JUnitRunner])
-class StartedTaskTimeoutSchedulerTest extends Specification with Mockito {
+import com.qmetric.penfold.app.StartedTaskTimeoutConfiguration
+import com.qmetric.penfold.command.CommandDispatcher
+import com.qmetric.penfold.domain.model.Status.Started
+import com.qmetric.penfold.readstore.{ReadStore, TaskProjectionReference}
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+
+import scala.concurrent.duration.FiniteDuration
+
+class StartedTaskTimeoutSchedulerTest extends SpecificationWithJUnit with Mockito {
 
   "requeue started tasks on timeout" in {
     val readStore = mock[ReadStore]

@@ -1,12 +1,9 @@
 package com.qmetric.penfold.domain.model.patch
 
-import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class AddTest extends Specification with DataTables {
+class AddTest extends SpecificationWithJUnit with DataTables {
 
   "apply add operation" in {
     "existing"                            || "operation"                          || "expected"                                    |

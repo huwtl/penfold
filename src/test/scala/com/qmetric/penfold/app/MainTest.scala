@@ -1,12 +1,9 @@
 package com.qmetric.penfold.app
 
-import org.specs2.mutable.Specification
-import org.specs2.specification.{Step, Fragments}
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.specification.{Fragments, Step}
 
-@RunWith(classOf[JUnitRunner])
-class MainTest extends Specification {
+class MainTest extends SpecificationWithJUnit {
   sequential
 
   sys.props.put("config.file", getClass.getClassLoader.getResource("application.conf").getPath)

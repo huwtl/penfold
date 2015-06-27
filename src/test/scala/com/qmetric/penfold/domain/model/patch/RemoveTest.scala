@@ -1,12 +1,9 @@
 package com.qmetric.penfold.domain.model.patch
 
-import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class RemoveTest extends Specification with DataTables {
+class RemoveTest extends SpecificationWithJUnit with DataTables {
   "apply remove operation" in {
     "existing"                       ||  "operation"              || "expected"                  |
       Map("a" -> Map("c" -> "2"))    !!  Remove("/a/c")           !! Map("a" -> Map.empty)       |

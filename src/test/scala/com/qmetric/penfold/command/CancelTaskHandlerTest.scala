@@ -3,12 +3,9 @@ package com.qmetric.penfold.command
 import com.qmetric.penfold.domain.model.{AggregateId, AggregateVersion, Task}
 import com.qmetric.penfold.domain.store.DomainRepository
 import org.specs2.mock.Mockito
-import org.specs2.mutable.Specification
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable.SpecificationWithJUnit
 
-@RunWith(classOf[JUnitRunner])
-class CancelTaskHandlerTest extends Specification with Mockito {
+class CancelTaskHandlerTest extends SpecificationWithJUnit with Mockito {
 
   val expectedAggregateId = AggregateId("a1")
 
