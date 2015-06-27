@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scalatra.version>2.3.1</scalatra.version>
         <scala.binary.version>2.11</scala.binary.version>
-        <scala.version>2.11.6</scala.version>
+        <scala.version>2.11.7</scala.version>
         <jetty.version>9.2.11.v20150529</jetty.version>
     </properties>
 
@@ -51,13 +51,13 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
-            <version>2.11.6</version>
+            <version>${scala.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
-            <version>2.11.6</version>
+            <version>${scala.version}</version>
         </dependency>
 
         <dependency>
