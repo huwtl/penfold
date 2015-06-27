@@ -55,14 +55,14 @@
         </dependency>
 
         <dependency>
-            <groupId>org.scalatra</groupId>
-            <artifactId>scalatra_2.11</artifactId>
-            <version>${scalatra.version}</version>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+            <version>2.11.6</version>
         </dependency>
 
         <dependency>
             <groupId>org.scalatra</groupId>
-            <artifactId>scalatra-scalate_2.11</artifactId>
+            <artifactId>scalatra_2.11</artifactId>
             <version>${scalatra.version}</version>
         </dependency>
 
@@ -170,12 +170,6 @@
         </dependency>
 
         <dependency>
-            <groupId>me.moocar</groupId>
-            <artifactId>logback-gelf</artifactId>
-            <version>0.12</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
             <version>2.3.2</version>
@@ -233,6 +227,7 @@
                     </execution>
                     <execution>
                         <id>attach-javadocs</id>
+                        <phase>verify</phase>
                         <goals>
                             <goal>doc-jar</goal>
                         </goals>
@@ -241,6 +236,7 @@
                 <configuration>
                     <scalaVersion>${scala.version}</scalaVersion>
                     <scalaCompatVersion>${scala.binary.version}</scalaCompatVersion>
+                    <recompileMode>incremental</recompileMode>
                 </configuration>
             </plugin>
             <plugin>
