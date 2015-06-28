@@ -1,195 +1,23 @@
 package com.qmetric.penfold.app.readstore.postgres
 
+import com.qmetric.penfold.app.readstore.postgres.subscribers.Subscribers
 import com.qmetric.penfold.app.support.json.ObjectSerializer
-import com.qmetric.penfold.domain.event.{FutureTaskCreated, TaskArchived, TaskClosed, TaskCreated, TaskPayloadUpdated, TaskRequeued, TaskRescheduled, TaskStarted, TaskTriggered, _}
-import com.qmetric.penfold.domain.model.Status._
-import com.qmetric.penfold.domain.model.patch.Patch
-import com.qmetric.penfold.domain.model.{AggregateId, AggregateVersion, Payload, Status}
+import com.qmetric.penfold.domain.event._
 import com.qmetric.penfold.readstore.EventListener
 import grizzled.slf4j.Logger
-
-import scala.slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
-import scala.slick.jdbc.StaticQuery.interpolation
-import scala.slick.jdbc.{StaticQuery => Q}
 
 class PostgresReadStoreUpdater(objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
 
-  private val success = true
+  private val subscribers = new Subscribers
 
-  override def handle(event: Event) = {
-    val result = event match {
-      case e: TaskCreated => handleCreatedEventEvent(e, Ready)
-      case e: FutureTaskCreated => handleCreatedEventEvent(e, Waiting)
-      case e: TaskTriggered => handleTaskTriggeredEvent(e)
-      case e: TaskStarted => handleTaskStartedEvent(e)
-      case e: TaskRequeued => handleTaskRequeuedEvent(e)
-      case e: TaskRescheduled => handleTaskRescheduledEvent(e)
-      case e: TaskClosed => handleTaskClosedEvent(e)
-      case e: TaskCancelled => handleTaskCancelledEvent(e)
-      case e: TaskUnassigned => handleUnassignedEvent(e)
-      case e: TaskPayloadUpdated => handleUpdatePayloadEvent(e)
-      case e: TaskArchived => handleArchiveEvent(e)
-      case _ =>
-    }
-
-    logger.info(s"event $event handled with result $result")
-
-    success
-  }
-
-  private def handleCreatedEventEvent(event: TaskCreatedEvent, initStatus: Status) = {
-    val queue = event.queue
-
-    val task = TaskData(event.aggregateId, event.aggregateVersion, event.created.getMillis, queue, initStatus, event.created.getMillis, previousStatus = None, 0, event.triggerDate.getMillis, assignee = None,
-      event.score, resolveSortOrder(event, initStatus, event.score).get, event.payload, rescheduleReason = None, cancelReason = None, closeReason = None, closeResultType = None)
-
-    val taskJson = objectSerializer.serialize(task)
-
-    val alreadyExists = sql"""SELECT id FROM tasks WHERE id = ${task.id.value}""".as[String].firstOption
-    if (!alreadyExists.isDefined) sqlu"""INSERT INTO tasks (id, data) VALUES (${task.id.value}, $taskJson::json)""".execute
-  }
-
-  private def handleTaskTriggeredEvent(event: TaskTriggered) = {
-    handleTaskUpdate(event) {
-      task => task.copy(previousStatus = Some(updatePreviousStatus(task)), status = Ready, statusLastModified = event.created.getMillis, sort = task.score)
-    }
-  }
-
-  private def handleTaskStartedEvent(event: TaskStarted) = {
-    handleTaskUpdate(event) {
-      task => task.copy(
-        previousStatus = Some(updatePreviousStatus(task)),
-        status = Started,
-        statusLastModified = event.created.getMillis,
-        attempts = task.attempts + 1,
-        sort = event.created.getMillis,
-        assignee = event.assignee,
-        payload = patchPayloadIfExists(task, event.payloadUpdate))
-    }
-  }
-
-  private def handleTaskRequeuedEvent(event: TaskRequeued) = {
-    handleTaskUpdate(event) {
-      task => {
-        val score = event.score.getOrElse(task.score)
-        task.copy(
-          previousStatus = Some(updatePreviousStatus(task)),
-          status = Ready,
-          statusLastModified = event.created.getMillis,
-          score = score,
-          sort = score,
-          assignee = event.assignee,
-          payload = patchPayloadIfExists(task, event.payloadUpdate))
+  override def handle(event: Event) {
+    subscribers.findSuitable(event) match {
+      case Some(subscriber) => {
+        subscriber.handleEvent(event, objectSerializer)
+        logger.info(s"event $event handled")
       }
+      case _ => logger.warn(s"no handler found for event $event")
     }
-  }
-
-  private def handleTaskRescheduledEvent(event: TaskRescheduled) = {
-    handleTaskUpdate(event) {
-      task => {
-        task.copy(
-          previousStatus = Some(updatePreviousStatus(task)),
-          status = Waiting,
-          statusLastModified = event.created.getMillis,
-          score = event.score.getOrElse(task.score),
-          sort = event.triggerDate.getMillis,
-          triggerDate = event.triggerDate.getMillis,
-          rescheduleReason = event.reason,
-          assignee = event.assignee,
-          payload = patchPayloadIfExists(task, event.payloadUpdate))
-      }
-    }
-  }
-
-  private def handleTaskClosedEvent(event: TaskClosed) = {
-    handleTaskUpdate(event) {
-      task => {
-        task.copy(
-          previousStatus = Some(updatePreviousStatus(task)),
-          status = Closed,
-          statusLastModified = event.created.getMillis,
-          sort = event.created.getMillis,
-          closeReason = event.reason,
-          closeResultType = event.resultType,
-          assignee = None,
-          payload = patchPayloadIfExists(task, event.payloadUpdate))
-      }
-    }
-  }
-
-  private def handleTaskCancelledEvent(event: TaskCancelled) = {
-    handleTaskUpdate(event) {
-      task => {
-        task.copy(
-          previousStatus = Some(updatePreviousStatus(task)),
-          status = Cancelled,
-          statusLastModified = event.created.getMillis,
-          sort = event.created.getMillis,
-          cancelReason = event.reason,
-          assignee = None,
-          payload = patchPayloadIfExists(task, event.payloadUpdate))
-      }
-    }
-  }
-
-  private def handleUnassignedEvent(event: TaskUnassigned) = {
-    handleTaskUpdate(event) {
-      task => {
-        task.copy(
-          assignee = None,
-          payload = patchPayloadIfExists(task, event.payloadUpdate))
-      }
-    }
-  }
-
-  private def handleUpdatePayloadEvent(event: TaskPayloadUpdated) = {
-    handleTaskUpdate(event) {
-      task => {
-        task.copy(
-          sort = resolveSortOrder(event, task.status, task.score).getOrElse(task.sort),
-          score = event.score.getOrElse(task.score),
-          payload = patchPayloadIfExists(task, Some(event.payloadUpdate)))
-      }
-    }
-  }
-
-  private def handleArchiveEvent(event: TaskArchived) = {
-    sqlu"""INSERT INTO archived (id, data) (SELECT t.id, t.data FROM tasks t WHERE t.id = ${event.aggregateId.value})""".execute
-    sqlu"""DELETE FROM tasks WHERE id = ${event.aggregateId.value} AND (data->>'version')::bigint = ${event.aggregateVersion.previous.number}""".execute
-  }
-
-  private def handleTaskUpdate(event: Event)(updatedFields: TaskData => TaskData) = {
-    existing(event.aggregateId, event.aggregateVersion) match {
-      case Some(task) =>
-        val defaultsApplied = task.copy(version = event.aggregateVersion, rescheduleReason = None, closeReason = None, closeResultType = None, cancelReason = None)
-        val updatedTaskJson = objectSerializer.serialize(updatedFields(defaultsApplied))
-        sqlu"""UPDATE tasks SET data = $updatedTaskJson::json WHERE id = ${event.aggregateId.value} AND (data->>'version')::bigint = ${event.aggregateVersion.previous.number}""".execute
-      case None =>
-    }
-  }
-
-  private def updatePreviousStatus(existingTask: TaskData) = {
-    PreviousStatus(existingTask.status, existingTask.statusLastModified)
-  }
-
-  private def patchPayloadIfExists(existingTask: TaskData, payloadUpdate: Option[Patch]): Payload = {
-    payloadUpdate.map(update => Payload(update.exec(existingTask.payload.content))).getOrElse(existingTask.payload)
-  }
-
-  private def resolveSortOrder(event: Event, status: Status, existingScore: Long) = {
-    event match {
-      case e: TaskCreated => Some(e.score)
-      case e: FutureTaskCreated => Some(e.triggerDate.getMillis)
-      case e: TaskPayloadUpdated if status == Ready => Some(e.score getOrElse existingScore)
-      case e: TaskPayloadUpdated => None
-      case _ => Some(event.created.getMillis)
-    }
-  }
-
-  private def existing(id: AggregateId, version: AggregateVersion) = {
-    val json = sql"""SELECT data FROM tasks WHERE id = ${id.value} AND (data->>'version')::bigint = ${version.previous.number}""".as[String].firstOption
-    json.map(objectSerializer.deserialize[TaskData])
   }
 }
