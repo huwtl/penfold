@@ -32,7 +32,7 @@ class Bootstrap extends LifeCycle {
     val database = new PostgresDatabaseInitialiser(config.dbMigrationPath).init(new PostgresConnectionPoolFactory().create(config.database))
     val eventStore = new PostgresEventStore(database, eventSerializer)
 
-    val readStoreUpdater = new EventNotifier(new PostgresReadStoreUpdater(database, objectSerializer))
+    val readStoreUpdater = new EventNotifier(new PostgresReadStoreUpdater(objectSerializer))
 
     val domainRepository = new PostgresTransactionalDomainRepository(database, new DomainRepositoryImpl(eventStore, readStoreUpdater))
 

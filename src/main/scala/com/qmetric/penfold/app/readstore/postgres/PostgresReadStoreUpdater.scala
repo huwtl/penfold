@@ -13,7 +13,7 @@ import Database.dynamicSession
 import scala.slick.jdbc.StaticQuery.interpolation
 import scala.slick.jdbc.{StaticQuery => Q}
 
-class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSerializer) extends EventListener {
+class PostgresReadStoreUpdater(objectSerializer: ObjectSerializer) extends EventListener {
   private lazy val logger = Logger(getClass)
 
   private val success = true
