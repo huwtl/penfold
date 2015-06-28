@@ -1,6 +1,7 @@
 package com.qmetric.penfold.app
 
 import javax.servlet.ServletContext
+import com.qmetric.penfold.app.support.postgres.{PostgresDatabaseInitialiser, PostgresConnectionPoolFactory}
 import org.scalatra.LifeCycle
 import com.qmetric.penfold.app.web._
 import java.net.URI
@@ -15,7 +16,7 @@ import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 import com.qmetric.penfold.app.support.{DateTimeSource, UUIDFactory}
 import com.qmetric.penfold.app.schedule.{StartedTaskTimeoutScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
 import com.codahale.metrics.health.HealthCheckRegistry
-import com.qmetric.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
+import com.qmetric.penfold.app.support.metrics.ConnectivityHealthcheck
 import com.qmetric.penfold.app.store.postgres._
 import com.qmetric.penfold.app.readstore.postgres.{PaginatedQueryService, PostgresReadStore, PostgresReadStoreUpdater}
 
@@ -51,8 +52,8 @@ class Bootstrap extends LifeCycle {
     val queueFormatter = new HalQueueFormatter(baseQueueLink, taskFormatter)
 
     val healthCheckRegistry: HealthCheckRegistry = new HealthCheckRegistry
-    healthCheckRegistry.register("Event store connectivity", new EventStoreConnectivityHealthcheck(eventStore))
-    healthCheckRegistry.register("Read store connectivity", new ReadStoreConnectivityHealthcheck(readStore))
+    healthCheckRegistry.register("Event store connectivity", new ConnectivityHealthcheck(eventStore))
+    healthCheckRegistry.register("Read store connectivity", new ConnectivityHealthcheck(readStore))
 
     context mount(new PingResource, "/ping")
     context mount(new HealthResource(healthCheckRegistry, objectSerializer), "/healthcheck")

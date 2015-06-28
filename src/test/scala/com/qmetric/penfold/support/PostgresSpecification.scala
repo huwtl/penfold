@@ -1,7 +1,7 @@
 package com.qmetric.penfold.support
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgreSQL
-import com.qmetric.penfold.app.store.postgres.PostgresDatabaseInitialiser
+import com.qmetric.penfold.app.support.postgres.PostgresDatabaseInitialiser
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.{Fragments, Step}
 

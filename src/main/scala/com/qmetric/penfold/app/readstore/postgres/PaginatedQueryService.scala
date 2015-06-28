@@ -2,12 +2,13 @@ package com.qmetric.penfold.app.readstore.postgres
 
 import com.qmetric.penfold.app.readstore.postgres.NavigationDirection.{Forward, Reverse}
 import com.qmetric.penfold.app.support.json.ObjectSerializer
+import com.qmetric.penfold.app.support.postgres.MyPostgresDriver
 import com.qmetric.penfold.readstore.{PageRequest, TaskProjection, _}
 
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import grizzled.slf4j.Logger
-import com.qmetric.penfold.app.readstore.postgres.MyPostgresDriver.simple._
+import MyPostgresDriver.simple._
 import com.qmetric.penfold.app.readstore.postgres.TasksTable.TasksTable
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.lifted

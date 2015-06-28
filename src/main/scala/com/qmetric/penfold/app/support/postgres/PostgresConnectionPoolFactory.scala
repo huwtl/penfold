@@ -1,10 +1,11 @@
-package com.qmetric.penfold.app.store.postgres
+package com.qmetric.penfold.app.support.postgres
 
 import com.qmetric.penfold.app.DatabaseConfiguration
 import com.zaxxer.hikari.HikariDataSource
 
 class PostgresConnectionPoolFactory {
   def create(poolConfig: DatabaseConfiguration) = {
+
     val dataSource = new HikariDataSource
     dataSource.setJdbcUrl(poolConfig.url)
     dataSource.setUsername(poolConfig.username)

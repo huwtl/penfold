@@ -1,5 +1,7 @@
 package com.qmetric.penfold.app.readstore.postgres
 
+import com.qmetric.penfold.app.support.postgres.MyPostgresDriver
+
 import scala.slick.jdbc.{StaticQuery => Q}
 import com.github.tminglei.slickpg._
 

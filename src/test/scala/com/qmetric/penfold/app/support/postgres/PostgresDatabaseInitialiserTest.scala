@@ -1,4 +1,4 @@
-package com.qmetric.penfold.app.store.postgres
+package com.qmetric.penfold.app.support.postgres
 
 import javax.sql.DataSource
 

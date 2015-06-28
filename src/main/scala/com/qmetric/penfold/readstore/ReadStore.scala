@@ -1,13 +1,12 @@
 package com.qmetric.penfold.readstore
 
+import com.qmetric.penfold.app.support.ConnectivityCheck
 import com.qmetric.penfold.domain.model.Status
 import com.qmetric.penfold.domain.model.QueueId
 import com.qmetric.penfold.domain.model.AggregateId
 import scala.concurrent.duration.FiniteDuration
 
-trait ReadStore {
-  def checkConnectivity: Either[Boolean, Exception]
-
+trait ReadStore extends ConnectivityCheck {
   def retrieveBy(id: AggregateId): Option[TaskProjection]
 
   def retrieveBy(filters: Filters, pageRequest: PageRequest): PageResult

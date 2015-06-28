@@ -1,11 +1,12 @@
 package com.qmetric.penfold.app
 
+import com.qmetric.penfold.app.support.postgres.CustomDbMigrationPath
+
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
 import com.qmetric.penfold.readstore.{SortOrderMapping, SortOrder}
 import com.qmetric.penfold.domain.model.Status
 import com.qmetric.penfold.app.readstore.postgres.{Aliases, Path, Alias}
-import com.qmetric.penfold.app.store.postgres.CustomDbMigrationPath
 
 case class ServerConfiguration(publicUrl: String,
                                httpPort: Int,

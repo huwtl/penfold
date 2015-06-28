@@ -1,5 +1,7 @@
 package com.qmetric.penfold.app.store.postgres
 
+import com.qmetric.penfold.app.support.ConnectivityCheck
+
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import scala.slick.jdbc.{GetResult, StaticQuery => Q}
