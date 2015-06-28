@@ -1,12 +1,12 @@
 package com.qmetric.penfold.app.readstore.postgres
 
-import grizzled.slf4j.Logger
 import com.qmetric.penfold.app.support.json.ObjectSerializer
 import com.qmetric.penfold.domain.event.{FutureTaskCreated, TaskArchived, TaskClosed, TaskCreated, TaskPayloadUpdated, TaskRequeued, TaskRescheduled, TaskStarted, TaskTriggered, _}
 import com.qmetric.penfold.domain.model.Status._
 import com.qmetric.penfold.domain.model.patch.Patch
 import com.qmetric.penfold.domain.model.{AggregateId, AggregateVersion, Payload, Status}
 import com.qmetric.penfold.readstore.EventListener
+import grizzled.slf4j.Logger
 
 import scala.slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -20,8 +20,8 @@ class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSeria
 
   override def handle(event: Event) = {
     val result = event match {
-      case e: TaskCreated => handleCreateEvent(e, Ready)
-      case e: FutureTaskCreated => handleCreateEvent(e, Waiting)
+      case e: TaskCreated => handleCreatedEventEvent(e, Ready)
+      case e: FutureTaskCreated => handleCreatedEventEvent(e, Waiting)
       case e: TaskTriggered => handleTaskTriggeredEvent(e)
       case e: TaskStarted => handleTaskStartedEvent(e)
       case e: TaskRequeued => handleTaskRequeuedEvent(e)
@@ -39,11 +39,11 @@ class PostgresReadStoreUpdater(database: Database, objectSerializer: ObjectSeria
     success
   }
 
-  private def handleCreateEvent(event: TaskCreatedEvent, status: Status) = {
+  private def handleCreatedEventEvent(event: TaskCreatedEvent, initStatus: Status) = {
     val queue = event.queue
 
-    val task = TaskData(event.aggregateId, event.aggregateVersion, event.created.getMillis, queue, status, event.created.getMillis, previousStatus = None, 0, event.triggerDate.getMillis, assignee = None,
-      event.score, resolveSortOrder(event, status, event.score).get, event.payload, rescheduleReason = None, cancelReason = None, closeReason = None, closeResultType = None)
+    val task = TaskData(event.aggregateId, event.aggregateVersion, event.created.getMillis, queue, initStatus, event.created.getMillis, previousStatus = None, 0, event.triggerDate.getMillis, assignee = None,
+      event.score, resolveSortOrder(event, initStatus, event.score).get, event.payload, rescheduleReason = None, cancelReason = None, closeReason = None, closeResultType = None)
 
     val taskJson = objectSerializer.serialize(task)
 

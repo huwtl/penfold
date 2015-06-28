@@ -23,44 +23,38 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
   def execQuery(filters: Filters, pageRequest: PageRequest, sortOrder: SortOrder): PageResult = {
     val pageSize = pageRequest.pageSize
 
-    val query = TasksTable.Tasks
+    val emptyQueryOnTasks = TasksTable.Tasks
 
     lastKnownPageTransformer.toPageDetails(pageRequest.pageReference) match {
-      case Some(lastKnownPageDetails) =>
-        (lastKnownPageDetails.direction, sortOrder) match {
-          case (Forward, SortOrder.Desc) => queryForward(query, filters, pageSize, lastKnownPageDetails, SortOrder.Desc, movingToLesserSortScores = true)
-          case (Forward, SortOrder.Asc) => queryForward(query, filters, pageSize, lastKnownPageDetails, SortOrder.Asc, movingToLesserSortScores = false)
-          case (Reverse, SortOrder.Desc) => queryBackwards(query, filters, pageSize, lastKnownPageDetails, SortOrder.Desc, movingToLesserSortScores = false)
-          case (Reverse, SortOrder.Asc) => queryBackwards(query, filters, pageSize, lastKnownPageDetails, SortOrder.Asc, movingToLesserSortScores = true)
-        }
-      case None =>
-        val resultsWithOverflow = execPageQueryWithOverflow(query, filters, sortOrder, pageSize)
-        val results = resultsWithOverflow take pageSize
-        val nextPage = if (resultsWithOverflow.size > pageSize) lastKnownPageTransformer.toPageReference(results, Forward) else None
+      case None => executeQueryToFirstPage(emptyQueryOnTasks, filters, pageSize, sortOrder)
+      case Some(lastKnownPageDetails) => execQueryToGivenPage(emptyQueryOnTasks, lastKnownPageDetails, filters, pageSize, sortOrder)
+    }
+  }
 
-        PageResult(results, previousPage = None, nextPage = nextPage)
+  private def executeQueryToFirstPage(emptyQueryOnTasks: lifted.TableQuery[TasksTable], filters: Filters, pageSize: Int, sortOrder: SortOrder) = {
+    val resultsWithOverflow = execPageQueryWithOverflow(emptyQueryOnTasks, filters, sortOrder, pageSize)
+    val results = resultsWithOverflow take pageSize
+    val nextPage = if (resultsWithOverflow.size > pageSize) lastKnownPageTransformer.toPageReference(results, Forward) else None
+
+    PageResult(results, previousPage = None, nextPage = nextPage)
+  }
+
+  private def execQueryToGivenPage(emptyQueryOnTasks: lifted.TableQuery[TasksTable], lastKnownPageDetails: LastKnownPageDetails,  filters: Filters, pageSize: Int, sortOrder: SortOrder) = {
+    (lastKnownPageDetails.direction, sortOrder) match {
+      case (Forward, SortOrder.Desc) => queryForward(emptyQueryOnTasks, filters, pageSize, lastKnownPageDetails, SortOrder.Desc, movingToLesserSortScores = true)
+      case (Forward, SortOrder.Asc) => queryForward(emptyQueryOnTasks, filters, pageSize, lastKnownPageDetails, SortOrder.Asc, movingToLesserSortScores = false)
+      case (Reverse, SortOrder.Desc) => queryBackwards(emptyQueryOnTasks, filters, pageSize, lastKnownPageDetails, SortOrder.Desc, movingToLesserSortScores = false)
+      case (Reverse, SortOrder.Asc) => queryBackwards(emptyQueryOnTasks, filters, pageSize, lastKnownPageDetails, SortOrder.Asc, movingToLesserSortScores = true)
     }
   }
 
   private def execPageQueryWithOverflow(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], filters: Filters, sortOrder: SortOrder, pageSize: Int) = {
     if (pageSize > 0) {
-      val queryWithCriteria: lifted.Query[TasksTable, TasksTable#TableElementType, Seq] = filters.all.foldLeft(query)((q, f) => {
+      val queryWithRestrictions: lifted.Query[TasksTable, TasksTable#TableElementType, Seq] = appendRestrictionsToQuery(query, filters)
 
-        val filterPath = aliases.path(Alias(f.key)).value
+      val queryWithRestrictionsAndSort = appendSortCriteriaToQuery(queryWithRestrictions, sortOrder)
 
-        q.filter((row: TasksTable) =>
-          f match {
-            case EQ(key, value, dataType) => jsonPath(row, filterPath) === value.bind
-            case IN(key, values, dataType) => jsonPath(row, filterPath) inSetBind values
-            case LT(key, value, dataType) => jsonPath(row, filterPath).asColumnOf[Long] < Option(value).map(_.toLong).getOrElse(Long.MinValue).bind
-            case GT(key, value, dataType) => jsonPath(row, filterPath).asColumnOf[Long] > Option(value).map(_.toLong).getOrElse(Long.MaxValue).bind
-            case _ => throw new IllegalStateException("unsupported filter type")
-          })
-      })
-
-      val sort = sortCriteria(queryWithCriteria, sortOrder).take(pageSize + 1)
-
-      val rows = sort.map(_.data)
+      val rows = queryWithRestrictionsAndSort.take(pageSize + 1).map(_.data)
 
       logger.debug(s"query: ${rows.selectStatement}")
 
@@ -71,7 +65,22 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
     }
   }
 
-  private def jsonPath(row: TasksTable, path: String) = {
+  private def appendRestrictionsToQuery(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], filters: Filters) = {
+    filters.all.foldLeft(query)((currentQuery, nextFilter) => {
+      val filterPath = aliases.path(Alias(nextFilter.key)).value
+
+      currentQuery.filter((row: TasksTable) =>
+        nextFilter match {
+          case EQ(key, value, dataType) => jsonDataPath(row, filterPath) === value.bind
+          case IN(key, values, dataType) => jsonDataPath(row, filterPath) inSetBind values
+          case LT(key, value, dataType) => jsonDataPath(row, filterPath).asColumnOf[Long] < Option(value).map(_.toLong).getOrElse(Long.MinValue).bind
+          case GT(key, value, dataType) => jsonDataPath(row, filterPath).asColumnOf[Long] > Option(value).map(_.toLong).getOrElse(Long.MaxValue).bind
+          case _ => throw new IllegalStateException("unsupported filter type")
+        })
+    })
+  }
+
+  private def jsonDataPath(row: TasksTable, path: String) = {
     val parts = path.split("\\.").toList
 
     parts match {
@@ -93,7 +102,7 @@ class PaginatedQueryService(database: Database, objectSerializer: ObjectSerializ
     if (movingToLesserSortScores) SortOrder.Desc else SortOrder.Asc
   }
 
-  private def sortCriteria(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], sortOrder: SortOrder) = {
+  private def appendSortCriteriaToQuery(query: lifted.Query[TasksTable, TasksTable#TableElementType, Seq], sortOrder: SortOrder) = {
     if (sortOrder == SortOrder.Desc)
       query.sortBy(_.id.desc).sortBy(row => row.data.+>>(sortColumn).asColumnOf[Long].desc)
     else
