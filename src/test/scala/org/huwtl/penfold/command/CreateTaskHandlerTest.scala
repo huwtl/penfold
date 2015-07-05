@@ -1,12 +1,11 @@
 package org.huwtl.penfold.command
 
-import org.specs2.mutable.Specification
-import org.specs2.mock.Mockito
+import org.huwtl.penfold.domain.model.{AggregateId, _}
 import org.huwtl.penfold.domain.store.DomainRepository
-import org.huwtl.penfold.domain.model._
-import org.huwtl.penfold.domain.model.AggregateId
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 
-class CreateTaskHandlerTest extends Specification with Mockito {
+class CreateTaskHandlerTest extends SpecificationWithJUnit with Mockito {
 
   val expectedAggregateId = AggregateId("a1")
 

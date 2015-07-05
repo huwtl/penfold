@@ -6,9 +6,9 @@ import org.huwtl.penfold.domain.model.Status.{Ready, Started}
 import org.huwtl.penfold.support.{JsonFixtures, TestModel}
 import org.joda.time.DateTime
 import org.specs2.matcher.DataTables
-import org.specs2.mutable.Specification
+import org.specs2.mutable.SpecificationWithJUnit
 
-class TaskDataSerializerTest extends Specification with DataTables with JsonFixtures {
+class TaskDataSerializerTest extends SpecificationWithJUnit with DataTables with JsonFixtures {
 
   val prevStatus = PreviousStatus(Started, new DateTime(2014, 2, 25, 13, 0, 0, 0).getMillis)
 
@@ -51,9 +51,9 @@ class TaskDataSerializerTest extends Specification with DataTables with JsonFixt
   val serializer = new ObjectSerializer
 
   "deserialise task data for postgres" in {
-    "jsonPath"             || "expected"                                              |
-    "taskData.json"        !! taskDataFull       |
-    "taskDataMinimal.json" !! taskDataMinimal |> {
+    "jsonPath"               || "expected"                                              |
+      "taskData.json"        !! taskDataFull       |
+      "taskDataMinimal.json" !! taskDataMinimal |> {
       (jsonPath, expected) =>
         val json = jsonFixtureAsString(s"fixtures/readstore/postgres/$jsonPath")
         val actualTaskData = serializer.deserialize[TaskData](json)

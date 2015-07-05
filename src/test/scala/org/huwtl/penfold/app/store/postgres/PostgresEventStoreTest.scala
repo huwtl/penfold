@@ -1,17 +1,15 @@
 package org.huwtl.penfold.app.store.postgres
 
-import org.specs2.mutable.Specification
-import org.specs2.matcher.DataTables
 import org.huwtl.penfold.app.support.json.EventSerializer
-import org.huwtl.penfold.domain.model._
-import org.joda.time.DateTime
-import org.huwtl.penfold.domain.event.{Event, TaskTriggered, TaskCreated}
-import org.huwtl.penfold.domain.model.AggregateId
+import org.huwtl.penfold.domain.event.{Event, TaskCreated, TaskTriggered}
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
+import org.huwtl.penfold.domain.model.{AggregateId, _}
 import org.huwtl.penfold.support.PostgresSpecification
+import org.joda.time.DateTime
+import org.specs2.matcher.DataTables
 import org.specs2.specification.Scope
 
-class PostgresEventStoreTest extends Specification with DataTables with PostgresSpecification {
+class PostgresEventStoreTest extends PostgresSpecification with DataTables {
 
   class context extends Scope {
     val triggerDate = new DateTime(2014, 4, 3, 13, 0, 0, 0)

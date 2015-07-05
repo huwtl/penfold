@@ -1,11 +1,11 @@
 package org.huwtl.penfold.app.support.json
 
-import org.huwtl.penfold.readstore.{EQ, GT, IN, LT, _}
+import org.huwtl.penfold.readstore.{EQ, IN, LT, _}
 import org.huwtl.penfold.support.JsonFixtures
 import org.specs2.matcher.DataTables
-import org.specs2.mutable.Specification
+import org.specs2.mutable.SpecificationWithJUnit
 
-class ObjectSerializerTest extends Specification with DataTables with JsonFixtures {
+class ObjectSerializerTest extends SpecificationWithJUnit with DataTables with JsonFixtures {
   val serializer = new ObjectSerializer
 
   "deserialise filter" in {

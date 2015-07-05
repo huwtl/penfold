@@ -1,18 +1,14 @@
 package org.huwtl.penfold.domain.model
 
-import org.specs2.mutable.Specification
-import org.huwtl.penfold.domain.event._
-import org.joda.time.DateTime
-import org.huwtl.penfold.domain.event.TaskCreated
-import org.huwtl.penfold.domain.event.TaskTriggered
-import org.huwtl.penfold.domain.event.TaskStarted
+import org.huwtl.penfold.domain.event.{TaskCreated, TaskStarted, TaskTriggered, _}
 import org.huwtl.penfold.domain.exceptions.AggregateConflictException
-import org.huwtl.penfold.domain.model.patch.Patch
-import scala.None
-import org.huwtl.penfold.support.TestModel
 import org.huwtl.penfold.domain.model.CloseResultType.Success
+import org.huwtl.penfold.domain.model.patch.Patch
+import org.huwtl.penfold.support.TestModel
+import org.joda.time.DateTime
+import org.specs2.mutable.SpecificationWithJUnit
 
-class TaskTest extends Specification {
+class TaskTest extends SpecificationWithJUnit {
 
   val queue = QueueId("abc")
 
@@ -107,10 +103,9 @@ class TaskTest extends Specification {
       typesOf(requeuedTask.uncommittedEvents) must beEqualTo(List(classOf[TaskRequeued], classOf[FutureTaskCreated]))
     }
 
-    "ensure ready, archived, closed tasks cannot be requeued" in {
+    "ensure ready, archived  tasks cannot be requeued" in {
       Task.create(AggregateId("1"), queue, Payload.empty, None).requeue(TestModel.version, None, None, None, None) must throwA[AggregateConflictException]
       Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).requeue(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
-      Task.create(AggregateId("1"), queue, Payload.empty, None).cancel(TestModel.version, None, None, None).requeue(TestModel.version.next, None, None, None, None) must throwA[AggregateConflictException]
     }
   }
 
@@ -122,10 +117,6 @@ class TaskTest extends Specification {
 
     "ensure archived tasks cannot be rescheduled" in {
       Task.create(AggregateId("1"), queue, Payload.empty, None).archive(TestModel.version).reschedule(TestModel.version.next, DateTime.now().plusHours(1), None, None, None, None) must throwA[AggregateConflictException]
-    }
-
-    "ensure cancelled tasks cannot be rescheduled" in {
-      Task.create(AggregateId("1"), queue, Payload.empty, None).cancel(TestModel.version, None, None, None).reschedule(TestModel.version.next, DateTime.now().plusHours(1), None, None, None, None) must throwA[AggregateConflictException]
     }
   }
 

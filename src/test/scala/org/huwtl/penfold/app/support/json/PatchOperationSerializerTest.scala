@@ -3,9 +3,9 @@ package org.huwtl.penfold.app.support.json
 import org.huwtl.penfold.domain.model.patch.{Add, Remove, Replace, Value}
 import org.huwtl.penfold.support.JsonFixtures
 import org.specs2.matcher.DataTables
-import org.specs2.mutable.Specification
+import org.specs2.mutable.SpecificationWithJUnit
 
-class PatchOperationSerializerTest extends Specification with DataTables with JsonFixtures {
+class PatchOperationSerializerTest extends SpecificationWithJUnit with DataTables with JsonFixtures {
 
   val addOperation = Add("/a/b", Value("1"))
   val addOperationWithNumberic = Add("/a/b", Value(1))
@@ -31,13 +31,13 @@ class PatchOperationSerializerTest extends Specification with DataTables with Js
 
   "serialise patch operation" in {
     "op"                      ||  "expected"                  |
-    addOperation              !!  "add.json"                  |
-    addOperationWithNumberic  !!  "addWithNumericValue.json"  |
-    addOperationWithComplex   !!  "addWithComplexValue.json"  |
-    removeOperation           !!  "remove.json"               |
-    replaceOperation          !!  "replace.json"              |> {
+      addOperation              !!  "add.json"                  |
+      addOperationWithNumberic  !!  "addWithNumericValue.json"  |
+      addOperationWithComplex   !!  "addWithComplexValue.json"  |
+      removeOperation           !!  "remove.json"               |
+      replaceOperation          !!  "replace.json"              |> {
       (op, expected) =>
-        val expectedJson = jsonFixture(s"fixtures/patch/${expected}")
+        val expectedJson = jsonFixture(s"fixtures/patch/$expected")
         val json = asJson(serializer.serialize(op))
         json must beEqualTo(expectedJson)
     }

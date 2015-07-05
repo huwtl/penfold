@@ -1,14 +1,15 @@
 package org.huwtl.penfold.app
 
-import org.specs2.mutable.Specification
+import java.util.concurrent.TimeUnit._
 
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.Ficus._
-import scala.concurrent.duration.FiniteDuration
-import java.util.concurrent.TimeUnit._
 import net.ceedubs.ficus.readers.ArbitraryTypeReader._
+import org.specs2.mutable.SpecificationWithJUnit
 
-class ServerConfigurationTest extends Specification {
+import scala.concurrent.duration.FiniteDuration
+
+class ServerConfigurationTest extends SpecificationWithJUnit {
 
   val publicUrl = "http://localhost:9762"
 

@@ -1,21 +1,20 @@
 package org.huwtl.penfold.app.web
 
-import org.scalatra._
-import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
-import org.huwtl.penfold.app.support.hal.HalTaskFormatter
-import org.huwtl.penfold.domain.model.{AggregateVersion, AggregateId}
-import org.huwtl.penfold.readstore.ReadStore
-import org.huwtl.penfold.command.CommandDispatcher
-import org.huwtl.penfold.app.support.auth.BasicAuthenticationSupport
 import org.huwtl.penfold.app.AuthenticationCredentials
+import org.huwtl.penfold.app.support.auth.BasicAuthenticationSupport
+import org.huwtl.penfold.app.support.hal.HalTaskFormatter
+import org.huwtl.penfold.command.CommandDispatcher
+import org.huwtl.penfold.domain.model.{AggregateId, AggregateVersion}
+import org.huwtl.penfold.readstore.ReadStore
+import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
+import org.scalatra._
 
 class TaskResource(readStore: ReadStore,
                    commandDispatcher: CommandDispatcher,
                    commandParser: TaskCommandParser,
                    halFormatter: HalTaskFormatter,
                    pageSize: Int,
-                   authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport {
-
+                   authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport with RequestLogging {
   before() {
     contentType = HAL_JSON
   }

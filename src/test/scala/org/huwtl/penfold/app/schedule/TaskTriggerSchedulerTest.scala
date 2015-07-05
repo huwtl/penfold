@@ -1,11 +1,11 @@
 package org.huwtl.penfold.app.schedule
 
-import org.specs2.mutable.Specification
-import org.specs2.mock.Mockito
-import org.huwtl.penfold.readstore.{TaskProjectionReference, ReadStore}
 import org.huwtl.penfold.command.CommandDispatcher
+import org.huwtl.penfold.readstore.{ReadStore, TaskProjectionReference}
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 
-class TaskTriggerSchedulerTest extends Specification with Mockito {
+class TaskTriggerSchedulerTest extends SpecificationWithJUnit with Mockito {
   "periodically trigger future tasks" in {
     val readStore = mock[ReadStore]
     val commandDispatcher = mock[CommandDispatcher]

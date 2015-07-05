@@ -5,13 +5,14 @@ import java.net.URI
 import org.huwtl.penfold.app.AuthenticationCredentials
 import org.huwtl.penfold.app.support.hal.{HalQueueFormatter, HalTaskFormatter}
 import org.huwtl.penfold.command.CommandDispatcher
-import org.huwtl.penfold.domain.model.{AggregateId, _}
-import org.huwtl.penfold.readstore.{PageRequest, PageResult, _}
+import org.huwtl.penfold.domain.model.{AggregateId, Status}
+import org.huwtl.penfold.readstore.{PageRequest, SortOrderMapping, _}
 import org.huwtl.penfold.support.{JsonFixtures, TestModel}
 import org.scalatra.test.specs2.MutableScalatraSpec
 import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 
-class QueueResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification with JsonFixtures {
+class QueueResourceTest extends SpecificationWithJUnit with MutableScalatraSpec with Mockito with WebAuthSpecification with JsonFixtures {
   sequential
 
   val expectedTask1 = TestModel.readModels.task.copy(id = AggregateId("1"))

@@ -5,9 +5,9 @@ import java.net.URI
 import org.huwtl.penfold.domain.model.{AggregateId, _}
 import org.huwtl.penfold.readstore.{PageResult, _}
 import org.huwtl.penfold.support.{JsonFixtures, TestModel}
-import org.specs2.mutable.Specification
+import org.specs2.mutable.SpecificationWithJUnit
 
-class HalQueueFormatterTest extends Specification with JsonFixtures {
+class HalQueueFormatterTest extends SpecificationWithJUnit with JsonFixtures {
 
   val filters = Filters(List(EQ("data", "a value")))
 

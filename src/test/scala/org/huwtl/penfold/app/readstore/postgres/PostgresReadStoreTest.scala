@@ -45,7 +45,7 @@ class PostgresReadStoreTest extends PostgresSpecification with Mockito with Data
     val dateTimeSource = mock[DateTimeSource]
     val aliases = Aliases(Map(Alias("a") -> Path("payload.a"), Alias("b") -> Path("payload.b"), Alias("c") -> Path("payload.c")))
 
-    val readStoreUpdater = new PostgresReadStoreUpdater(database, new ObjectSerializer)
+    val readStoreUpdater = new PostgresReadStoreUpdater(new ObjectSerializer)
     val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, new ObjectSerializer, aliases), new ObjectSerializer, dateTimeSource, aliases)
 
     def persist(events: List[Event]) = {

@@ -1,13 +1,13 @@
 package org.huwtl.penfold.support
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgreSQL
-import org.specs2.mutable.Specification
+import org.huwtl.penfold.app.support.postgres.PostgresDatabaseInitialiser
+import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.{Fragments, Step}
 
 import scala.slick.driver.JdbcDriver.backend.Database
-import org.huwtl.penfold.app.store.postgres.PostgresDatabaseInitialiser
 
-trait PostgresSpecification extends Specification {
+trait PostgresSpecification extends SpecificationWithJUnit {
   sequential
 
   var postgres: EmbeddedPostgreSQL = null

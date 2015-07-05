@@ -1,9 +1,9 @@
 package org.huwtl.penfold.domain.model.patch
 
-import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
+import org.specs2.mutable.SpecificationWithJUnit
 
-class ReplaceTest extends Specification with DataTables {
+class ReplaceTest extends SpecificationWithJUnit with DataTables {
 
   "apply replace operation" in {
     "existing"                                || "operation"                                || "expected"                                |

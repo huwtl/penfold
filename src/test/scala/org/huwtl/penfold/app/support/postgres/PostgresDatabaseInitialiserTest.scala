@@ -1,12 +1,14 @@
-package org.huwtl.penfold.app.store.postgres
+package org.huwtl.penfold.app.support.postgres
 
-import org.specs2.mutable.Specification
-import org.specs2.mock.Mockito
-import com.googlecode.flyway.core.Flyway
 import javax.sql.DataSource
+
+import com.googlecode.flyway.core.Flyway
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+
 import scala.slick.driver.JdbcDriver.backend.Database
 
-class PostgresDatabaseInitialiserTest extends Specification with Mockito {
+class PostgresDatabaseInitialiserTest extends SpecificationWithJUnit with Mockito {
   "init database schema" in {
     val flyway = mock[Flyway]
     val dataSource = mock[DataSource]

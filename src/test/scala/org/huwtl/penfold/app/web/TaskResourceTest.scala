@@ -12,8 +12,9 @@ import org.huwtl.penfold.readstore.{PageRequest, PageResult, _}
 import org.huwtl.penfold.support.{JsonFixtures, TestModel}
 import org.scalatra.test.specs2.MutableScalatraSpec
 import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 
-class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification with JsonFixtures {
+class TaskResourceTest extends SpecificationWithJUnit with MutableScalatraSpec with Mockito with WebAuthSpecification with JsonFixtures {
   sequential
 
   val expectedTask = TestModel.readModels.task.copy(status = Waiting)

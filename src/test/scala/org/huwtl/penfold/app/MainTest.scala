@@ -1,9 +1,9 @@
 package org.huwtl.penfold.app
 
-import org.specs2.mutable.Specification
-import org.specs2.specification.{Step, Fragments}
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.specification.{Fragments, Step}
 
-class MainTest extends Specification {
+class MainTest extends SpecificationWithJUnit {
   sequential
 
   sys.props.put("config.file", getClass.getClassLoader.getResource("application.conf").getPath)

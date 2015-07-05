@@ -1,6 +1,7 @@
 package org.huwtl.penfold.app
 
 import javax.servlet.ServletContext
+import org.huwtl.penfold.app.support.postgres.{PostgresDatabaseInitialiser, PostgresConnectionPoolFactory}
 import org.scalatra.LifeCycle
 import org.huwtl.penfold.app.web._
 import java.net.URI
@@ -15,7 +16,7 @@ import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 import org.huwtl.penfold.app.support.{DateTimeSource, UUIDFactory}
 import org.huwtl.penfold.app.schedule.{StartedTaskTimeoutScheduler, TaskArchiveScheduler, TaskTriggerScheduler}
 import com.codahale.metrics.health.HealthCheckRegistry
-import org.huwtl.penfold.app.support.metrics.{ReadStoreConnectivityHealthcheck, EventStoreConnectivityHealthcheck}
+import org.huwtl.penfold.app.support.metrics.ConnectivityHealthcheck
 import org.huwtl.penfold.app.store.postgres._
 import org.huwtl.penfold.app.readstore.postgres.{PaginatedQueryService, PostgresReadStore, PostgresReadStoreUpdater}
 
@@ -29,16 +30,16 @@ class Bootstrap extends LifeCycle {
 
     val aggregateIdFactory = new UUIDFactory
 
-    val database = new PostgresDatabaseInitialiser(config.customReadStoreDbMigrationPath).init(new PostgresConnectionPoolFactory().create(config.database))
+    val database = new PostgresDatabaseInitialiser(config.dbMigrationPath).init(new PostgresConnectionPoolFactory().create(config.database))
     val eventStore = new PostgresEventStore(database, eventSerializer)
 
-    val readStoreUpdater = new EventNotifier(new PostgresReadStoreUpdater(database, objectSerializer))
+    val readStoreUpdater = new EventNotifier(new PostgresReadStoreUpdater(objectSerializer))
 
     val domainRepository = new PostgresTransactionalDomainRepository(database, new DomainRepositoryImpl(eventStore, readStoreUpdater))
 
     val commandDispatcher = new CommandDispatcherFactory(domainRepository, aggregateIdFactory).create
 
-    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, objectSerializer, config.readStorePathAliases), objectSerializer, new DateTimeSource, config.readStorePathAliases)
+    val readStore = new PostgresReadStore(database, new PaginatedQueryService(database, objectSerializer, config.queryPathAliases), objectSerializer, new DateTimeSource, config.queryPathAliases)
 
     val baseUrl = URI.create(config.publicUrl)
 
@@ -51,8 +52,8 @@ class Bootstrap extends LifeCycle {
     val queueFormatter = new HalQueueFormatter(baseQueueLink, taskFormatter)
 
     val healthCheckRegistry: HealthCheckRegistry = new HealthCheckRegistry
-    healthCheckRegistry.register("Event store connectivity", new EventStoreConnectivityHealthcheck(eventStore))
-    healthCheckRegistry.register("Read store connectivity", new ReadStoreConnectivityHealthcheck(readStore))
+    healthCheckRegistry.register("Event store connectivity", new ConnectivityHealthcheck(eventStore))
+    healthCheckRegistry.register("Read store connectivity", new ConnectivityHealthcheck(readStore))
 
     context mount(new PingResource, "/ping")
     context mount(new HealthResource(healthCheckRegistry, objectSerializer), "/healthcheck")

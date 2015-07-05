@@ -1,15 +1,17 @@
 package org.huwtl.penfold.app.schedule
 
-import org.specs2.mutable.Specification
-import org.huwtl.penfold.readstore.{TaskProjectionReference, ReadStore}
-import org.huwtl.penfold.command.CommandDispatcher
-import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit._
-import org.huwtl.penfold.app.StartedTaskTimeoutConfiguration
-import org.specs2.mock.Mockito
-import org.huwtl.penfold.domain.model.Status.Started
 
-class StartedTaskTimeoutSchedulerTest extends Specification with Mockito {
+import org.huwtl.penfold.app.StartedTaskTimeoutConfiguration
+import org.huwtl.penfold.command.CommandDispatcher
+import org.huwtl.penfold.domain.model.Status.Started
+import org.huwtl.penfold.readstore.{ReadStore, TaskProjectionReference}
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+
+import scala.concurrent.duration.FiniteDuration
+
+class StartedTaskTimeoutSchedulerTest extends SpecificationWithJUnit with Mockito {
 
   "requeue started tasks on timeout" in {
     val readStore = mock[ReadStore]

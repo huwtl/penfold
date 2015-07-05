@@ -1,5 +1,7 @@
 package org.huwtl.penfold.app.readstore.postgres
 
+import org.huwtl.penfold.app.support.postgres.MyPostgresDriver
+
 import scala.slick.jdbc.{StaticQuery => Q}
 import com.github.tminglei.slickpg._
 

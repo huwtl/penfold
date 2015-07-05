@@ -18,14 +18,15 @@ trait ErrorHandling extends ScalatraServlet {
     case e: MappingException => errorResponse(BadRequest(s"Bad request: ${e.getMessage}"), e)
     case e: JsonParseException => errorResponse(BadRequest(s"Bad request: ${e.getMessage}"), e)
     case e: AggregateConflictException => {
-      logger.info("Conflict:", e)
-      errorResponse(Conflict(e.getMessage))
+      val conflict = Conflict(e.getMessage)
+      logger.info(s"${conflict.status.line}:", e)
+      errorResponse(conflict)
     }
     case e: Exception => errorResponse(InternalServerError("Crumbs!"), e)
   }
 
   def errorResponse(errorResp: ActionResult, e: Exception): ActionResult = {
-    logger.error("Error:", e)
+    logger.error(s"${errorResp.status.line}:", e)
     errorResponse(errorResp)
   }
 

@@ -1,9 +1,9 @@
 package org.huwtl.penfold.readstore
 
-import org.specs2.mutable.Specification
 import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 
-class PageResultTest extends Specification with Mockito {
+class PageResultTest extends SpecificationWithJUnit with Mockito {
 
   "know when empty" in {
     new PageResult(List(mock[TaskProjection]), previousPage = None, nextPage = None).isEmpty must beFalse

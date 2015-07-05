@@ -1,7 +1,8 @@
-package org.huwtl.penfold.app.readstore.postgres
+package org.huwtl.penfold.app.support.postgres
+
+import com.github.tminglei.slickpg._
 
 import scala.slick.driver.PostgresDriver
-import com.github.tminglei.slickpg._
 
 trait MyPostgresDriver extends PostgresDriver
 with PgArraySupport

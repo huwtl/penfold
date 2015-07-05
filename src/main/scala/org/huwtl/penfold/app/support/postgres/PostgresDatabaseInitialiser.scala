@@ -1,7 +1,9 @@
-package org.huwtl.penfold.app.store.postgres
+package org.huwtl.penfold.app.support.postgres
 
 import javax.sql.DataSource
+
 import com.googlecode.flyway.core.Flyway
+
 import scala.slick.driver.JdbcDriver.backend.Database
 
 class PostgresDatabaseInitialiser(customDbMigrationPath: Option[CustomDbMigrationPath], flyway: Flyway = new Flyway) {

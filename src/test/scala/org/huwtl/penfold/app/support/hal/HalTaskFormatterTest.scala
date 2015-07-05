@@ -8,9 +8,9 @@ import org.huwtl.penfold.readstore.{TaskProjection, _}
 import org.huwtl.penfold.support.TestModel._
 import org.huwtl.penfold.support.TestModel.readModels._
 import org.huwtl.penfold.support.{JsonFixtures, TestModel}
-import org.specs2.mutable.Specification
+import org.specs2.mutable.SpecificationWithJUnit
 
-class HalTaskFormatterTest extends Specification with JsonFixtures {
+class HalTaskFormatterTest extends SpecificationWithJUnit with JsonFixtures {
 
   val filters = Filters(List(EQ("data", "a value")))
 

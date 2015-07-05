@@ -7,11 +7,11 @@ import org.huwtl.penfold.command.CommandDispatcher
 import org.huwtl.penfold.domain.model.Status.Closed
 import org.huwtl.penfold.readstore.{ReadStore, TaskProjectionReference}
 import org.specs2.mock.Mockito
-import org.specs2.mutable.Specification
+import org.specs2.mutable.SpecificationWithJUnit
 
 import scala.concurrent.duration.FiniteDuration
 
-class TaskArchiveSchedulerTest extends Specification with Mockito {
+class TaskArchiveSchedulerTest extends SpecificationWithJUnit with Mockito {
 
   "archive closed tasks on timeout" in {
     val readStore = mock[ReadStore]
