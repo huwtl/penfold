@@ -3,7 +3,7 @@ language: scala
 script: "mvn clean test"
 
 scala:
-   - "2.11.6"
+   - "2.11.7"
 
 jdk:
   - oraclejdk8
