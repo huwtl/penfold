@@ -31,7 +31,7 @@ case class AuthenticationCredentials(username: String, password: String)
 
 case class DatabaseConfiguration(url: String, username: String, password: String, driver: String = "org.postgresql.Driver", poolSize: Int = 15)
 
-case class TaskArchiverConfiguration(timeout: FiniteDuration, checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
+case class TaskArchiverConfiguration(timeout: FiniteDuration, checkFrequency: FiniteDuration = FiniteDuration(30L, TimeUnit.MINUTES))
 
 case class StartedTaskTimeoutConfiguration(timeout: FiniteDuration, checkFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS))
 
