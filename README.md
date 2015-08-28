@@ -289,6 +289,6 @@ The task should now be closed.
 
 ## Further documentation
 
-[Refer to Wiki](https://github.com/qmetric/rosser/wiki)
+[Refer to Wiki](https://github.com/qmetric/penfold/wiki)
 
 
