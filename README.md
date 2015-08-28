@@ -289,16 +289,6 @@ The task should now be closed.
 
 ## Further documentation
 
-TODO: create these documents
-
-* configuration
-* logging
-* api
-* queue ordering
-* optimistic locking
-* search
-* scheduling future tasks
-* archiving tasks
-* authentication
+[Refer to Wiki](https://github.com/qmetric/rosser/wiki)
 
 
