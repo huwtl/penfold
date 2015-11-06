@@ -1,0 +1,27 @@
+{
+  "id": "1",
+  "version": 1,
+  "created": 1393333200000,
+  "queue": "abc",
+  "status": "ready",
+  "statusLastModified": 1393333201000,
+  "previousStatus": {
+    "status": "started",
+    "statusLastModified": 1393333200000
+  },
+  "attempts": 0,
+  "triggerDate": 1393336800000,
+  "assignee": "user1",
+  "score": 1393336800000,
+  "sort": 1393336800000,
+  "payload": {
+    "data": "value",
+    "inner": {
+      "bool": true
+    }
+  },
+  "rescheduleReason": "reason1",
+  "cancelReason": "reason2",
+  "closeReason": "reason3",
+  "closeResultType": "success"
+}

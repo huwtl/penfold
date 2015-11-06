@@ -1,22 +1,13 @@
 package com.qmetric.penfold.support
 
-import org.joda.time.DateTime
-import com.qmetric.penfold.domain.model._
-import com.qmetric.penfold.domain.model.Status.{Waiting, Started, Ready, Closed}
-import com.qmetric.penfold.command._
+import com.qmetric.penfold.command.{CreateFutureTask, CreateTask, UnassignTask, UpdateTaskPayload, _}
 import com.qmetric.penfold.domain.event._
-import com.qmetric.penfold.command.UpdateTaskPayload
-import com.qmetric.penfold.command.UnassignTask
-import com.qmetric.penfold.domain.model.QueueId
-import com.qmetric.penfold.domain.model.AggregateId
-import com.qmetric.penfold.readstore.TaskRecord
-import scala.Some
-import com.qmetric.penfold.domain.model.User
-import com.qmetric.penfold.readstore.PreviousStatus
-import com.qmetric.penfold.command.CreateTask
+import com.qmetric.penfold.domain.model.Status._
+import com.qmetric.penfold.domain.model.{AggregateId, QueueId, User, _}
 import com.qmetric.penfold.domain.model.patch.Patch
-import com.qmetric.penfold.command.CreateFutureTask
-import com.qmetric.penfold.domain.model.QueueBinding
+import com.qmetric.penfold.readstore.{PreviousStatus, TaskProjection}
+import org.joda.time.DateTime
+import com.qmetric.penfold.domain.model.CloseResultType.Success
 
 object TestModel {
   val createdDate = new DateTime(2014, 2, 25, 13, 0, 0, 0)
@@ -33,19 +24,17 @@ object TestModel {
 
   val assignee = User("user1")
 
-  val concluder = User("user1")
+  val user = User("user1")
 
   val updateType = "updateType"
 
-  val unassignType = "unassignType"
+  val unassignReason = "unassignType"
 
-  val reassignType = "reassignType"
+  val rescheduleReason = "schType"
 
-  val rescheduleType = "schType"
+  val requeueReason = "reqType"
 
-  val requeueType = "reqType"
-
-  val conclusionType = "type"
+  val closeReason = "type"
 
   val emptyPayload = Payload.empty
 
@@ -58,25 +47,27 @@ object TestModel {
   val payloadUpdate = Patch(List())
 
   object commands {
-    val createTask = CreateTask(QueueBinding(TestModel.queueId), payload, Some(score))
+    val createTask = CreateTask(TestModel.queueId, payload, Some(score))
 
-    val createFutureTask = CreateFutureTask(QueueBinding(TestModel.queueId), triggerDate, payload, Some(score))
+    val createFutureTask = CreateFutureTask(TestModel.queueId, triggerDate, payload, Some(score))
 
-    val unassignTask = UnassignTask(aggregateId, version, Some(unassignType), Some(payloadUpdate))
+    val unassignTask = UnassignTask(aggregateId, version, Some(unassignReason), Some(payloadUpdate))
 
     val updateTaskPayload = UpdateTaskPayload(aggregateId, version, Some(updateType), payloadUpdate, Some(score))
 
     val startTask = StartTask(aggregateId, version, Some(assignee), Some(payloadUpdate))
 
-    val requeueTask = RequeueTask(aggregateId, version, Some(requeueType), Some(assignee), Some(payloadUpdate), Some(score))
+    val requeueTask = RequeueTask(aggregateId, version, Some(requeueReason), Some(assignee), Some(payloadUpdate), Some(score))
 
-    val rescheduleTask = RescheduleTask(aggregateId, version, triggerDate, Some(assignee), Some(rescheduleType), Some(payloadUpdate), Some(score))
+    val rescheduleTask = RescheduleTask(aggregateId, version, triggerDate, Some(assignee), Some(rescheduleReason), Some(payloadUpdate), Some(score))
 
-    val closeTask = CloseTask(aggregateId, version, Some(concluder), Some(conclusionType), Some(assignee), Some(payloadUpdate))
+    val closeTask = CloseTask(aggregateId, version, Some(user), Some(closeReason), Some(Success), Some(payloadUpdate))
+
+    val cancelTask = CancelTask(aggregateId, version, Some(user), Some(closeReason), Some(payloadUpdate))
   }
 
   object readModels {
-    val task = TaskRecord(aggregateId, AggregateVersion.init, createdDate, QueueBinding(queueId), Status.Ready, createdDate, None, None, triggerDate, score, score, payload)
+    val task = TaskProjection(aggregateId, AggregateVersion.init, createdDate, queueId, Status.Ready, createdDate, None, 0, None, triggerDate, score, score, payload)
 
     val readyTask = task
 
@@ -84,33 +75,35 @@ object TestModel {
 
     val waitingTask = task.copy(status = Waiting)
 
-    val startedTask = task.copy(version = AggregateVersion(2), status = Started, assignee = Some(assignee), previousStatus = Some(PreviousStatus(Ready, createdDate)), sort = createdDate.getMillis)
+    val startedTask = task.copy(version = AggregateVersion(2), status = Started, attempts = 1, assignee = Some(assignee), previousStatus = Some(PreviousStatus(Ready, createdDate)), sort = createdDate.getMillis)
 
-    val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), assignee = Some(concluder), conclusionType = Some(conclusionType))
+    val closedTask = startedTask.copy(version = AggregateVersion(3), status = Closed, previousStatus = Some(previousStatus), assignee = None, closeReason = Some(closeReason), closeResultType = Some(Success))
+
+    val cancelledTask = startedTask.copy(version = AggregateVersion(3), status = Cancelled, previousStatus = Some(previousStatus), assignee = None, cancelReason = Some(closeReason))
 
     val requeuedTask = task.copy(version = AggregateVersion(2), previousStatus = Some(previousStatus))
 
-    val rescheduledTask = task.copy(version = AggregateVersion(3), status = Waiting, previousStatus = Some(previousStatus), assignee = Some(assignee), sort = score, rescheduleType = Some(rescheduleType))
+    val rescheduledTask = task.copy(version = AggregateVersion(3), status = Waiting, previousStatus = Some(previousStatus), assignee = Some(assignee), sort = score, rescheduleReason = Some(rescheduleReason))
   }
 
   object events {
-    val createdEvent = TaskCreated(aggregateId, AggregateVersion(1), createdDate, QueueBinding(queueId), triggerDate, payload, score)
+    val createdEvent = TaskCreated(aggregateId, AggregateVersion(1), createdDate, queueId, triggerDate, payload, score)
 
     val triggeredEvent = TaskTriggered(aggregateId, AggregateVersion(2), createdDate)
 
-    val futureCreatedEvent = FutureTaskCreated(aggregateId, AggregateVersion(1), createdDate, QueueBinding(queueId), triggerDate, payload, score)
+    val futureCreatedEvent = FutureTaskCreated(aggregateId, AggregateVersion(1), createdDate, queueId, triggerDate, payload, score)
 
     val startedEvent = TaskStarted(aggregateId, AggregateVersion(2), createdDate, Some(assignee), Some(payloadUpdate))
 
-    val closedEvent = TaskClosed(aggregateId, AggregateVersion(3), createdDate, Some(concluder), Some(conclusionType), Some(assignee), Some(payloadUpdate))
+    val closedEvent = TaskClosed(aggregateId, AggregateVersion(3), createdDate, Some(user), Some(closeReason), Some(Success), Some(payloadUpdate))
 
-    val requeuedEvent = TaskRequeued(aggregateId, AggregateVersion(4), createdDate, Some(requeueType), Some(assignee), Some(payloadUpdate), Some(score))
+    val cancelEvent = TaskCancelled(aggregateId, AggregateVersion(3), createdDate, Some(user), Some(closeReason), Some(payloadUpdate))
 
-    val rescheduledEvent = TaskRescheduled(aggregateId, AggregateVersion(3), createdDate, triggerDate, Some(assignee), Some(rescheduleType), Some(payloadUpdate), Some(score))
+    val requeuedEvent = TaskRequeued(aggregateId, AggregateVersion(4), createdDate, Some(requeueReason), Some(assignee), Some(payloadUpdate), Some(score))
 
-    val unassignedEvent = TaskUnassigned(aggregateId, AggregateVersion(3), createdDate, Some(unassignType), Some(payloadUpdate))
+    val rescheduledEvent = TaskRescheduled(aggregateId, AggregateVersion(3), createdDate, triggerDate, Some(assignee), Some(rescheduleReason), Some(payloadUpdate), Some(score))
 
-    val reassignedEvent = TaskReassigned(aggregateId, AggregateVersion(3), createdDate, assignee, Some(reassignType), Some(payloadUpdate))
+    val unassignedEvent = TaskUnassigned(aggregateId, AggregateVersion(3), createdDate, Some(unassignReason), Some(payloadUpdate))
 
     val payloadUpdatedEvent = TaskPayloadUpdated(aggregateId, AggregateVersion(2), createdDate, payloadUpdate, Some(updateType), Some(score))
 

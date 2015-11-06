@@ -1,29 +1,45 @@
 {
-    "_links": {
-        "self": {"href": "http://host/tasks/1"},
-        "CloseTask": {"href": "http://host/tasks/1/1"},
-        "ReassignTask": {"href": "http://host/tasks/1/1"},
-        "RequeueTask": {"href": "http://host/tasks/1/1"},
-        "RescheduleTask": {"href": "http://host/tasks/1/1"},
-        "UpdateTaskPayload": {"href": "http://host/tasks/1/1"},
-        "queue": {"href": "http://host/queues/abc/started"}
+  "_links": {
+    "self": {
+      "href": "http://host/tasks/1"
     },
-    "id": "1",
-    "version": 1,
-    "payload": {
-        "data": "value",
-        "inner": {
-            "bool": true
-        }
+    "CancelTask": {
+      "href": "http://host/tasks/1/1"
     },
-    "status": "started",
-    "statusLastModified": "2014-02-25 13:00:00",
-    "previousStatus": {
-      "status": "ready",
-      "statusLastModified": "2014-02-25 13:00:00"
+    "CloseTask": {
+      "href": "http://host/tasks/1/1"
     },
-    "assignee": "user1",
-    "triggerDate": "2014-02-25 14:00:00",
-    "queueBinding": {"id": "abc"},
-    "score": 1393336800000
+    "RequeueTask": {
+      "href": "http://host/tasks/1/1"
+    },
+    "RescheduleTask": {
+      "href": "http://host/tasks/1/1"
+    },
+    "UpdateTaskPayload": {
+      "href": "http://host/tasks/1/1"
+    },
+    "queue": {
+      "href": "http://host/queues/abc/started"
+    }
+  },
+  "created": "2014-02-25 13:00:00",
+  "attempts": 0,
+  "id": "1",
+  "version": 1,
+  "payload": {
+    "data": "value",
+    "inner": {
+      "bool": true
+    }
+  },
+  "status": "started",
+  "statusLastModified": "2014-02-25 13:00:00",
+  "previousStatus": {
+    "status": "ready",
+    "statusLastModified": "2014-02-25 13:00:00"
+  },
+  "assignee": "user1",
+  "triggerDate": "2014-02-25 14:00:00",
+  "queue": "abc",
+  "score": 1393336800000
 }

@@ -4,6 +4,7 @@ import com.qmetric.penfold.domain.model.{AggregateType, AggregateVersion, Aggreg
 import org.joda.time.DateTime
 
 trait Event {
+  val version = 2
   val aggregateId: AggregateId
   val aggregateVersion: AggregateVersion
   val aggregateType: AggregateType

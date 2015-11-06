@@ -1,7 +1,7 @@
 {
     "triggerDate" : "2014-02-25 14:00:00",
     "assignee": "user1",
-    "rescheduleType": "schType",
+    "reason": "schType",
     "payloadUpdate": {"operations": []},
     "scoreUpdate": 1393336800000
 }

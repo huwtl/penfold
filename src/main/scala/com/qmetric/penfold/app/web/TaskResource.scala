@@ -1,21 +1,20 @@
 package com.qmetric.penfold.app.web
 
-import org.scalatra._
-import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
-import com.qmetric.penfold.app.support.hal.HalTaskFormatter
-import com.qmetric.penfold.domain.model.{AggregateVersion, AggregateId}
-import com.qmetric.penfold.readstore.ReadStore
-import com.qmetric.penfold.command.CommandDispatcher
-import com.qmetric.penfold.app.support.auth.BasicAuthenticationSupport
 import com.qmetric.penfold.app.AuthenticationCredentials
+import com.qmetric.penfold.app.support.auth.BasicAuthenticationSupport
+import com.qmetric.penfold.app.support.hal.HalTaskFormatter
+import com.qmetric.penfold.command.CommandDispatcher
+import com.qmetric.penfold.domain.model.{AggregateId, AggregateVersion}
+import com.qmetric.penfold.readstore.ReadStore
+import com.theoryinpractise.halbuilder.api.RepresentationFactory.HAL_JSON
+import org.scalatra._
 
 class TaskResource(readStore: ReadStore,
                    commandDispatcher: CommandDispatcher,
                    commandParser: TaskCommandParser,
                    halFormatter: HalTaskFormatter,
                    pageSize: Int,
-                   authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport {
-
+                   authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport with RequestLogging {
   before() {
     contentType = HAL_JSON
   }

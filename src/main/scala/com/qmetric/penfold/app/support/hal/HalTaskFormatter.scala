@@ -1,43 +1,51 @@
 package com.qmetric.penfold.app.support.hal
 
-import com.theoryinpractise.halbuilder.api.RepresentationFactory._
-import org.joda.time.format.DateTimeFormat
 import java.net.URI
-import com.theoryinpractise.halbuilder.DefaultRepresentationFactory
-import com.qmetric.penfold.readstore._
-import com.qmetric.penfold.domain.model.Status._
+
 import com.theoryinpractise.halbuilder.api.Representation
+import com.theoryinpractise.halbuilder.api.RepresentationFactory._
+import com.theoryinpractise.halbuilder.json.JsonRepresentationFactory
 import com.qmetric.penfold.app.support.JavaMapUtil
-import com.qmetric.penfold.readstore.PageRequest
-import com.qmetric.penfold.readstore.TaskRecord
-import com.qmetric.penfold.domain.model.QueueBinding
+import com.qmetric.penfold.domain.model.Status._
+import com.qmetric.penfold.readstore.{PageRequest, TaskProjection, _}
+import org.joda.time.format.DateTimeFormat
 
 class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedRepresentationProvider {
-  private val representationFactory = new DefaultRepresentationFactory
+  private val representationFactory = new JsonRepresentationFactory().withFlag(COALESCE_ARRAYS)
 
   private val dateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 
-  def halRepresentationFrom(task: TaskRecord) = {
+  def halRepresentationFrom(task: TaskProjection) = {
     val representation = representationFactory.newRepresentation(s"${baseTaskLink.toString}/${task.id.value}")
       .withProperty("id", task.id.value)
       .withProperty("version", task.version.number)
       .withProperty("status", task.status.name)
       .withProperty("statusLastModified", dateFormatter.print(task.statusLastModified))
+      .withProperty("created", dateFormatter.print(task.created))
+      .withProperty("attempts", task.attempts)
       .withProperty("triggerDate", dateFormatter.print(task.triggerDate))
       .withProperty("score", task.score)
       .withProperty("payload", JavaMapUtil.deepConvertToJavaMap(task.payload.content))
-      .withProperty("queueBinding", JavaMapUtil.deepConvertToJavaMap(bindingToMap(task.queueBinding)))
+      .withProperty("queue", task.queue.value)
 
     if (task.assignee.isDefined) {
       representation.withProperty("assignee", task.assignee.get.username)
     }
 
-    if (task.rescheduleType.isDefined) {
-      representation.withProperty("rescheduleType", task.rescheduleType.get)
+    if (task.rescheduleReason.isDefined) {
+      representation.withProperty("rescheduleReason", task.rescheduleReason.get)
     }
 
-    if (task.conclusionType.isDefined) {
-      representation.withProperty("conclusionType", task.conclusionType.get)
+    if (task.closeReason.isDefined) {
+      representation.withProperty("closeReason", task.closeReason.get)
+    }
+
+    if (task.closeResultType.isDefined) {
+      representation.withProperty("closeResultType", task.closeResultType.get.name)
+    }
+
+    if (task.cancelReason.isDefined) {
+      representation.withProperty("cancelReason", task.cancelReason.get)
     }
 
     if (task.previousStatus.isDefined) {
@@ -49,16 +57,27 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
     representation
   }
 
-  def addLinks(task : TaskRecord, representation: Representation) = {
-    val queueIdParam = task.queueBinding.id.value
+  def addLinks(task : TaskProjection, representation: Representation) = {
+    val queueIdParam = task.queue.value
 
     val taskUpdateUrl = s"${baseTaskLink.toString}/${task.id.value}/${task.version.number}"
 
     representation.withLink("queue", s"${baseQueueLink.toString}/$queueIdParam/${task.status.name}")
 
-    if (task.status != Closed) {
-      representation.withLink("UpdateTaskPayload", taskUpdateUrl)
-      representation.withLink("CloseTask", taskUpdateUrl)
+    if (task.status != Cancelled) {
+      if (task.status != Closed) {
+        representation.withLink("UpdateTaskPayload", taskUpdateUrl)
+        representation.withLink("CloseTask", taskUpdateUrl)
+        representation.withLink("CancelTask", taskUpdateUrl)
+      }
+
+      if (task.assignee.isDefined && (task.status == Waiting || task.status == Ready)) {
+        representation.withLink("UnassignTask", taskUpdateUrl)
+      }
+
+      if (task.status == Ready) {
+        representation.withLink("StartTask", taskUpdateUrl)
+      }
     }
 
     representation.withLink("RescheduleTask", taskUpdateUrl)
@@ -66,21 +85,9 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
     if (task.status != Ready) {
       representation.withLink("RequeueTask", taskUpdateUrl)
     }
-
-    if (task.assignee.isDefined && (task.status == Waiting || task.status == Ready)) {
-      representation.withLink("UnassignTask", taskUpdateUrl)
-    }
-
-    if (task.status == Started) {
-      representation.withLink("ReassignTask", taskUpdateUrl)
-    }
-
-    if (task.status == Ready) {
-      representation.withLink("StartTask", taskUpdateUrl)
-    }
   }
 
-  def halFrom(task: TaskRecord) = {
+  def halFrom(task: TaskProjection) = {
     halRepresentationFrom(task).toString(HAL_JSON)
   }
 
@@ -94,10 +101,6 @@ class HalTaskFormatter(baseTaskLink: URI, baseQueueLink: URI) extends PaginatedR
     })
 
     root.toString(HAL_JSON)
-  }
-
-  def bindingToMap(binding: QueueBinding) = {
-    Map("id" -> binding.id.value)
   }
 
   def previousStatusToMap(previousStatus: PreviousStatus) = {

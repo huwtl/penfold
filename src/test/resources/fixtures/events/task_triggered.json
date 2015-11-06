@@ -3,5 +3,6 @@
     "aggregateId" : "1",
     "aggregateVersion" : 2,
     "created" : "2014-02-25 13:00:00",
-    "aggregateType" : "Task"
+    "aggregateType" : "Task",
+    "version": 2
 }

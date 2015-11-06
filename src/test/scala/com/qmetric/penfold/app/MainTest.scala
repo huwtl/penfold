@@ -1,13 +1,12 @@
 package com.qmetric.penfold.app
 
-import org.specs2.mutable.Specification
-import org.specs2.specification.{Step, Fragments}
-import com.github.athieriot.EmbedConnection
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.specification.{Fragments, Step}
 
-class MainTest extends Specification with EmbedConnection {
+class MainTest extends SpecificationWithJUnit {
   sequential
 
-  sys.props.put("config.file", getClass.getClassLoader.getResource("fixtures/config/full.conf").getPath)
+  sys.props.put("config.file", getClass.getClassLoader.getResource("application.conf").getPath)
 
   val server = new Main().init()
 

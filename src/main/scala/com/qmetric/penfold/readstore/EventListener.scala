@@ -1,5 +1,7 @@
 package com.qmetric.penfold.readstore
 
+import com.qmetric.penfold.domain.event.Event
+
 trait EventListener {
-  def handle(event: EventRecord): Boolean
+  def handle(event: Event)
 }

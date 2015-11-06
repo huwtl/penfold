@@ -1,36 +1,23 @@
 package com.qmetric.penfold.readstore
 
-import org.specs2.mutable.Specification
+import com.qmetric.penfold.domain.event.Event
 import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
 
-class EventNotifierTest extends Specification with Mockito {
+class EventNotifierTest extends SpecificationWithJUnit with Mockito {
 
   class context extends Scope {
-    val maxRetries = 3
-    val eventRecord1 = mock[EventRecord]
-    val eventRecord2 = mock[EventRecord]
-    val newEventsProvider = mock[NewEventsProvider]
+    val eventRecord1 = mock[Event]
+    val eventRecord2 = mock[Event]
     val eventListener = mock[EventListener]
-    val eventNotifier = new EventNotifier(newEventsProvider, eventListener, maxRetries)
+    val eventNotifier = new EventNotifier(eventListener)
   }
 
   "notify listener of new events" in new context {
-    newEventsProvider.newEvents returns List(eventRecord1, eventRecord2).toStream
-
-    eventNotifier.notifyListener()
+    eventNotifier.notify(List(eventRecord1, eventRecord2))
 
     there was one(eventListener).handle(eventRecord1)
     there was one(eventListener).handle(eventRecord2)
-  }
-
-  "skip further new events once event handling fails after retrying max times to handle erroneous event" in new context {
-    newEventsProvider.newEvents returns List(eventRecord1, eventRecord2).toStream
-    eventListener.handle(eventRecord1) throws new RuntimeException
-
-    eventNotifier.notifyListener()
-
-    there were three(eventListener).handle(eventRecord1)
-    there was no(eventListener).handle(eventRecord2)
   }
 }

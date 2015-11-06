@@ -7,5 +7,5 @@ import com.qmetric.penfold.domain.model.patch.Patch
 case class TaskUnassigned(aggregateId: AggregateId,
                           aggregateVersion: AggregateVersion,
                           created: DateTime,
-                          unassignType: Option[String],
+                          reason: Option[String],
                           payloadUpdate: Option[Patch]) extends TaskEvent

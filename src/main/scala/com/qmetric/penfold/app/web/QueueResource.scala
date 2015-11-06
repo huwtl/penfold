@@ -12,7 +12,7 @@ class QueueResource(readStore: ReadStore,
                     halFormatter: HalQueueFormatter,
                     sortOrderMapping: SortOrderMapping,
                     pageSize: Int,
-                    authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport {
+                    authenticationCredentials: Option[AuthenticationCredentials]) extends ScalatraServlet with FilterParamsProvider with PageRequestProvider with ErrorHandling with BasicAuthenticationSupport with RequestLogging {
 
   before() {
     contentType = HAL_JSON
@@ -26,17 +26,6 @@ class QueueResource(readStore: ReadStore,
         val filters = parseFilters(multiParams)
         val sortOrder = sortOrderMapping.sortOrderFor(status)
         Ok(halFormatter.halFrom(queue, status, page, readStore.retrieveByQueue(queue, status, page, sortOrder, filters), filters))
-      }
-    }
-  }
-
-  get("/:queue/:status/:id") {
-    statusMatch {
-      status => {
-        readStore.retrieveBy(AggregateId(params("id"))) match {
-          case Some(task) => Ok(halFormatter.halFrom(QueueId(queueIdParam), task))
-          case None => errorResponse(NotFound(s"$status task not found"))
-        }
       }
     }
   }

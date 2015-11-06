@@ -10,6 +10,7 @@ class ObjectSerializer {
     new PayloadJsonSerializer +
     new DateTimeJsonSerializer +
     new StatusJsonSerializer +
+    new CloseResultTypeJsonSerializer +
     new AggregateTypeJsonSerializer +
     new IdJsonSerializer +
     new VersionJsonSerializer +

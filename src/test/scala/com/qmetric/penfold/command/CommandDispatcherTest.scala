@@ -1,10 +1,10 @@
 package com.qmetric.penfold.command
 
-import org.specs2.mutable.Specification
+import com.qmetric.penfold.domain.model.{AggregateId, AggregateVersion}
 import org.specs2.mock.Mockito
-import com.qmetric.penfold.domain.model.{AggregateVersion, AggregateId}
+import org.specs2.mutable.SpecificationWithJUnit
 
-class CommandDispatcherTest extends Specification with Mockito {
+class CommandDispatcherTest extends SpecificationWithJUnit with Mockito {
 
   val triggerTaskCommand = TriggerTask(AggregateId("a1"), AggregateVersion.init)
   val startTaskCommand = StartTask(AggregateId("a1"), AggregateVersion.init, None, None)

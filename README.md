@@ -13,6 +13,10 @@ Penfold is deployed as a standalone server, or mulitple standalone servers for a
 
 Penfold is spoken to via a Restful API, based on the media type [HAL+JSON](http://stateless.co/hal_specification.html).
 
+## Documentation
+
+[Refer to Wiki](https://github.com/qmetric/penfold/wiki)
+
 
 ## Quick start
 
@@ -20,15 +24,14 @@ Penfold is spoken to via a Restful API, based on the media type [HAL+JSON](http:
 
 Prerequisites:
 
-* [JVM](https://www.java.com/en/download/) 6+
-* [Mysql server](http://www.mysql.com/)
-* [MongoDB server](http://www.mongodb.org/) 
+* [JVM](https://www.java.com/en/download/) 8+
+* [Postgres database server](http://www.postgresql.org/)
 
 1.
 Download the latest penfold JAR file from [Maven Central](http://search.maven.org/). The JAR can be found under "com.qmetric.penfold"
 
 2.
-Create a new empty database on your Mysql server
+Create a new empty database on your Postgres database server
 
 3.
 Create a configuration file named "penfold.conf", and populate with:
@@ -39,26 +42,16 @@ penfold {
   publicUrl = "http://localhost:8080"
 
   httpPort = 8080
-
-  domainJdbcConnectionPool {
-    driver = com.mysql.jdbc.Driver
-    url = "jdbc:mysql://localhost:3306/<EMPTY_DATABASE_NAME>"
-    username = <USERNAME>
-    password = <PASSWORD>
+  
+  authentication {
+    username = usr
+    password = pswd
   }
 
-  readStoreMongoDatabaseServers {
-    databaseName = <DATABASE_NAME>
-    credentials {
-      username = <USERNAME>
-      password = <PASSWORD>
-    }
-    servers = [
-      {
-        host = "127.0.0.1"
-        port = 27017
-      }
-    ]
+  database {
+    url = "jdbc:postgresql://<HOST:<PORT>/<NAME_OF_EMPTY_DATABASE>"
+    username = <USERNAME>
+    password = <PASSWORD>
   }
 }
 ```
@@ -86,6 +79,7 @@ A task has a status:
 * waiting - task has been scheduled in the future and is waiting to become ready in its assigned queue
 * ready - task is available for starting
 * started - the task has been started
+* cancelled - the task has been cancelled
 * closed - the task has been closed
 
 You can view all tasks by queue and status. For the purpose of this tutorial we will use a queue named "greenback".
@@ -94,6 +88,7 @@ You can view all tasks by queue and status. For the purpose of this tutorial we 
 GET: /queues/greenback/waiting  HTTP 1.1
 GET: /queues/greenback/ready  HTTP 1.1
 GET: /queues/greenback/started  HTTP 1.1
+GET: /queues/greenback/cancelled  HTTP 1.1
 GET: /queues/greenback/closed  HTTP 1.1
 ```
 
@@ -107,9 +102,7 @@ POST: /tasks  HTTP 1.1
 Content-Type: application/json;domain-command=CreateFutureTask
     
 {
-    "queueBinding": {
-        "id": "greenback"
-    },
+    "queue": "greenback",
     "triggerDate": "yyyy-MM-dd HH:mm:ss",
     "payload": {
         "customer": { 
@@ -119,7 +112,6 @@ Content-Type: application/json;domain-command=CreateFutureTask
         }
     }
 }
-    
 ```
 
 You should see a response similar to below. The response lists the attributes of your newly created task, including an auto generated unique task ID.
@@ -154,9 +146,7 @@ Content-Type: application/hal+json
             "email": "bob@email.com"
         }
     },
-    "queueBinding": {
-        "id": "greenback"
-    },
+    "queue": "greenback",
     "status": "waiting",
     "triggerDate": "2014-07-11 16:05:00",
     "version": 1
@@ -184,47 +174,38 @@ When your task is "ready", then you should see a response similar to below.
             "href": "http://localhost:8080/queues/greenback/ready"
         }
     },
+    "id": "greenback",
     "_embedded": {
-        "queue": {
+        "tasks": [
+          {
             "_links": {
                 "self": {
-                    "href": "http://localhost:8080/queues/greenback/ready/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
+                },
+                "CloseTask": {
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
+                },
+                "StartTask": {
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
+                },
+                "UpdateTaskPayload": {
+                    "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
                 }
             },
-            "taskId": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
-            "_embedded": {
-                "task": {
-                    "_links": {
-                        "self": {
-                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02"
-                        },
-                        "CloseTask": {
-                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
-                        },
-                        "StartTask": {
-                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
-                        },
-                        "UpdateTaskPayload": {
-                            "href": "http://localhost:8080/tasks/25cfd0f7-2266-4d6f-9a33-997fec57ed02/2"
-                        }
-                    },
-                    "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
-                    "payload": {
-                        "customer": {
-                            "id": 1,
-                            "name": "bob",
-                            "email": "bob@email.com"
-                        }
-                    },
-                    "queueBinding": {
-                        "id": "greenback"
-                    },
-                    "status": "ready",
-                    "triggerDate": "2014-07-11 16:05:00",
-                    "version": 2
+            "id": "25cfd0f7-2266-4d6f-9a33-997fec57ed02",
+            "payload": {
+                "customer": {
+                    "id": 1,
+                    "name": "bob",
+                    "email": "bob@email.com"
                 }
-            }
-        }
+            },
+            "queue": "greenback",
+            "status": "ready",
+            "triggerDate": "2014-07-11 16:05:00",
+            "version": 2
+          }
+        ]
     }
 }
 ```
@@ -267,9 +248,7 @@ The task has now been started, you will notice in the POST response that the tas
             "email": "bob@email.com"
         }
     },
-    "queueBinding": {
-        "id": "greenback"
-    },
+    "queue": "greenback",
     "status": "started",
     "triggerDate": "2014-07-11 16:05:00",
     "version": 3
@@ -304,28 +283,11 @@ The task should now be closed.
             "email": "bob@email.com"
         }
     },
-    "queueBinding": {
-        "id": "greenback"
-    },
+    "queue": "greenback",
     "status": "closed",
     "triggerDate": "2014-07-11 16:05:00",
     "version": 4
 }
 ```
-
-
-## Further documentation
-
-TODO: create these documents
-
-* configuration
-* logging
-* api
-* queue ordering
-* optimistic locking
-* search
-* scheduling future tasks
-* archiving tasks
-* authentication
 
 

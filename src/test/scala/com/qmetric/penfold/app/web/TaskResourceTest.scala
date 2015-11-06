@@ -1,23 +1,20 @@
 package com.qmetric.penfold.app.web
 
-import com.qmetric.penfold.app.support.hal.HalTaskFormatter
 import java.net.URI
-import org.json4s.jackson.JsonMethods._
-import scala.io.Source._
+
+import com.qmetric.penfold.app.AuthenticationCredentials
+import com.qmetric.penfold.app.support.hal.HalTaskFormatter
+import com.qmetric.penfold.app.support.json.ObjectSerializer
+import com.qmetric.penfold.command._
+import com.qmetric.penfold.domain.model.AggregateId
+import com.qmetric.penfold.domain.model.Status.Waiting
+import com.qmetric.penfold.readstore.{PageRequest, PageResult, _}
+import com.qmetric.penfold.support.{JsonFixtures, TestModel}
 import org.scalatra.test.specs2.MutableScalatraSpec
 import org.specs2.mock.Mockito
-import com.qmetric.penfold.readstore._
-import com.qmetric.penfold.command._
-import com.qmetric.penfold.app.support.json.ObjectSerializer
-import com.qmetric.penfold.readstore.PageResult
-import com.qmetric.penfold.support.TestModel
-import com.qmetric.penfold.domain.model.Status.Waiting
-import com.qmetric.penfold.domain.model.AggregateId
-import scala.Some
-import com.qmetric.penfold.app.AuthenticationCredentials
-import com.qmetric.penfold.readstore.PageRequest
+import org.specs2.mutable.SpecificationWithJUnit
 
-class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpecification {
+class TaskResourceTest extends SpecificationWithJUnit with MutableScalatraSpec with Mockito with WebAuthSpecification with JsonFixtures {
   sequential
 
   val expectedTask = TestModel.readModels.task.copy(status = Waiting)
@@ -37,7 +34,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
 
     get("/tasks/1", headers = validAuthHeader) {
       status must beEqualTo(200)
-      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedWaitingTask.json"))
+      asJson(body) must beEqualTo(jsonFixture("fixtures/hal/halFormattedWaitingTask.json"))
     }
   }
 
@@ -47,7 +44,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
 
     get("""/tasks?q=%5B%7B%22op%22%3A%22EQ%22%2C%22key%22%3A%22data%22%2C%22value%22%3A%22a%20value%22%20%7D%5D""", headers = validAuthHeader) {
       status must beEqualTo(200)
-      parse(body) must beEqualTo(jsonFromFile("fixtures/hal/halFormattedFilteredTasks.json"))
+      asJson(body) must beEqualTo(jsonFixture("fixtures/hal/halFormattedFilteredTasks.json"))
     }
   }
 
@@ -62,7 +59,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(TestModel.commands.createTask) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    post("/tasks", textFromFile("fixtures/web/create_task.json"), headers = validAuthHeader + commandTypeHeader("CreateTask")) {
+    post("/tasks", jsonFixtureAsString("fixtures/web/create_task.json"), headers = validAuthHeader + commandTypeHeader("CreateTask")) {
       status must beEqualTo(201)
     }
   }
@@ -71,7 +68,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(TestModel.commands.createFutureTask) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    post("/tasks", textFromFile("fixtures/web/create_future_task.json"), headers = validAuthHeader + commandTypeHeader("CreateFutureTask")) {
+    post("/tasks", jsonFixtureAsString("fixtures/web/create_future_task.json"), headers = validAuthHeader + commandTypeHeader("CreateFutureTask")) {
       status must beEqualTo(201)
     }
   }
@@ -80,7 +77,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(TestModel.commands.unassignTask) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    post("/tasks/1/1", textFromFile("fixtures/web/unassign_task.json"), headers = validAuthHeader + commandTypeHeader("UnassignTask")) {
+    post("/tasks/1/1", jsonFixtureAsString("fixtures/web/unassign_task.json"), headers = validAuthHeader + commandTypeHeader("UnassignTask")) {
       status must beEqualTo(200)
     }
   }
@@ -89,7 +86,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(TestModel.commands.updateTaskPayload) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    post("/tasks/1/1", textFromFile("fixtures/web/update_payload.json"), headers = validAuthHeader + commandTypeHeader("UpdateTaskPayload")) {
+    post("/tasks/1/1", jsonFixtureAsString("fixtures/web/update_payload.json"), headers = validAuthHeader + commandTypeHeader("UpdateTaskPayload")) {
       status must beEqualTo(200)
     }
   }
@@ -98,7 +95,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(TestModel.commands.startTask) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    post("/tasks/1/1", textFromFile("fixtures/web/start_task.json"), headers = validAuthHeader + commandTypeHeader("StartTask")) {
+    post("/tasks/1/1", jsonFixtureAsString("fixtures/web/start_task.json"), headers = validAuthHeader + commandTypeHeader("StartTask")) {
       status must beEqualTo(200)
     }
   }
@@ -107,7 +104,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(TestModel.commands.requeueTask) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    post("/tasks/1/1", textFromFile("fixtures/web/requeue_task.json"), headers = validAuthHeader + commandTypeHeader("RequeueTask")) {
+    post("/tasks/1/1", jsonFixtureAsString("fixtures/web/requeue_task.json"), headers = validAuthHeader + commandTypeHeader("RequeueTask")) {
       status must beEqualTo(200)
     }
   }
@@ -116,7 +113,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(TestModel.commands.rescheduleTask) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    post("/tasks/1/1", textFromFile("fixtures/web/reschedule_task.json"), headers = validAuthHeader + commandTypeHeader("RescheduleTask")) {
+    post("/tasks/1/1", jsonFixtureAsString("fixtures/web/reschedule_task.json"), headers = validAuthHeader + commandTypeHeader("RescheduleTask")) {
       status must beEqualTo(200)
     }
   }
@@ -125,7 +122,16 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(TestModel.commands.closeTask) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    post("/tasks/1/1", textFromFile("fixtures/web/close_task.json"), headers = validAuthHeader + commandTypeHeader("CloseTask")) {
+    post("/tasks/1/1", jsonFixtureAsString("fixtures/web/close_task.json"), headers = validAuthHeader + commandTypeHeader("CloseTask")) {
+      status must beEqualTo(200)
+    }
+  }
+
+  "return 200 when cancelling task" in {
+    commandDispatcher.dispatch(TestModel.commands.cancelTask) returns expectedTask.id
+    readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
+
+    post("/tasks/1/1", jsonFixtureAsString("fixtures/web/cancel_task.json"), headers = validAuthHeader + commandTypeHeader("CancelTask")) {
       status must beEqualTo(200)
     }
   }
@@ -134,7 +140,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(TestModel.commands.createTask) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    post("/tasks", textFromFile("fixtures/web/create_task.json"), headers = validAuthHeader) {
+    post("/tasks", jsonFixtureAsString("fixtures/web/create_task.json"), headers = validAuthHeader) {
       status must beEqualTo(400)
     }
   }
@@ -143,7 +149,7 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
     commandDispatcher.dispatch(TestModel.commands.startTask) returns expectedTask.id
     readStore.retrieveBy(expectedTask.id) returns Some(expectedTask)
 
-    post("/tasks/1/1", textFromFile("fixtures/web/start_task.json"), headers = validAuthHeader) {
+    post("/tasks/1/1", jsonFixtureAsString("fixtures/web/start_task.json"), headers = validAuthHeader) {
       status must beEqualTo(400)
     }
   }
@@ -170,14 +176,6 @@ class TaskResourceTest extends MutableScalatraSpec with Mockito with WebAuthSpec
   }
 
   def commandTypeHeader(commandType: String) = "Content-Type" -> s"application/json;domain-command=$commandType"
-
-  def jsonFromFile(filePath: String) = {
-    parse(textFromFile(filePath))
-  }
-
-  def textFromFile(filePath: String) = {
-    fromInputStream(getClass.getClassLoader.getResourceAsStream(filePath)).mkString
-  }
 
   def validAuthHeader = authHeader(validCredentials.username, validCredentials.password)
 }

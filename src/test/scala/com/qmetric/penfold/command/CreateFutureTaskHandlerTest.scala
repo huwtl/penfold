@@ -1,14 +1,12 @@
 package com.qmetric.penfold.command
 
-import org.specs2.mutable.Specification
-import com.qmetric.penfold.domain.model._
+import com.qmetric.penfold.domain.model.{AggregateId, _}
 import com.qmetric.penfold.domain.store.DomainRepository
-import org.specs2.mock.Mockito
 import org.joda.time.DateTime
-import com.qmetric.penfold.domain.model.AggregateId
-import com.qmetric.penfold.domain.model.QueueBinding
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
 
-class CreateFutureTaskHandlerTest extends Specification with Mockito {
+class CreateFutureTaskHandlerTest extends SpecificationWithJUnit with Mockito {
 
   val expectedAggregateId = AggregateId("a1")
 
@@ -21,7 +19,7 @@ class CreateFutureTaskHandlerTest extends Specification with Mockito {
   "create future task" in {
     aggregateIdFactory.create returns expectedAggregateId
 
-    val aggregateId = commandDispatcher.dispatch(CreateFutureTask(QueueBinding(QueueId("q1")), DateTime.now, Payload.empty, None))
+    val aggregateId = commandDispatcher.dispatch(CreateFutureTask(QueueId("q1"), DateTime.now, Payload.empty, None))
 
     there was one(domainRepository).add(any[Task])
     aggregateId must beEqualTo(expectedAggregateId)

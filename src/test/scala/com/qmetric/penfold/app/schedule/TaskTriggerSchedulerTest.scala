@@ -1,19 +1,17 @@
 package com.qmetric.penfold.app.schedule
 
-import org.specs2.mutable.Specification
+import com.qmetric.penfold.command.CommandDispatcher
+import com.qmetric.penfold.readstore.{ReadStore, TaskProjectionReference}
 import org.specs2.mock.Mockito
-import com.qmetric.penfold.readstore.{TaskRecordReference, ReadStore}
-import com.qmetric.penfold.command.{TriggerTask, CommandDispatcher}
-import com.qmetric.penfold.support.TestModel
+import org.specs2.mutable.SpecificationWithJUnit
 
-class TaskTriggerSchedulerTest extends Specification with Mockito {
+class TaskTriggerSchedulerTest extends SpecificationWithJUnit with Mockito {
   "periodically trigger future tasks" in {
     val readStore = mock[ReadStore]
     val commandDispatcher = mock[CommandDispatcher]
-    readStore.retrieveTasksToTrigger returns List(TaskRecordReference(TestModel.aggregateId, TestModel.version)).toIterator
 
     new TaskTriggerScheduler(readStore, commandDispatcher, null).process()
 
-    there was one(commandDispatcher).dispatch(TriggerTask(TestModel.aggregateId, TestModel.version))
+    there was one(readStore).forEachTriggeredTask(any[TaskProjectionReference => Unit])
   }
 }

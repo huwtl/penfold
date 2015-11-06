@@ -1,27 +1,37 @@
 {
-    "_links": {
-        "self": {"href": "http://host/tasks/1"},
-        "RequeueTask": {"href": "http://host/tasks/1/3"},
-        "RescheduleTask": {"href": "http://host/tasks/1/3"},
-        "queue": {"href": "http://host/queues/abc/closed"}
+  "_links": {
+    "self": {
+      "href": "http://host/tasks/1"
     },
-    "id": "1",
-    "version": 3,
-    "payload": {
-        "data": "value",
-        "inner": {
-            "bool": true
-        }
+    "RequeueTask": {
+      "href": "http://host/tasks/1/3"
     },
-    "status": "closed",
-    "statusLastModified": "2014-02-25 13:00:00",
-    "previousStatus": {
-        "status": "started",
-        "statusLastModified": "2014-02-25 13:00:00"
+    "RescheduleTask": {
+      "href": "http://host/tasks/1/3"
     },
-    "assignee": "user1",
-    "conclusionType": "type",
-    "triggerDate": "2014-02-25 14:00:00",
-    "queueBinding": {"id": "abc"},
-    "score": 1393336800000
+    "queue": {
+      "href": "http://host/queues/abc/closed"
+    }
+  },
+  "created": "2014-02-25 13:00:00",
+  "attempts": 1,
+  "id": "1",
+  "version": 3,
+  "payload": {
+    "data": "value",
+    "inner": {
+      "bool": true
+    }
+  },
+  "status": "closed",
+  "statusLastModified": "2014-02-25 13:00:00",
+  "previousStatus": {
+    "status": "started",
+    "statusLastModified": "2014-02-25 13:00:00"
+  },
+  "closeReason": "type",
+  "closeResultType": "success",
+  "triggerDate": "2014-02-25 14:00:00",
+  "queue": "abc",
+  "score": 1393336800000
 }

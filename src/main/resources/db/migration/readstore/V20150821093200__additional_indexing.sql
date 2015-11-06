@@ -1,0 +1,1 @@
+CREATE INDEX tasks_sort_id_queue_status_idx ON tasks (cast(data->>'sort' AS BIGINT), id, (data->>'queue'), (data->>'status'));
