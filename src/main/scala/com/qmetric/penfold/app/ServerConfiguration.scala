@@ -22,7 +22,7 @@ case class ServerConfiguration(publicUrl: String,
                                pageSize: Int = 10,
                                triggerCheckFrequency: FiniteDuration = FiniteDuration(60L, TimeUnit.SECONDS),
                                archiver: Option[TaskArchiverConfiguration] = Some(TaskArchiverConfiguration(FiniteDuration(28L, DAYS), FiniteDuration(1L, HOURS))),
-                               startedTaskTimeout: Option[StartedTaskTimeoutConfiguration] = Some(StartedTaskTimeoutConfiguration(FiniteDuration(1L, DAYS), FiniteDuration(1L, DAYS)))) {
+                               startedTaskTimeout: Option[StartedTaskTimeoutConfiguration] = None) {
 
   val queryPathAliases = Aliases(queryAliases.map {
     case (alias, path) => (Alias(alias), Path(path))
