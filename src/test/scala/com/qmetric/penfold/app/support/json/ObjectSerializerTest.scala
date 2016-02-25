@@ -41,8 +41,8 @@ class ObjectSerializerTest extends SpecificationWithJUnit with DataTables with J
 
   "deserialise dateTime" in {
     "dateTimeString" || "expected" |
-      "2016-03-27 01:00:00" !! new DateTime(2016, 3, 27, 2, 0, 0) |
-      "2016-02-27 01:00:00" !! new DateTime(2016, 2, 27, 1, 0, 0) |> {
+      "2016-03-27 03:00:00" !! new DateTime(2016, 3, 27, 3, 0, 0) |
+      "2016-02-27 03:00:00" !! new DateTime(2016, 2, 27, 3, 0, 0) |> {
       (dateTimeString, expected) =>
         serializer.deserialize[Map[String, DateTime]]( s"""{"dateTime": "$dateTimeString"}""") must beEqualTo(Map("dateTime" -> expected))
     }
@@ -50,8 +50,8 @@ class ObjectSerializerTest extends SpecificationWithJUnit with DataTables with J
 
   "serialise dateTime" in {
     "dateTime" || "expected" |
-      new DateTime(2016, 3, 27, 2, 0, 0) !! "2016-03-27 02:00:00" |
-      new DateTime(2016, 2, 27, 1, 0, 0) !! "2016-02-27 01:00:00" |> {
+      new DateTime(2016, 3, 27, 3, 0, 0) !! "2016-03-27 03:00:00" |
+      new DateTime(2016, 2, 27, 3, 0, 0) !! "2016-02-27 03:00:00" |> {
       (dateTime, expected) =>
         serializer.serialize(Map("dateTime" -> dateTime)) must beEqualTo(s"""{"dateTime":"$expected"}""")
     }
