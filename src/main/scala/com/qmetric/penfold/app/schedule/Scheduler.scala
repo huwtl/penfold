@@ -25,7 +25,7 @@ trait Scheduler {
 
           logger.debug(s"scheduled $name completed")
         } catch {
-          case e: Exception => logger.error(s"error during scheduled $name", e)
+          case e: Throwable => logger.error(s"error during scheduled $name", e)
         }
       }
     }, 0, frequency.length, frequency.unit)
